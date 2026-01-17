@@ -1,11 +1,26 @@
-"""Main application entry point and orchestrator"""
+"""Main application entry point and orchestrator.
+
+This module contains the MoriaManagerApp class which coordinates:
+    - Application initialization and configuration loading
+    - First-run setup with auto-detection of game installations
+    - Main window creation and event loop management
+
+The main() function serves as the entry point, handling:
+    - Logging setup (file-based, with optional console output via --debug)
+    - Error handling with user-friendly error dialogs
+    - Clean shutdown with logging
+
+Usage:
+    python -m moria_manager [--debug]
+
+    --debug: Enable console logging for troubleshooting
+"""
 
 import sys
 
 import customtkinter as ctk
 
 from .config.manager import ConfigurationManager
-# from .core.backup_service import BackupService  # Not currently used
 from .core.game_detector import GameDetector
 from .gui.config_dialog import ConfigDialog
 from .gui.main_window import MainWindow
@@ -21,7 +36,6 @@ class MoriaManagerApp:
 
     def __init__(self):
         self.config_manager = ConfigurationManager()
-        # self.backup_service: BackupService | None = None  # Not currently used
         self.main_window: MainWindow | None = None
 
     def run(self):
@@ -39,9 +53,6 @@ class MoriaManagerApp:
             self._show_first_run_config_standalone()
         else:
             self.config_manager.load()
-
-        # Initialize backup service (not currently used)
-        # self.backup_service = BackupService(self.config_manager)
 
         # Create main window
         self.main_window = MainWindow(self.config_manager)
@@ -82,30 +93,6 @@ class MoriaManagerApp:
         # Create default configuration with detected installations
         self.config_manager.create_default(installations)
 
-    def _show_first_run_config(self):
-        """Show the configuration dialog for first-run setup."""
-        if self.main_window is None:
-            return
-
-        dialog = ConfigDialog(
-            self.main_window,
-            self.config_manager,
-            first_run=True
-        )
-
-        # Wait for dialog to close
-        self.main_window.wait_window(dialog)
-
-        # If user closed without saving (shouldn't happen with first_run=True modal)
-        # but handle it gracefully
-        if not self.config_manager.config.settings.first_run_complete:
-            # Save anyway to prevent repeated first-run prompts
-            self.config_manager.config.settings.first_run_complete = True
-            self.config_manager.save()
-
-        # Refresh main window to show configured installations
-        self.main_window._refresh_ui()
-
 
 def main():
     """Application entry point."""
@@ -116,7 +103,7 @@ def main():
     try:
         app = MoriaManagerApp()
         app.run()
-    except Exception as e:
+    except (OSError, IOError, RuntimeError, ValueError) as e:
         logger.exception("Fatal error during startup")
         # Show error dialog if something goes wrong during startup
         import tkinter as tk

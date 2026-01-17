@@ -239,9 +239,9 @@ class MoriaSaveParser:
                 modified_time=modified_time,
             )
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, struct.error) as e:
             # Log error but don't crash
-            logger.warning(f"Error parsing world save {file_path}: {e}")
+            logger.warning("Error parsing world save %s: %s", file_path, e)
             return None
 
     def parse_character_save(self, file_path: Path) -> Optional[CharacterSaveInfo]:
@@ -277,8 +277,8 @@ class MoriaSaveParser:
                 modified_time=modified_time,
             )
 
-        except Exception as e:
-            logger.warning(f"Error parsing character save {file_path}: {e}")
+        except (OSError, IOError, ValueError, struct.error) as e:
+            logger.warning("Error parsing character save %s: %s", file_path, e)
             return None
 
     def get_world_saves(self, save_directory: Path) -> list[WorldSaveInfo]:

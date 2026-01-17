@@ -1,5 +1,6 @@
 """Main application window with vertical tabs and split panes."""
 
+import json
 from typing import Optional
 import tkinter as tk
 
@@ -21,7 +22,7 @@ from .. import __app_name__, __version__
 from ..assets.loader import get_asset_path
 from ..config.manager import ConfigurationManager
 from ..config.schema import Installation
-# from ..core.backup_service import BackupService  # Not currently used
+from ..config.security import decrypt_password, encrypt_password
 from ..core.backup_index import BackupIndexManager, BackupIndexEntry
 from ..core.save_parser import (
     MoriaSaveParser, WorldWithVersions, CharacterWithVersions, SaveFileVersion
@@ -105,8 +106,8 @@ class MainWindow(ctk.CTk):
                 # tkinterdnd2 needs to initialize its Tcl library
                 tkdnd_path = tkinterdnd2.TkinterDnD._require(self)
                 self._dnd_enabled = True
-            except Exception as e:
-                logger.debug(f"tkdnd not available: {e}")
+            except (RuntimeError, OSError, tk.TclError) as e:
+                logger.debug("tkdnd not available: %s", e)
 
         self._set_app_icon()
 
@@ -129,8 +130,8 @@ class MainWindow(ctk.CTk):
             icon_path = get_asset_path("icons/app_icon.ico")
             if icon_path.exists():
                 self.iconbitmap(str(icon_path))
-        except Exception as e:
-            logger.debug(f"Could not set app icon: {e}")
+        except (OSError, tk.TclError) as e:
+            logger.debug("Could not set app icon: %s", e)
 
     def _setup_background(self):
         """Set up the faded background image."""
@@ -157,8 +158,8 @@ class MainWindow(ctk.CTk):
 
                 # Bind resize event
                 self.bind("<Configure>", self._on_window_resize)
-        except Exception as e:
-            logger.warning(f"Could not load background image: {e}")
+        except (OSError, IOError, ValueError) as e:
+            logger.warning("Could not load background image: %s", e)
 
     def _update_background(self):
         """Update background image to fit window size."""
@@ -208,8 +209,8 @@ class MainWindow(ctk.CTk):
         # Ensure canvas stays behind other widgets
         try:
             self.bg_canvas.tk.call('lower', self.bg_canvas._w)
-        except Exception as e:
-            logger.debug(f"Could not lower canvas: {e}")
+        except tk.TclError as e:
+            logger.debug("Could not lower canvas: %s", e)
 
     def _draw_pane_overlays(self, composite: Image.Image, width: int, height: int):
         """Draw semi-transparent overlays on the background for each pane area.
@@ -564,7 +565,7 @@ class MainWindow(ctk.CTk):
             self.trade_merchants = load_order_decks(json_path)
             self._load_trade_config()  # Load saved checkbox state
             self._build_trade_ui()
-        except Exception as e:
+        except (OSError, IOError, json.JSONDecodeError, KeyError, ValueError) as e:
             error_label = ctk.CTkLabel(
                 self.trade_scroll_frame,
                 text=f"Error loading trade data:\n\n{e}",
@@ -589,7 +590,7 @@ class MainWindow(ctk.CTk):
                 return 2
             else:
                 return 3
-        except Exception:
+        except tk.TclError:
             return 2  # Default to 2 columns
 
     def _on_trade_pane_resize(self, event=None):
@@ -820,9 +821,9 @@ class MainWindow(ctk.CTk):
                 for order in merchant.orders:
                     order.checked = (merchant.raw_name, order.raw_name) in checked_orders
 
-        except Exception as e:
+        except (OSError, ET.ParseError, KeyError) as e:
             # If file is corrupted, just continue with defaults
-            pass
+            logger.debug("Could not load trade config: %s", e)
 
     def _create_world_list_pane(self):
         """Create the left pane showing world/character names and filenames."""
@@ -1268,7 +1269,7 @@ class MainWindow(ctk.CTk):
             server_elem = ET.SubElement(root, "Server")
             ET.SubElement(server_elem, "Name").text = entry.get("name", "")
             ET.SubElement(server_elem, "Address").text = entry.get("address", "")
-            ET.SubElement(server_elem, "Password").text = entry.get("password", "")
+            ET.SubElement(server_elem, "Password").text = encrypt_password(entry.get("password", ""))
             ET.SubElement(server_elem, "Notes").text = entry.get("notes", "")
 
         # Write pretty-printed XML
@@ -1301,12 +1302,12 @@ class MainWindow(ctk.CTk):
                 entry = {
                     "name": self._get_elem_text(server_elem, "Name"),
                     "address": self._get_elem_text(server_elem, "Address"),
-                    "password": self._get_elem_text(server_elem, "Password"),
+                    "password": decrypt_password(self._get_elem_text(server_elem, "Password")),
                     "notes": self._get_elem_text(server_elem, "Notes"),
                 }
                 self.server_entries_by_install[install_id].append(entry)
 
-        except Exception as e:
+        except (OSError, ET.ParseError, KeyError) as e:
             self._set_status(f"Error loading server list ({install_id}): {e}")
 
     def _get_elem_text(self, parent, tag: str) -> str:
@@ -1342,9 +1343,9 @@ class MainWindow(ctk.CTk):
             self.versions_list_frame.dnd_bind('<<DragEnter>>', self._on_available_mods_drag_enter)
             self.versions_list_frame.dnd_bind('<<DragLeave>>', self._on_available_mods_drag_leave)
 
-        except Exception as e:
+        except (RuntimeError, tk.TclError, AttributeError) as e:
             # DnD setup failed, continue without it
-            logger.warning(f"Drag-and-drop setup failed: {e}")
+            logger.warning("Drag-and-drop setup failed: %s", e)
             self._dnd_enabled = False
 
     def _on_available_mods_drag_enter(self, event):
@@ -1374,8 +1375,8 @@ class MainWindow(ctk.CTk):
             files_str = event.data
             # Parse the Tcl list format (handles spaces in paths with braces)
             files = self.tk.splitlist(files_str)
-        except Exception as e:
-            logger.debug(f"Could not parse Tcl list, using raw data: {e}")
+        except (tk.TclError, ValueError) as e:
+            logger.debug("Could not parse Tcl list, using raw data: %s", e)
             files = [event.data] if event.data else []
 
         if not files:
@@ -1388,6 +1389,7 @@ class MainWindow(ctk.CTk):
         """Import dropped files/folders to the Available Mods directory."""
         import shutil
         import zipfile
+        from ..config.path_validator import is_safe_path, is_path_under_root, sanitize_filename
 
         backup_root = (
             self.config_manager.config.settings.backup_location
@@ -1405,7 +1407,15 @@ class MainWindow(ctk.CTk):
             if not source_path.exists():
                 continue
 
-            dest_path = mods_backup_path / source_path.name
+            # Sanitize the filename to prevent path traversal
+            safe_name = sanitize_filename(source_path.name)
+            dest_path = mods_backup_path / safe_name
+
+            # Validate destination path is safe and under backup root
+            if not is_safe_path(dest_path) or not is_path_under_root(dest_path, backup_root):
+                self._set_status(f"Skipped: Invalid destination path for '{source_path.name}'")
+                skipped_count += 1
+                continue
 
             try:
                 if source_path.is_dir():
@@ -1516,7 +1526,7 @@ class MainWindow(ctk.CTk):
                     shutil.copy2(str(source_path), str(dest_path))
                     imported_count += 1
 
-            except Exception as e:
+            except (OSError, IOError, shutil.Error, zipfile.BadZipFile) as e:
                 self._set_status(f"Error importing {source_path.name}: {e}")
 
         # Refresh and report
@@ -1858,6 +1868,8 @@ class MainWindow(ctk.CTk):
 
     def _restore_version(self, version: SaveFileVersion):
         """Restore the selected version as the current save (copies over existing main file)."""
+        from ..config.path_validator import is_safe_path, is_path_under_root
+
         if not self.current_installation or not self.selected_item:
             self._set_status("No item selected")
             return
@@ -1867,6 +1879,16 @@ class MainWindow(ctk.CTk):
             main_file = self.selected_item.main_file
             if not main_file:
                 self._set_status("No main save file found")
+                return
+
+            # Validate paths are safe
+            save_path = self.current_installation.save_path
+            if not save_path or not is_path_under_root(main_file.file_path, save_path):
+                self._set_status("Invalid save path configuration")
+                return
+
+            if not is_safe_path(main_file.file_path):
+                self._set_status("Cannot operate on protected path")
                 return
 
             import shutil
@@ -1879,7 +1901,7 @@ class MainWindow(ctk.CTk):
 
             self._set_status(f"Restored {version.display_name} as current save")
             self._refresh_versions_list()
-        except Exception as e:
+        except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Restore failed: {e}")
 
     def _restore_as_main(self, version: SaveFileVersion):
@@ -1923,7 +1945,7 @@ class MainWindow(ctk.CTk):
                         self._on_item_selected(item)
                         return
             self._refresh_versions_list()
-        except Exception as e:
+        except (OSError, IOError) as e:
             self._set_status(f"Restore failed: {e}")
 
     def _mark_version_bad(self, version: SaveFileVersion):
@@ -1952,7 +1974,7 @@ class MainWindow(ctk.CTk):
                     return
 
             self._set_status("Could not mark as bad: too many bad files")
-        except Exception as e:
+        except (OSError, IOError) as e:
             self._set_status(f"Mark bad failed: {e}")
 
     def _update_backup_button_states(self):
@@ -2004,7 +2026,7 @@ class MainWindow(ctk.CTk):
                 self._set_status(f"Backup created: {backup_path.name}")
             else:
                 self._set_status(f"Backup failed for {item_name}")
-        except Exception as e:
+        except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Backup failed: {e}")
 
     def _backup_all_items(self):
@@ -2041,7 +2063,7 @@ class MainWindow(ctk.CTk):
                         backed_up += 1
 
             self._set_status(f"Backed up {backed_up} of {len(items)} {item_type}")
-        except Exception as e:
+        except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Backup failed: {e}")
 
     def _create_single_item_backup(self, main_file, item_name: str):
@@ -2111,8 +2133,8 @@ class MainWindow(ctk.CTk):
             # Copy the file
             shutil.copy2(main_file.file_path, backup_path)
             return backup_path
-        except Exception as e:
-            logger.error(f"Backup error for {item_name}: {e}")
+        except (OSError, IOError, shutil.Error) as e:
+            logger.error("Backup error for %s: %s", item_name, e)
             return None
 
     def _create_tooltip(self, widget, text: str):
@@ -2153,8 +2175,8 @@ class MainWindow(ctk.CTk):
             if icon_path.exists():
                 image = Image.open(icon_path)
                 return ctk.CTkImage(light_image=image, dark_image=image, size=size)
-        except Exception as e:
-            logger.debug(f"Could not load icon {relative_path}: {e}")
+        except (OSError, IOError, ValueError) as e:
+            logger.debug("Could not load icon %s: %s", relative_path, e)
         return None
 
     def _open_settings(self):
@@ -2327,7 +2349,7 @@ class MainWindow(ctk.CTk):
         try:
             index_manager = BackupIndexManager(backup_root, category)
             self.restore_entries = index_manager.list_entries()
-        except Exception as e:
+        except (OSError, ET.ParseError, ValueError) as e:
             self.item_placeholder = ctk.CTkLabel(
                 self.item_list_frame,
                 text=f"Error reading backups: {e}",
@@ -2427,7 +2449,7 @@ class MainWindow(ctk.CTk):
         try:
             index_manager = BackupIndexManager(backup_root, category)
             self.restore_timestamps = index_manager.get_backup_timestamps(self.selected_restore_entry)
-        except Exception as e:
+        except (OSError, ET.ParseError, ValueError) as e:
             self.versions_placeholder = ctk.CTkLabel(
                 self.versions_list_frame,
                 text=f"Error: {e}",
@@ -2525,12 +2547,21 @@ class MainWindow(ctk.CTk):
 
     def _restore_from_backup(self, timestamp_dir: Path):
         """Restore a backup from the backup location to the game save directory."""
+        from ..config.path_validator import is_safe_path, is_path_under_root, validate_save_path
+
         if not self.current_installation or not self.current_installation.save_path:
             self._set_status("No installation selected")
             return
 
         if not self.selected_restore_entry:
             self._set_status("No backup selected")
+            return
+
+        # Validate save path before proceeding
+        save_path = self.current_installation.save_path
+        is_valid, error_msg = validate_save_path(save_path)
+        if not is_valid:
+            self._set_status(f"Invalid save path: {error_msg}")
             return
 
         try:
@@ -2541,6 +2572,11 @@ class MainWindow(ctk.CTk):
                 self.config_manager.config.settings.backup_location
                 or GamePaths.BACKUP_DEFAULT
             )
+
+            # Validate backup directory is under backup root
+            if not is_path_under_root(timestamp_dir, backup_root):
+                self._set_status("Invalid backup directory")
+                return
 
             category = "worlds" if self.current_view_type == "Worlds" else "characters"
             index_manager = BackupIndexManager(backup_root, category)
@@ -2593,7 +2629,7 @@ class MainWindow(ctk.CTk):
             # Refresh to show the restored files
             self._refresh_restore_timestamps()
 
-        except Exception as e:
+        except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Restore failed: {e}")
 
     def _refresh_mods_list(self):
@@ -2664,7 +2700,7 @@ class MainWindow(ctk.CTk):
             # Sort: directories first, then files, alphabetically
             items.sort(key=lambda x: (not x.is_dir(), x.name.lower()))
             self.mods_items = items
-        except Exception as e:
+        except (OSError, IOError) as e:
             placeholder = ctk.CTkLabel(
                 self.item_list_frame,
                 text=f"Error reading Paks:\n{e}",
@@ -2835,6 +2871,7 @@ class MainWindow(ctk.CTk):
     def _move_mod_to_available(self, item_path: Path):
         """Move a mod directory to the backup/mods directory."""
         import shutil
+        from ..config.path_validator import is_safe_path, is_path_under_root, sanitize_filename
 
         backup_root = (
             self.config_manager.config.settings.backup_location
@@ -2845,14 +2882,21 @@ class MainWindow(ctk.CTk):
         # Ensure mods directory exists
         mods_backup_path.mkdir(parents=True, exist_ok=True)
 
-        dest_path = mods_backup_path / item_path.name
+        # Sanitize filename and validate destination
+        safe_name = sanitize_filename(item_path.name)
+        dest_path = mods_backup_path / safe_name
+
+        # Validate destination is safe
+        if not is_safe_path(dest_path) or not is_path_under_root(dest_path, backup_root):
+            self._set_status("Invalid destination path")
+            return
 
         try:
             shutil.move(str(item_path), str(dest_path))
             self._set_status(f"Moved '{item_path.name}' to Available Mods")
             # Refresh both panes
             self._refresh_mods_list()
-        except Exception as e:
+        except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Failed to move mod: {e}")
 
     def _prompt_remove_installed_mod_dir(self, item_path: Path):
@@ -2860,6 +2904,20 @@ class MainWindow(ctk.CTk):
         import time
         import os
         import stat
+        from ..config.path_validator import is_safe_path
+
+        # Validate path is safe to delete
+        if not is_safe_path(item_path):
+            self._set_status("Cannot remove: path is in a protected directory")
+            return
+
+        # Ensure path is under game installation
+        if self.current_installation and self.current_installation.game_path:
+            from ..config.path_validator import is_path_under_root
+            if not is_path_under_root(item_path, self.current_installation.game_path):
+                self._set_status("Cannot remove: path is outside game installation")
+                return
+
         message = f"The mod '{item_path.name}' is already in Available Mods.\n\nWould you like to remove it from Installed Mods?"
 
         def remove_readonly(func, path, excinfo):
@@ -2874,8 +2932,8 @@ class MainWindow(ctk.CTk):
                 if path.is_dir():
                     for item in path.iterdir():
                         clear_readonly_recursive(item)
-            except Exception as e:
-                logger.debug(f"Could not clear read-only on {path}: {e}")
+            except OSError as e:
+                logger.debug("Could not clear read-only on %s: %s", path, e)
 
         if self._show_confirm_dialog("Remove from Installed?", message):
             import shutil
@@ -2886,14 +2944,14 @@ class MainWindow(ctk.CTk):
                     try:
                         clear_readonly_recursive(item_path)
                         errors_log.append("Cleared read-only attributes")
-                    except Exception as e:
+                    except OSError as e:
                         errors_log.append(f"Could not clear read-only: {e}")
 
                     # First attempt with onerror handler
                     try:
                         shutil.rmtree(str(item_path), onerror=remove_readonly)
                         errors_log.append(f"Attempt 1: shutil.rmtree completed")
-                    except Exception as e:
+                    except (OSError, shutil.Error) as e:
                         errors_log.append(f"Attempt 1: shutil.rmtree failed - {e}")
 
                     # Retry mechanism: check if directory still exists and try again
@@ -2907,7 +2965,7 @@ class MainWindow(ctk.CTk):
                         try:
                             remaining = list(item_path.iterdir()) if item_path.is_dir() else []
                             errors_log.append(f"Retry {attempt + 1}: Directory still exists, {len(remaining)} items remaining")
-                        except Exception as e:
+                        except OSError as e:
                             errors_log.append(f"Retry {attempt + 1}: Could not list directory - {e}")
 
                         # Small delay before retry (Windows file handles may need time to release)
@@ -2916,8 +2974,8 @@ class MainWindow(ctk.CTk):
                         # Clear read-only again before retry
                         try:
                             clear_readonly_recursive(item_path)
-                        except Exception as e:
-                            logger.debug(f"Retry clear read-only failed: {e}")
+                        except OSError as e:
+                            logger.debug("Retry clear read-only failed: %s", e)
 
                         try:
                             if item_path.is_dir():
@@ -2935,7 +2993,7 @@ class MainWindow(ctk.CTk):
                                 os.chmod(str(item_path), stat.S_IWRITE)
                                 item_path.unlink()
                                 errors_log.append(f"Retry {attempt + 1}: unlink succeeded")
-                        except Exception as retry_err:
+                        except (OSError, shutil.Error) as retry_err:
                             errors_log.append(f"Retry {attempt + 1}: Failed - {retry_err}")
 
                     if item_path.exists():
@@ -2962,7 +3020,7 @@ class MainWindow(ctk.CTk):
                     self._set_status(f"Path does not exist: {item_path}")
                 # Refresh to update the mods list
                 self._refresh_mods_list()
-            except Exception as e:
+            except (OSError, IOError, shutil.Error) as e:
                 self._show_info_dialog("Removal Error", f"Failed to remove mod: {e}\n\nLog:\n" + "\n".join(errors_log))
                 self._set_status(f"Failed to remove mod: {e}")
 
@@ -2996,7 +3054,7 @@ class MainWindow(ctk.CTk):
             self._set_status(f"Created folder '{mod_name}' with {moved_count} files")
             # Refresh the mods list
             self._refresh_mods_list()
-        except Exception as e:
+        except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Failed to create folder: {e}")
 
     def _move_mod_files_to_available(self, item_path: Path):
@@ -3029,7 +3087,7 @@ class MainWindow(ctk.CTk):
             self._set_status(f"Moved {moved_count} files for '{mod_name}' to Available Mods")
             # Refresh the mods list
             self._refresh_mods_list()
-        except Exception as e:
+        except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Failed to move mod files: {e}")
 
     def _prompt_remove_installed_mod_files(self, item_path: Path):
@@ -3068,7 +3126,7 @@ class MainWindow(ctk.CTk):
 
                 # Refresh the mods list
                 self._refresh_mods_list()
-            except Exception as e:
+            except OSError as e:
                 self._set_status(f"Failed to remove mod files: {e}")
 
     def _refresh_available_mods(self):
@@ -3092,8 +3150,8 @@ class MainWindow(ctk.CTk):
             # Create the mods directory if it doesn't exist
             try:
                 mods_path.mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                logger.warning(f"Could not create mods directory {mods_path}: {e}")
+            except OSError as e:
+                logger.warning("Could not create mods directory %s: %s", mods_path, e)
 
             placeholder = ctk.CTkLabel(
                 self.versions_list_frame,
@@ -3118,7 +3176,7 @@ class MainWindow(ctk.CTk):
             # Sort: directories first, then files, alphabetically
             items.sort(key=lambda x: (not x.is_dir(), x.name.lower()))
             self.available_mods_items = items
-        except Exception as e:
+        except OSError as e:
             placeholder = ctk.CTkLabel(
                 self.versions_list_frame,
                 text=f"Error reading mods:\n{e}",
@@ -3302,7 +3360,7 @@ class MainWindow(ctk.CTk):
             # Refresh the installed mods list
             self._refresh_mods_list()
 
-        except Exception as e:
+        except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Failed to install mod: {e}")
 
     def _organize_available_mod_files(self, item_path: Path):
@@ -3352,7 +3410,7 @@ class MainWindow(ctk.CTk):
             # Refresh the available mods list
             self._refresh_available_mods()
 
-        except Exception as e:
+        except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Failed to organize mod files: {e}")
 
     def _show_info_dialog(self, title: str, message: str):

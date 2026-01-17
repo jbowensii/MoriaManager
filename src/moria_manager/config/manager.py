@@ -15,6 +15,7 @@ from .schema import (
     ServerInfo,
     Settings,
 )
+from .security import decrypt_password, encrypt_password
 from ..logging_config import get_logger
 
 logger = get_logger("config_manager")
@@ -47,7 +48,7 @@ class ConfigurationManager:
         try:
             self.load()
             return not self.config.settings.first_run_complete
-        except Exception as e:
+        except (ET.ParseError, FileNotFoundError, ValueError, KeyError) as e:
             # Corrupted config = treat as first run
             logger.warning(f"Could not load config, treating as first run: {e}")
             return True
@@ -77,7 +78,7 @@ class ConfigurationManager:
                 server_info = ServerInfo(
                     name=self._get_text(server_elem, "Name", ""),
                     address=self._get_text(server_elem, "Address", ""),
-                    password=self._get_text(server_elem, "Password", ""),
+                    password=decrypt_password(self._get_text(server_elem, "Password", "")),
                     notes=self._get_text(server_elem, "Notes", ""),
                 )
 
@@ -165,7 +166,7 @@ class ConfigurationManager:
             server_elem = ET.SubElement(settings_elem, "ServerInfo")
             ET.SubElement(server_elem, "Name").text = self.config.settings.server_info.name or ""
             ET.SubElement(server_elem, "Address").text = self.config.settings.server_info.address or ""
-            ET.SubElement(server_elem, "Password").text = self.config.settings.server_info.password or ""
+            ET.SubElement(server_elem, "Password").text = encrypt_password(self.config.settings.server_info.password or "")
             ET.SubElement(server_elem, "Notes").text = self.config.settings.server_info.notes or ""
 
         # Installations section
@@ -268,17 +269,6 @@ class ConfigurationManager:
         elem = parent.find(tag)
         if elem is not None and elem.text:
             return elem.text.lower() == "true"
-        return default
-
-    @staticmethod
-    def _parse_int(parent: ET.Element, tag: str, default: int = 0) -> int:
-        """Parse an integer value from child element."""
-        elem = parent.find(tag)
-        if elem is not None and elem.text:
-            try:
-                return int(elem.text)
-            except ValueError:
-                pass
         return default
 
     @staticmethod
