@@ -7,7 +7,7 @@ import customtkinter as ctk
 from ..config.manager import ConfigurationManager
 from ..config.paths import GamePaths
 from ..config.schema import InstallationType
-from .styles import FONTS, PADDING, WINDOW_SIZES
+from .styles import COLORS, FONTS, PADDING, WINDOW_SIZES
 from .widgets.path_selector import PathSelector
 
 
@@ -38,14 +38,13 @@ class ConfigDialog(ctk.CTkToplevel):
         self.first_run = first_run
 
         # Window setup
-        self.title("Initial Setup" if first_run else "Settings")
+        self.title("Welcome to Moria Manager" if first_run else "Settings")
         width, height = WINDOW_SIZES["config_dialog"]
-        self.geometry(f"{width}x{height}")
         self.resizable(False, False)
 
-        # Center on parent
-        self.transient(parent)
-        self.grab_set()
+        # Make frameless for first run
+        if first_run:
+            self.overrideredirect(True)
 
         # Store widget references for saving
         self.installation_vars: dict[InstallationType, ctk.BooleanVar] = {}
@@ -53,8 +52,21 @@ class ConfigDialog(ctk.CTkToplevel):
 
         self._create_ui()
 
-        # Focus this window
+        # Center on screen and make visible
+        self.update_idletasks()
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        self.geometry(f"{width}x{height}+{x}+{y}")
+
+        # For non-first-run, center on parent
+        if not first_run:
+            self.transient(parent)
+
+        self.grab_set()
         self.focus_force()
+        self.lift()
 
     def _create_ui(self):
         """Create the dialog UI."""
@@ -76,9 +88,9 @@ class ConfigDialog(ctk.CTkToplevel):
         subtitle = ctk.CTkLabel(container, text=subtitle_text, font=FONTS["body"], text_color="gray")
         subtitle.pack(anchor="w", pady=(0, PADDING["large"]))
 
-        # Scrollable frame for content
-        scroll_frame = ctk.CTkScrollableFrame(container, height=350)
-        scroll_frame.pack(fill="both", expand=True, pady=(0, PADDING["medium"]))
+        # Scrollable frame for content - fixed height to leave room for buttons
+        scroll_frame = ctk.CTkScrollableFrame(container, height=420)
+        scroll_frame.pack(fill="x", pady=(0, PADDING["medium"]))
 
         self._create_installation_section(scroll_frame)
         self._create_backup_settings_section(scroll_frame)
@@ -182,58 +194,45 @@ class ConfigDialog(ctk.CTkToplevel):
         )
         self.backup_path_selector.pack(fill="x")
 
-        # Max backups
-        max_frame = ctk.CTkFrame(section, fg_color="transparent")
-        max_frame.pack(fill="x", padx=PADDING["medium"], pady=PADDING["small"])
-
-        max_label = ctk.CTkLabel(max_frame, text="Max Backups per Installation:", font=FONTS["body"])
-        max_label.pack(side="left")
-
-        self.max_backups_var = ctk.IntVar(value=self.config_manager.config.settings.max_backups_per_installation)
-        self.max_backups_label = ctk.CTkLabel(max_frame, text=str(self.max_backups_var.get()), width=30)
-        self.max_backups_label.pack(side="right", padx=(10, 0))
-
-        self.max_backups_slider = ctk.CTkSlider(
-            max_frame,
-            from_=1,
-            to=50,
-            number_of_steps=49,
-            variable=self.max_backups_var,
-            command=self._on_slider_change,
-        )
-        self.max_backups_slider.pack(side="right", padx=10)
-
-    def _on_slider_change(self, value):
-        """Update the max backups label when slider changes."""
-        self.max_backups_label.configure(text=str(int(value)))
-
     def _create_buttons(self, parent):
         """Create the dialog buttons."""
         button_frame = ctk.CTkFrame(parent, fg_color="transparent")
         button_frame.pack(fill="x", pady=(PADDING["medium"], 0))
 
-        # Cancel button (not shown on first run)
-        if not self.first_run:
-            cancel_btn = ctk.CTkButton(
-                button_frame,
-                text="Cancel",
-                width=100,
-                fg_color="transparent",
-                border_width=1,
-                text_color=("gray10", "gray90"),
-                command=self.destroy,
-            )
-            cancel_btn.pack(side="left")
+        # Cancel button (red)
+        cancel_btn = ctk.CTkButton(
+            button_frame,
+            text="Cancel",
+            width=140,
+            height=40,
+            font=FONTS["body"],
+            fg_color=COLORS["danger"],
+            hover_color=COLORS["danger_hover"],
+            command=self._cancel,
+        )
+        cancel_btn.pack(side="left")
 
         # Save button
-        save_text = "Get Started" if self.first_run else "Save"
+        save_text = "Save & Continue" if self.first_run else "Save"
         save_btn = ctk.CTkButton(
             button_frame,
             text=save_text,
-            width=120,
+            width=160,
+            height=40,
+            font=FONTS["body"],
             command=self._save_and_close,
         )
         save_btn.pack(side="right")
+
+    def _cancel(self):
+        """Handle cancel button - close dialog or exit app on first run."""
+        if self.first_run:
+            # Exit the application on first run cancel
+            import sys
+            self.master.destroy()
+            sys.exit(0)
+        else:
+            self.destroy()
 
     def _save_and_close(self):
         """Save configuration and close dialog."""
@@ -248,8 +247,6 @@ class ConfigDialog(ctk.CTkToplevel):
         backup_path = self.backup_path_selector.get_path()
         if backup_path:
             self.config_manager.config.settings.backup_location = backup_path
-
-        self.config_manager.config.settings.max_backups_per_installation = int(self.max_backups_var.get())
 
         # Mark first run complete
         self.config_manager.config.settings.first_run_complete = True

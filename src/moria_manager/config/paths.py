@@ -32,6 +32,9 @@ class GamePaths:
     # Server info files (one per installation type)
     SERVER_INFO_DIR = CONFIG_DIR / "servers"
 
+    # Trade manager configuration
+    TRADE_CONFIG_FILE = CONFIG_DIR / "trade_config.xml"
+
     @classmethod
     def expand_path(cls, path_str: str) -> Path:
         """Expand environment variables in path string.

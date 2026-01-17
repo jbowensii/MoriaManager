@@ -30,6 +30,6 @@ PADDING = {
 # Window sizes
 WINDOW_SIZES = {
     "main": (900, 600),
-    "config_dialog": (650, 550),
+    "config_dialog": (750, 650),
     "min_main": (700, 500),
 }

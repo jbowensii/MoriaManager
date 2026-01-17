@@ -46,7 +46,6 @@ class Settings:
     """Application settings"""
     first_run_complete: bool = False
     backup_location: Optional[Path] = None
-    max_backups_per_installation: int = 10
     auto_backup_on_launch: bool = False
     server_info: Optional[ServerInfo] = None
 

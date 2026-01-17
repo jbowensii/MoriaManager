@@ -86,7 +86,6 @@ class ConfigurationManager:
             settings = Settings(
                 first_run_complete=self._parse_bool(settings_elem, "FirstRunComplete", False),
                 backup_location=self._parse_path(settings_elem, "BackupLocation"),
-                max_backups_per_installation=self._parse_int(settings_elem, "MaxBackupsPerInstallation", 10),
                 auto_backup_on_launch=self._parse_bool(settings_elem, "AutoBackupOnLaunch", False),
                 server_info=server_info,
             )
@@ -95,7 +94,6 @@ class ConfigurationManager:
             settings = Settings(
                 first_run_complete=False,
                 backup_location=None,
-                max_backups_per_installation=10,
                 auto_backup_on_launch=False,
                 server_info=None,
             )
@@ -160,7 +158,6 @@ class ConfigurationManager:
         settings_elem = ET.SubElement(root, "Settings")
         ET.SubElement(settings_elem, "FirstRunComplete").text = str(self.config.settings.first_run_complete).lower()
         ET.SubElement(settings_elem, "BackupLocation").text = str(self.config.settings.backup_location or GamePaths.BACKUP_DEFAULT)
-        ET.SubElement(settings_elem, "MaxBackupsPerInstallation").text = str(self.config.settings.max_backups_per_installation)
         ET.SubElement(settings_elem, "AutoBackupOnLaunch").text = str(self.config.settings.auto_backup_on_launch).lower()
 
         # Server info section
@@ -221,7 +218,6 @@ class ConfigurationManager:
             settings=Settings(
                 first_run_complete=False,
                 backup_location=GamePaths.BACKUP_DEFAULT,
-                max_backups_per_installation=10,
                 auto_backup_on_launch=False,
             ),
             installations=installations,

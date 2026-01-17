@@ -352,7 +352,25 @@ class MainWindow(ctk.CTk):
         self.toolbar_servers_btn.pack(side="left", padx=2)
         self._create_tooltip(self.toolbar_servers_btn, "Server List")
 
-        # Gear icon button (settings - on the right)
+        # Trade Manager button (handshake)
+        trade_image = self._load_icon("icons/toolbar_trade.png", size=(24, 24))
+        if trade_image:
+            self.toolbar_trade_btn = ctk.CTkButton(
+                toolbar_buttons_frame, image=trade_image, text="", width=40, height=40,
+                fg_color="transparent", hover_color=("gray80", "gray30"),
+                command=self._on_toolbar_trade,
+            )
+        else:
+            # Fallback: handshake symbol
+            self.toolbar_trade_btn = ctk.CTkButton(
+                toolbar_buttons_frame, text="🤝", width=40, height=40,
+                font=("Segoe UI Emoji", 16), fg_color="transparent", hover_color=("gray80", "gray30"),
+                command=self._on_toolbar_trade,
+            )
+        self.toolbar_trade_btn.pack(side="left", padx=2)
+        self._create_tooltip(self.toolbar_trade_btn, "Trade Manager")
+
+        # Gear icon button (settings - on the right, light blue)
         gear_image = self._load_icon("icons/gear.png", size=(24, 24))
         if gear_image:
             self.settings_btn = ctk.CTkButton(
@@ -361,8 +379,15 @@ class MainWindow(ctk.CTk):
                 command=self._open_settings,
             )
         else:
-            self.settings_btn = ctk.CTkButton(toolbar, text="Settings", width=80, command=self._open_settings)
+            # Fallback: gear symbol with light blue color
+            self.settings_btn = ctk.CTkButton(
+                toolbar, text="⚙", width=40, height=40,
+                font=("Segoe UI", 18), text_color="#5dade2",
+                fg_color="transparent", hover_color=("gray80", "gray30"),
+                command=self._open_settings,
+            )
         self.settings_btn.pack(side="right", padx=PADDING["medium"])
+        self._create_tooltip(self.settings_btn, "Settings")
 
     def _create_vertical_tabs(self):
         """Create vertical tab buttons on the left side with semi-transparent dark appearance."""
@@ -436,6 +461,369 @@ class MainWindow(ctk.CTk):
         # Server pane (hidden by default, shown in servers mode)
         self._create_server_pane()
 
+        # Trade pane (hidden by default, shown in trade mode)
+        self._create_trade_pane()
+
+    def _create_trade_pane(self):
+        """Create the trade manager pane (hidden by default)."""
+        self.trade_pane = ctk.CTkFrame(self.content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
+        # Don't grid initially - only shown in trade mode
+
+        # Header
+        header_frame = ctk.CTkFrame(self.trade_pane, fg_color="transparent")
+        header_frame.pack(fill="x", padx=PADDING["small"], pady=PADDING["small"])
+
+        header_label = ctk.CTkLabel(header_frame, text="Trade Manager", font=FONTS["heading"])
+        header_label.pack(side="left")
+
+        # Centered button container for Show All / Hide All
+        button_container = ctk.CTkFrame(self.trade_pane, fg_color="transparent")
+        button_container.pack(fill="x", pady=(0, PADDING["small"]))
+
+        # Center the buttons
+        button_frame = ctk.CTkFrame(button_container, fg_color="transparent")
+        button_frame.pack(anchor="center")
+
+        # Show All button (expand symbol)
+        show_all_btn = ctk.CTkButton(
+            button_frame,
+            text="⊞",  # Boxed plus - expand all
+            width=40,
+            height=32,
+            font=("Segoe UI", 16),
+            fg_color="transparent",
+            hover_color=("gray80", "gray30"),
+            command=self._trade_show_all
+        )
+        show_all_btn.pack(side="left", padx=5)
+        self._create_tooltip(show_all_btn, "Show All")
+
+        # Hide All button (collapse symbol)
+        hide_all_btn = ctk.CTkButton(
+            button_frame,
+            text="⊟",  # Boxed minus - collapse all
+            width=40,
+            height=32,
+            font=("Segoe UI", 16),
+            fg_color="transparent",
+            hover_color=("gray80", "gray30"),
+            command=self._trade_hide_all
+        )
+        hide_all_btn.pack(side="left", padx=5)
+        self._create_tooltip(hide_all_btn, "Hide All")
+
+        # Clear All button (empty checkbox symbol)
+        clear_all_btn = ctk.CTkButton(
+            button_frame,
+            text="☐",  # Empty checkbox - clear all
+            width=40,
+            height=32,
+            font=("Segoe UI", 16),
+            fg_color="transparent",
+            hover_color=("gray80", "gray30"),
+            command=self._trade_clear_all
+        )
+        clear_all_btn.pack(side="left", padx=5)
+        self._create_tooltip(clear_all_btn, "Clear All")
+
+        # Scrollable content area for merchants
+        self.trade_scroll_frame = ctk.CTkScrollableFrame(self.trade_pane, fg_color="transparent")
+        self.trade_scroll_frame.pack(fill="both", expand=True, padx=PADDING["small"], pady=PADDING["small"])
+
+        # Store merchant data and UI references
+        self.trade_merchants: list = []
+        self.trade_merchant_frames: dict = {}
+        self.trade_order_checkboxes: dict = {}
+        self.trade_column_frames: list = []
+        self.trade_current_columns: int = 0
+
+        # Load merchant data
+        self._load_trade_data()
+
+        # Bind resize event to reflow columns
+        self.trade_pane.bind("<Configure>", self._on_trade_pane_resize)
+
+    def _load_trade_data(self):
+        """Load merchant and order data from DT_OrderDecks.json."""
+        from ..core.trade_data import load_order_decks, get_default_order_decks_path
+
+        json_path = get_default_order_decks_path()
+        if not json_path or not json_path.exists():
+            # Show error message if file not found
+            error_label = ctk.CTkLabel(
+                self.trade_scroll_frame,
+                text="Could not find DT_OrderDecks.json\n\nPlace the file in the gamesource directory.",
+                font=FONTS["body"],
+                text_color="orange",
+                justify="center"
+            )
+            error_label.pack(expand=True, pady=PADDING["large"])
+            return
+
+        try:
+            self.trade_merchants = load_order_decks(json_path)
+            self._load_trade_config()  # Load saved checkbox state
+            self._build_trade_ui()
+        except Exception as e:
+            error_label = ctk.CTkLabel(
+                self.trade_scroll_frame,
+                text=f"Error loading trade data:\n\n{e}",
+                font=FONTS["body"],
+                text_color="red",
+                justify="center"
+            )
+            error_label.pack(expand=True, pady=PADDING["large"])
+
+    def _build_trade_ui(self):
+        """Build the trade manager UI with merchant dropdowns in columns."""
+        # Initial build with default column count
+        self._rebuild_trade_columns(self._calculate_trade_columns())
+
+    def _calculate_trade_columns(self) -> int:
+        """Calculate the number of columns based on pane width."""
+        try:
+            width = self.trade_pane.winfo_width()
+            if width < 600:
+                return 1
+            elif width < 1000:
+                return 2
+            else:
+                return 3
+        except Exception:
+            return 2  # Default to 2 columns
+
+    def _on_trade_pane_resize(self, event=None):
+        """Handle trade pane resize to adjust column count."""
+        if not self.trade_merchants:
+            return
+
+        new_columns = self._calculate_trade_columns()
+        if new_columns != self.trade_current_columns:
+            self._rebuild_trade_columns(new_columns)
+
+    def _rebuild_trade_columns(self, num_columns: int):
+        """Rebuild the trade UI with the specified number of columns."""
+        self.trade_current_columns = num_columns
+
+        # Clear existing column frames
+        for frame in self.trade_column_frames:
+            frame.destroy()
+        self.trade_column_frames.clear()
+        self.trade_merchant_frames.clear()
+        self.trade_order_checkboxes.clear()
+
+        # Create column container
+        columns_container = ctk.CTkFrame(self.trade_scroll_frame, fg_color="transparent")
+        columns_container.pack(fill="both", expand=True)
+
+        # Configure grid columns with equal weight
+        for i in range(num_columns):
+            columns_container.grid_columnconfigure(i, weight=1, uniform="trade_col")
+        columns_container.grid_rowconfigure(0, weight=1)
+
+        # Create column frames
+        column_frames = []
+        for i in range(num_columns):
+            col_frame = ctk.CTkFrame(columns_container, fg_color="transparent")
+            col_frame.grid(row=0, column=i, sticky="nsew", padx=2)
+            column_frames.append(col_frame)
+            self.trade_column_frames.append(columns_container)  # Store container for cleanup
+
+        # Distribute merchants across columns
+        for idx, merchant in enumerate(self.trade_merchants):
+            col_idx = idx % num_columns
+            self._create_merchant_section(merchant, column_frames[col_idx])
+
+    def _create_merchant_section(self, merchant, parent=None):
+        """Create a collapsible section for a merchant."""
+        if parent is None:
+            parent = self.trade_scroll_frame
+
+        # Container for the merchant section
+        section_frame = ctk.CTkFrame(parent, fg_color=("#2d2d2d", "#252525"))
+        section_frame.pack(fill="x", pady=(0, PADDING["small"]))
+
+        # Header row (clickable to expand/collapse)
+        header_frame = ctk.CTkFrame(section_frame, fg_color="transparent")
+        header_frame.pack(fill="x", padx=PADDING["small"], pady=PADDING["small"])
+
+        # Expand/collapse arrow
+        arrow_label = ctk.CTkLabel(
+            header_frame,
+            text="▼" if merchant.expanded else "▶",
+            font=FONTS["body"],
+            width=20
+        )
+        arrow_label.pack(side="left")
+
+        # Merchant name
+        name_label = ctk.CTkLabel(
+            header_frame,
+            text=merchant.display_name,
+            font=FONTS["heading"]
+        )
+        name_label.pack(side="left", padx=(5, 0))
+
+        # Order count
+        count_label = ctk.CTkLabel(
+            header_frame,
+            text=f"({len(merchant.orders)} orders)",
+            font=FONTS["small"],
+            text_color="gray"
+        )
+        count_label.pack(side="left", padx=(10, 0))
+
+        # Orders container (collapsible)
+        orders_frame = ctk.CTkFrame(section_frame, fg_color="transparent")
+        if merchant.expanded:
+            orders_frame.pack(fill="x", padx=PADDING["medium"], pady=(0, PADDING["small"]))
+
+        # Store references
+        self.trade_merchant_frames[merchant.raw_name] = {
+            "section": section_frame,
+            "arrow": arrow_label,
+            "orders_frame": orders_frame,
+            "merchant": merchant
+        }
+
+        # Create order checkboxes
+        self.trade_order_checkboxes[merchant.raw_name] = {}
+
+        for order in merchant.orders:
+            self._create_order_checkbox(orders_frame, merchant, order)
+
+        # Make header clickable
+        for widget in [header_frame, arrow_label, name_label, count_label]:
+            widget.bind("<Button-1>", lambda e, m=merchant: self._toggle_merchant_section(m))
+            widget.configure(cursor="hand2")
+
+    def _create_order_checkbox(self, parent, merchant, order):
+        """Create a checkbox for a single order."""
+        var = ctk.BooleanVar(value=order.checked)
+
+        checkbox = ctk.CTkCheckBox(
+            parent,
+            text=order.display_name,
+            variable=var,
+            font=FONTS["body"],
+            command=lambda: self._on_order_toggle(merchant, order, var.get())
+        )
+        checkbox.pack(anchor="w", pady=2)
+
+        self.trade_order_checkboxes[merchant.raw_name][order.raw_name] = {
+            "checkbox": checkbox,
+            "var": var,
+            "order": order
+        }
+
+    def _toggle_merchant_section(self, merchant):
+        """Toggle the expanded/collapsed state of a merchant section."""
+        merchant.expanded = not merchant.expanded
+
+        frame_data = self.trade_merchant_frames.get(merchant.raw_name)
+        if not frame_data:
+            return
+
+        arrow_label = frame_data["arrow"]
+        orders_frame = frame_data["orders_frame"]
+
+        if merchant.expanded:
+            arrow_label.configure(text="▼")
+            orders_frame.pack(fill="x", padx=PADDING["medium"], pady=(0, PADDING["small"]))
+        else:
+            arrow_label.configure(text="▶")
+            orders_frame.pack_forget()
+
+    def _on_order_toggle(self, merchant, order, checked: bool):
+        """Handle order checkbox toggle."""
+        order.checked = checked
+        self._save_trade_config()
+
+    def _trade_show_all(self):
+        """Expand all merchant sections."""
+        for merchant in self.trade_merchants:
+            if not merchant.expanded:
+                merchant.expanded = True
+                frame_data = self.trade_merchant_frames.get(merchant.raw_name)
+                if frame_data:
+                    frame_data["arrow"].configure(text="▼")
+                    frame_data["orders_frame"].pack(fill="x", padx=PADDING["medium"], pady=(0, PADDING["small"]))
+
+    def _trade_hide_all(self):
+        """Collapse all merchant sections."""
+        for merchant in self.trade_merchants:
+            if merchant.expanded:
+                merchant.expanded = False
+                frame_data = self.trade_merchant_frames.get(merchant.raw_name)
+                if frame_data:
+                    frame_data["arrow"].configure(text="▶")
+                    frame_data["orders_frame"].pack_forget()
+
+    def _trade_clear_all(self):
+        """Clear all order checkmarks."""
+        for merchant in self.trade_merchants:
+            for order in merchant.orders:
+                order.checked = False
+            # Update UI checkboxes
+            merchant_checkboxes = self.trade_order_checkboxes.get(merchant.raw_name, {})
+            for order_data in merchant_checkboxes.values():
+                order_data["var"].set(False)
+        # Save state
+        self._save_trade_config()
+
+    def _save_trade_config(self):
+        """Save trade manager checkbox state to XML file."""
+        import xml.etree.ElementTree as ET
+        from xml.dom import minidom
+        from ..config.paths import GamePaths
+
+        GamePaths.ensure_config_dir()
+
+        root = ET.Element("TradeManager", version="1.0")
+
+        for merchant in self.trade_merchants:
+            merchant_elem = ET.SubElement(root, "Merchant", name=merchant.raw_name)
+            for order in merchant.orders:
+                if order.checked:
+                    ET.SubElement(merchant_elem, "Order", name=order.raw_name, checked="true")
+
+        # Write pretty-printed XML
+        xml_str = minidom.parseString(ET.tostring(root, encoding="unicode")).toprettyxml(indent="  ")
+        lines = [line for line in xml_str.split('\n') if line.strip()]
+        xml_str = '\n'.join(lines)
+
+        GamePaths.TRADE_CONFIG_FILE.write_text(xml_str, encoding="utf-8")
+
+    def _load_trade_config(self):
+        """Load trade manager checkbox state from XML file."""
+        import xml.etree.ElementTree as ET
+        from ..config.paths import GamePaths
+
+        if not GamePaths.TRADE_CONFIG_FILE.exists():
+            return
+
+        try:
+            tree = ET.parse(GamePaths.TRADE_CONFIG_FILE)
+            root = tree.getroot()
+
+            # Build a set of checked orders for fast lookup
+            checked_orders = set()
+            for merchant_elem in root.findall("Merchant"):
+                merchant_name = merchant_elem.get("name", "")
+                for order_elem in merchant_elem.findall("Order"):
+                    order_name = order_elem.get("name", "")
+                    if order_elem.get("checked", "").lower() == "true":
+                        checked_orders.add((merchant_name, order_name))
+
+            # Apply to current merchants
+            for merchant in self.trade_merchants:
+                for order in merchant.orders:
+                    order.checked = (merchant.raw_name, order.raw_name) in checked_orders
+
+        except Exception as e:
+            # If file is corrupted, just continue with defaults
+            pass
+
     def _create_world_list_pane(self):
         """Create the left pane showing world/character names and filenames."""
         self.world_pane = ctk.CTkFrame(self.content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
@@ -467,7 +855,7 @@ class MainWindow(ctk.CTk):
         # Don't pack initially - only shown in mods mode
 
         self.item_count_label = ctk.CTkLabel(header_frame, text="(0)", font=FONTS["small"], text_color="gray")
-        self.item_count_label.pack(side="left", padx=(5, 0))
+        # Don't pack initially - pack after header labels in _update_pane_headers_for_mode
 
         # Button frame for icons (right side) - order: Backup, Backup All, Refresh
         btn_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
@@ -567,7 +955,7 @@ class MainWindow(ctk.CTk):
         self._setup_dnd_for_available_mods()
 
     def _create_server_pane(self):
-        """Create the server list pane with tabs for each installation (hidden by default)."""
+        """Create the server list pane (hidden by default, uses left tabs for installation selection)."""
         # Server pane spans both columns
         self.server_pane = ctk.CTkFrame(self.content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
         # Don't grid initially - only shown in servers mode
@@ -576,140 +964,98 @@ class MainWindow(ctk.CTk):
         # Key is installation id (e.g., "steam", "epic", "custom")
         self.server_entries_by_install: dict[str, list[dict]] = {}
         self.server_row_widgets: list[dict] = []
-        self.current_server_tab: str = ""
 
-        # Create tabview for installation types
-        self.server_tabview = ctk.CTkTabview(self.server_pane, fg_color=("#3d3d3d", "#1a1a1a"))
-        self.server_tabview.pack(fill="both", expand=True, padx=PADDING["small"], pady=PADDING["small"])
+        # Store references for the single server list content area
+        self.server_list_frame: ctk.CTkScrollableFrame | None = None
+        self.server_add_button: ctk.CTkButton | None = None
+        self.server_header_frame: ctk.CTkFrame | None = None
+        self.server_content_frame: ctk.CTkFrame | None = None
 
-        # Store tab frames for later reference
-        self.server_tab_frames: dict[str, ctk.CTkFrame] = {}
-        self.server_list_frames: dict[str, ctk.CTkScrollableFrame] = {}
-        self.server_add_buttons: dict[str, ctk.CTkButton] = {}
+        # Create the server content area (single view, switches based on left tab)
+        self._create_server_content()
 
-    def _setup_server_tabs(self):
-        """Set up server tabs for enabled installations."""
-        # Get enabled installations
-        enabled = self.config_manager.config.get_enabled_installations()
+    def _create_server_content(self):
+        """Create the server list content area."""
+        # Content container
+        self.server_content_frame = ctk.CTkFrame(self.server_pane, fg_color="transparent")
+        self.server_content_frame.pack(fill="both", expand=True, padx=PADDING["small"], pady=PADDING["small"])
 
-        if not enabled:
-            # No installations enabled - show message
-            no_install_label = ctk.CTkLabel(
-                self.server_pane,
-                text="No installations enabled.\nConfigure installations in Settings.",
-                font=FONTS["body"],
-                text_color="gray"
-            )
-            no_install_label.pack(expand=True)
-            return
-
-        # Clear existing tabs
-        for tab_name in list(self.server_tabview._tab_dict.keys()):
-            self.server_tabview.delete(tab_name)
-        self.server_tab_frames.clear()
-        self.server_list_frames.clear()
-        self.server_add_buttons.clear()
-
-        # Create a tab for each enabled installation
-        for installation in enabled:
-            tab_name = installation.display_name
-            install_id = installation.id.value
-
-            # Create the tab
-            self.server_tabview.add(tab_name)
-            tab_frame = self.server_tabview.tab(tab_name)
-
-            # Store reference with install id
-            self.server_tab_frames[install_id] = tab_frame
-
-            # Create the server list content for this tab
-            self._create_server_tab_content(tab_frame, install_id)
-
-            # Initialize empty data if not exists
-            if install_id not in self.server_entries_by_install:
-                self.server_entries_by_install[install_id] = []
-
-        # Set up tab change callback
-        self.server_tabview.configure(command=self._on_server_tab_change)
-
-        # Set first tab as current
-        if enabled:
-            self.current_server_tab = enabled[0].id.value
-
-    def _create_server_tab_content(self, parent_frame: ctk.CTkFrame, install_id: str):
-        """Create the server list content for a specific installation tab."""
         # Header row with column titles
-        header_frame = ctk.CTkFrame(parent_frame, fg_color=("#2d2d2d", "#252525"))
-        header_frame.pack(fill="x", pady=(0, 0))
+        self.server_header_frame = ctk.CTkFrame(self.server_content_frame, fg_color=("#2d2d2d", "#252525"))
+        self.server_header_frame.pack(fill="x", pady=(0, 0))
 
         # Configure grid columns for spreadsheet layout
-        header_frame.grid_columnconfigure(0, weight=2, minsize=120)  # Name
-        header_frame.grid_columnconfigure(1, weight=2, minsize=150)  # Address
-        header_frame.grid_columnconfigure(2, weight=1, minsize=100)  # Password
-        header_frame.grid_columnconfigure(3, weight=3, minsize=200)  # Notes
-        header_frame.grid_columnconfigure(4, weight=0, minsize=80)   # Actions
+        self.server_header_frame.grid_columnconfigure(0, weight=2, minsize=120)  # Name
+        self.server_header_frame.grid_columnconfigure(1, weight=2, minsize=150)  # Address
+        self.server_header_frame.grid_columnconfigure(2, weight=1, minsize=100)  # Password
+        self.server_header_frame.grid_columnconfigure(3, weight=3, minsize=200)  # Notes
+        self.server_header_frame.grid_columnconfigure(4, weight=0, minsize=80)   # Actions
 
         # Column headers
-        name_header = ctk.CTkLabel(header_frame, text="Name", font=FONTS["heading"], anchor="w")
+        name_header = ctk.CTkLabel(self.server_header_frame, text="Name", font=FONTS["heading"], anchor="w")
         name_header.grid(row=0, column=0, sticky="w", padx=(PADDING["small"], 5), pady=5)
 
-        address_header = ctk.CTkLabel(header_frame, text="Address", font=FONTS["heading"], anchor="w")
+        address_header = ctk.CTkLabel(self.server_header_frame, text="Address", font=FONTS["heading"], anchor="w")
         address_header.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
-        password_header = ctk.CTkLabel(header_frame, text="Password", font=FONTS["heading"], anchor="w")
+        password_header = ctk.CTkLabel(self.server_header_frame, text="Password", font=FONTS["heading"], anchor="w")
         password_header.grid(row=0, column=2, sticky="w", padx=5, pady=5)
 
-        notes_header = ctk.CTkLabel(header_frame, text="Notes", font=FONTS["heading"], anchor="w")
+        notes_header = ctk.CTkLabel(self.server_header_frame, text="Notes", font=FONTS["heading"], anchor="w")
         notes_header.grid(row=0, column=3, sticky="w", padx=5, pady=5)
 
-        actions_header = ctk.CTkLabel(header_frame, text="", font=FONTS["heading"], anchor="center")
+        actions_header = ctk.CTkLabel(self.server_header_frame, text="", font=FONTS["heading"], anchor="center")
         actions_header.grid(row=0, column=4, sticky="ew", padx=5, pady=5)
 
         # Scrollable frame for server rows
-        list_frame = ctk.CTkScrollableFrame(parent_frame, fg_color=("#3d3d3d", "#1a1a1a"))
-        list_frame.pack(fill="both", expand=True, pady=(0, PADDING["small"]))
+        self.server_list_frame = ctk.CTkScrollableFrame(self.server_content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
+        self.server_list_frame.pack(fill="both", expand=True, pady=(0, PADDING["small"]))
 
         # Configure grid columns to match header
-        list_frame.grid_columnconfigure(0, weight=2, minsize=120)
-        list_frame.grid_columnconfigure(1, weight=2, minsize=150)
-        list_frame.grid_columnconfigure(2, weight=1, minsize=100)
-        list_frame.grid_columnconfigure(3, weight=3, minsize=200)
-        list_frame.grid_columnconfigure(4, weight=0, minsize=80)
-
-        self.server_list_frames[install_id] = list_frame
+        self.server_list_frame.grid_columnconfigure(0, weight=2, minsize=120)
+        self.server_list_frame.grid_columnconfigure(1, weight=2, minsize=150)
+        self.server_list_frame.grid_columnconfigure(2, weight=1, minsize=100)
+        self.server_list_frame.grid_columnconfigure(3, weight=3, minsize=200)
+        self.server_list_frame.grid_columnconfigure(4, weight=0, minsize=80)
 
         # Add new server button at bottom
-        add_frame = ctk.CTkFrame(parent_frame, fg_color="transparent")
+        add_frame = ctk.CTkFrame(self.server_content_frame, fg_color="transparent")
         add_frame.pack(fill="x", pady=PADDING["small"])
 
-        add_btn = ctk.CTkButton(
+        self.server_add_button = ctk.CTkButton(
             add_frame, text="+ Add Server", width=120,
-            command=lambda iid=install_id: self._add_server_entry(iid)
+            command=self._add_server_entry_current
         )
-        add_btn.pack(side="left")
-        self.server_add_buttons[install_id] = add_btn
+        self.server_add_button.pack(side="left")
 
-    def _on_server_tab_change(self):
-        """Handle tab change in server pane."""
-        # Get current tab name
-        current_tab_name = self.server_tabview.get()
+    def _add_server_entry_current(self):
+        """Add a server entry for the current installation."""
+        if self.current_installation:
+            self._add_server_entry(self.current_installation.id.value)
 
-        # Find the install_id for this tab
-        for installation in self.config_manager.config.get_enabled_installations():
-            if installation.display_name == current_tab_name:
-                self.current_server_tab = installation.id.value
-                break
+    def _refresh_server_list(self):
+        """Refresh the server list for the current installation."""
+        if not self.current_installation:
+            return
+
+        install_id = self.current_installation.id.value
+
+        # Load server data for this installation if not already loaded
+        if install_id not in self.server_entries_by_install:
+            self._load_server_list(install_id)
+
+        # Rebuild the UI
+        self._rebuild_server_list_current()
 
     def _create_server_row(self, install_id: str, row_index: int, data: dict = None):
         """Create a single server row with editable fields."""
         if data is None:
             data = {"name": "", "address": "", "password": "", "notes": ""}
 
-        list_frame = self.server_list_frames.get(install_id)
-        if not list_frame:
+        if not self.server_list_frame:
             return None
 
-        row_frame = ctk.CTkFrame(list_frame, fg_color="transparent")
+        row_frame = ctk.CTkFrame(self.server_list_frame, fg_color="transparent")
 
         # Name entry
         name_entry = ctk.CTkEntry(row_frame, font=FONTS["body"], height=28)
@@ -840,27 +1186,23 @@ class MainWindow(ctk.CTk):
                 self._save_server_list(install_id)
 
     def _rebuild_server_list(self, install_id: str = None):
-        """Rebuild the server list UI from data for a specific installation or all."""
+        """Rebuild the server list UI from data for a specific installation."""
         if install_id:
             # Rebuild just one installation's list
             self._rebuild_server_list_for_install(install_id)
-        else:
-            # Rebuild all installations
-            for iid in self.server_entries_by_install.keys():
-                self._rebuild_server_list_for_install(iid)
+
+    def _rebuild_server_list_current(self):
+        """Rebuild the server list for the current installation."""
+        if not self.current_installation:
+            return
+        self._rebuild_server_list_for_install(self.current_installation.id.value)
 
     def _rebuild_server_list_for_install(self, install_id: str):
         """Rebuild the server list UI for a specific installation."""
-        # Clear existing widgets for this installation
-        widgets_to_remove = []
-        for i, widgets in enumerate(self.server_row_widgets):
-            if widgets.get("install_id") == install_id:
-                widgets["frame"].destroy()
-                widgets_to_remove.append(i)
-
-        # Remove from list in reverse order to maintain indices
-        for i in reversed(widgets_to_remove):
-            self.server_row_widgets.pop(i)
+        # Clear ALL existing widgets (single list frame now)
+        for widgets in self.server_row_widgets:
+            widgets["frame"].destroy()
+        self.server_row_widgets.clear()
 
         # Recreate all rows for this installation
         entries = self.server_entries_by_install.get(install_id, [])
@@ -966,18 +1308,6 @@ class MainWindow(ctk.CTk):
 
         except Exception as e:
             self._set_status(f"Error loading server list ({install_id}): {e}")
-
-    def _load_all_server_lists(self):
-        """Load server lists for all enabled installations."""
-        enabled = self.config_manager.config.get_enabled_installations()
-        for installation in enabled:
-            self._load_server_list(installation.id.value)
-
-    def _rebuild_all_server_lists(self):
-        """Rebuild server list UI for all enabled installations."""
-        enabled = self.config_manager.config.get_enabled_installations()
-        for installation in enabled:
-            self._rebuild_server_list(installation.id.value)
 
     def _get_elem_text(self, parent, tag: str) -> str:
         """Get text content of a child element."""
@@ -1238,6 +1568,8 @@ class MainWindow(ctk.CTk):
             self._refresh_restore_timestamps()
         elif self.current_mode == "mods":
             self._refresh_mods_list()
+        elif self.current_mode == "servers":
+            self._refresh_server_list()
 
         self._set_status(f"Loaded {installation.display_name}")
 
@@ -1844,8 +2176,18 @@ class MainWindow(ctk.CTk):
         self.status_label.configure(text=message)
 
     def _show_two_pane_view(self):
-        """Show the standard two-pane view and hide the server pane."""
+        """Show the standard two-pane view and hide server/trade panes."""
+        # Hide special panes
         self.server_pane.grid_forget()
+        self.trade_pane.grid_forget()
+
+        # Restore left tabs if hidden
+        self.tabs_frame.grid(row=0, column=0, sticky="ns", padx=(0, PADDING["medium"]))
+
+        # Restore content frame to normal position (column 1, not spanning)
+        self.content_frame.grid(row=0, column=1, sticky="nsew")
+
+        # Show the two panes
         self.world_pane.grid(row=0, column=0, sticky="nsew", padx=(0, PADDING["medium"]))
         self.versions_pane.grid(row=0, column=1, sticky="nsew")
 
@@ -1894,6 +2236,7 @@ class MainWindow(ctk.CTk):
         self.toolbar_restore_btn.configure(fg_color="transparent")
         self.toolbar_mods_btn.configure(fg_color="transparent")
         self.toolbar_servers_btn.configure(fg_color="transparent")
+        self.toolbar_trade_btn.configure(fg_color="transparent")
 
         # Highlight active mode button
         if self.current_mode == "backup":
@@ -1904,6 +2247,8 @@ class MainWindow(ctk.CTk):
             self.toolbar_mods_btn.configure(fg_color=("gray75", "gray35"))
         elif self.current_mode == "servers":
             self.toolbar_servers_btn.configure(fg_color=("gray75", "gray35"))
+        elif self.current_mode == "trade":
+            self.toolbar_trade_btn.configure(fg_color=("gray75", "gray35"))
 
     def _update_pane_headers_for_mode(self):
         """Update pane headers and buttons based on current mode."""
@@ -1913,8 +2258,10 @@ class MainWindow(ctk.CTk):
             self.backup_all_btn.pack(side="right", padx=2)
             # Show mode label + dropdown for Worlds/Characters, hide mods header
             self.items_header.pack_forget()
+            self.item_count_label.pack_forget()
             self.mode_header_label.configure(text="Backup")
             self.mode_header_label.pack(side="left")
+            self.item_count_label.pack(side="left", padx=(5, 0))
             self.view_type_dropdown.pack(side="left", padx=(40, 0))  # 5 char spacing (~40px)
             # Update right pane header
             self.versions_header.configure(text="File Versions")
@@ -1925,8 +2272,10 @@ class MainWindow(ctk.CTk):
             self.backup_all_btn.pack_forget()
             # Show mode label + dropdown for Worlds/Characters, hide mods header
             self.items_header.pack_forget()
+            self.item_count_label.pack_forget()
             self.mode_header_label.configure(text="Restore")
             self.mode_header_label.pack(side="left")
+            self.item_count_label.pack(side="left", padx=(5, 0))
             self.view_type_dropdown.pack(side="left", padx=(40, 0))  # 5 char spacing (~40px)
             # Update right pane header
             self.versions_header.configure(text="Backup Versions")
@@ -1938,8 +2287,10 @@ class MainWindow(ctk.CTk):
             # Hide dropdown and mode label, show mods header
             self.view_type_dropdown.pack_forget()
             self.mode_header_label.pack_forget()
+            self.item_count_label.pack_forget()
             self.items_header.configure(text="Installed Mods")
             self.items_header.pack(side="left")
+            self.item_count_label.pack(side="left", padx=(5, 0))
             # Update right pane header
             self.versions_header.configure(text="Available Mods")
             # Show available mods refresh button
@@ -3194,19 +3545,55 @@ class MainWindow(ctk.CTk):
         self._update_toolbar_button_states()
         self._update_pane_headers_for_mode()
 
-        # Hide the two-pane view, show server pane
+        # Hide the two-pane view and trade pane, show server pane
         self.world_pane.grid_forget()
         self.versions_pane.grid_forget()
+        self.trade_pane.grid_forget()
+
+        # Restore left tabs if hidden (from trade mode)
+        self.tabs_frame.grid(row=0, column=0, sticky="ns", padx=(0, PADDING["medium"]))
+
+        # Restore content frame to normal position
+        self.content_frame.grid(row=0, column=1, sticky="nsew")
+
         self.server_pane.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=PADDING["medium"])
 
-        # Set up tabs for enabled installations
-        self._setup_server_tabs()
-
-        # Load server lists for all enabled installations and rebuild UI
-        self._load_all_server_lists()
-        self._rebuild_all_server_lists()
+        # Load server list for current installation
+        if self.current_installation:
+            install_id = self.current_installation.id.value
+            if install_id not in self.server_entries_by_install:
+                self._load_server_list(install_id)
+            self._rebuild_server_list_current()
 
         self._set_status("Switched to Server List mode")
+
+    def _on_toolbar_trade(self):
+        """Handle toolbar Trade Manager button click.
+
+        Opens the trade manager interface.
+        """
+        if self.current_mode == "trade":
+            # Already in trade mode
+            return
+
+        self.current_mode = "trade"
+        self._update_toolbar_button_states()
+
+        # Hide the left tabs
+        self.tabs_frame.grid_forget()
+
+        # Hide all other panes
+        self.world_pane.grid_forget()
+        self.versions_pane.grid_forget()
+        self.server_pane.grid_forget()
+
+        # Reconfigure content frame to span full width (no tabs column)
+        self.content_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
+
+        # Show trade pane spanning both columns
+        self.trade_pane.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=PADDING["medium"])
+
+        self._set_status("Switched to Trade Manager")
 
     def _show_confirm_dialog(self, title: str, message: str) -> bool:
         """Show a themed confirmation dialog.

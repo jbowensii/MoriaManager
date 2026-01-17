@@ -35,6 +35,8 @@ class MoriaManagerApp:
 
         if is_first_run:
             self._handle_first_run()
+            # Show first-run config dialog before main window
+            self._show_first_run_config_standalone()
         else:
             self.config_manager.load()
 
@@ -44,12 +46,32 @@ class MoriaManagerApp:
         # Create main window
         self.main_window = MainWindow(self.config_manager)
 
-        # If first run, show config dialog immediately after main window renders
-        if is_first_run:
-            self.main_window.after(100, self._show_first_run_config)
-
         # Start the main loop
         self.main_window.mainloop()
+
+    def _show_first_run_config_standalone(self):
+        """Show first-run config dialog as a standalone window."""
+        # Create a hidden root window for the dialog
+        root = ctk.CTk()
+        root.withdraw()
+
+        dialog = ConfigDialog(
+            root,
+            self.config_manager,
+            first_run=True
+        )
+
+        # Wait for dialog to close
+        root.wait_window(dialog)
+
+        # Check if user cancelled (didn't save)
+        if not self.config_manager.config.settings.first_run_complete:
+            # User cancelled - exit the application
+            root.destroy()
+            sys.exit(0)
+
+        # Destroy the temporary root
+        root.destroy()
 
     def _handle_first_run(self):
         """Handle first-run setup."""
