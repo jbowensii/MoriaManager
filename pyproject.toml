@@ -1,0 +1,30 @@
+[project]
+name = "moria-manager"
+version = "1.0.0"
+description = "Manager utility for Lord of the Rings: Return to Moria"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "John"}
+]
+dependencies = [
+    "customtkinter>=5.2.0",
+    "pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pyinstaller>=6.0.0",
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+moria-manager = "moria_manager.app:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
