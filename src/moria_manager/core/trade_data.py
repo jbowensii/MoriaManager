@@ -132,11 +132,20 @@ def load_order_decks(json_path: Path) -> list[Merchant]:
 
 
 def get_default_order_decks_path() -> Optional[Path]:
-    """Get the default path to DT_OrderDecks.json in the gamesource directory."""
-    # Look for gamesource directory relative to package
-    import moria_manager
-    package_dir = Path(moria_manager.__file__).parent.parent.parent
-    gamesource_path = package_dir / "gamesource" / "DT_OrderDecks.json"
+    """Get the default path to DT_OrderDecks.json in the gamesource directory.
+
+    Works in both development mode and when packaged with PyInstaller.
+    """
+    import sys
+
+    if getattr(sys, 'frozen', False):
+        # Running as compiled executable (PyInstaller)
+        gamesource_path = Path(sys._MEIPASS) / "gamesource" / "DT_OrderDecks.json"
+    else:
+        # Running in development - look relative to package
+        import moria_manager
+        package_dir = Path(moria_manager.__file__).parent.parent.parent
+        gamesource_path = package_dir / "gamesource" / "DT_OrderDecks.json"
 
     if gamesource_path.exists():
         return gamesource_path

@@ -65,7 +65,8 @@ def is_safe_path(path: Path, allowed_roots: Optional[list[Path]] = None) -> bool
     Args:
         path: The path to validate
         allowed_roots: Optional list of allowed root directories. If provided,
-                      the path must be under one of these roots.
+                      the path must be under one of these roots, and protected
+                      directory checks are bypassed for paths under allowed roots.
 
     Returns:
         True if the path is safe, False otherwise
@@ -76,17 +77,8 @@ def is_safe_path(path: Path, allowed_roots: Optional[list[Path]] = None) -> bool
         logger.warning("Failed to resolve path %s: %s", path, e)
         return False
 
-    # Check for protected system directories
-    protected = _get_protected_paths()
-    for protected_path in protected:
-        try:
-            if resolved == protected_path or protected_path in resolved.parents:
-                logger.warning("Path %s is in protected directory %s", path, protected_path)
-                return False
-        except (OSError, ValueError):
-            pass
-
-    # If allowed_roots is specified, ensure path is under one of them
+    # If allowed_roots is specified, check if path is under one of them first
+    # This allows operations on game directories even if they're in Program Files
     if allowed_roots:
         is_under_allowed = False
         for root in allowed_roots:
@@ -98,9 +90,25 @@ def is_safe_path(path: Path, allowed_roots: Optional[list[Path]] = None) -> bool
             except (OSError, ValueError):
                 pass
 
-        if not is_under_allowed:
-            logger.warning("Path %s is not under any allowed root", path)
-            return False
+        if is_under_allowed:
+            # Path is under an allowed root, skip protected directory check
+            return True
+
+        logger.warning("Path %s is not under any allowed root", path)
+        return False
+
+    # No allowed_roots specified - check for protected system directories
+    # This prevents operations directly on system folders
+    protected = _get_protected_paths()
+    for protected_path in protected:
+        try:
+            # Only block if path IS the protected directory itself
+            # (not subdirectories, which may be legitimate game installs)
+            if resolved == protected_path:
+                logger.warning("Path %s is a protected directory", path, protected_path)
+                return False
+        except (OSError, ValueError):
+            pass
 
     return True
 
@@ -152,8 +160,8 @@ def validate_backup_path(backup_path: Path, backup_root: Path) -> tuple[bool, st
     if ".." in path_str:
         return False, "Path contains directory traversal"
 
-    # Check for protected directories
-    if not is_safe_path(backup_path):
+    # Check for protected directories (with backup_root as allowed)
+    if not is_safe_path(backup_path, allowed_roots=[backup_root]):
         return False, "Path is in a protected system directory"
 
     return True, ""
@@ -176,20 +184,22 @@ def validate_save_path(save_path: Path) -> tuple[bool, str]:
     except (OSError, ValueError) as e:
         return False, f"Invalid path: {e}"
 
-    # Save paths should typically be under LocalAppData
+    # Save paths should typically be under LocalAppData or user profile
+    allowed_roots = []
     local_appdata = os.environ.get("LOCALAPPDATA")
     if local_appdata:
-        local_appdata_path = Path(local_appdata)
-        if not is_path_under_root(save_path, local_appdata_path):
-            # Also allow paths under user profile
-            userprofile = os.environ.get("USERPROFILE")
-            if userprofile:
-                userprofile_path = Path(userprofile)
-                if not is_path_under_root(save_path, userprofile_path):
-                    return False, "Save path should be under user's local app data or profile"
+        allowed_roots.append(Path(local_appdata))
+    userprofile = os.environ.get("USERPROFILE")
+    if userprofile:
+        allowed_roots.append(Path(userprofile))
 
-    # Check for protected directories
-    if not is_safe_path(save_path):
+    if allowed_roots:
+        is_under_allowed = any(is_path_under_root(save_path, root) for root in allowed_roots)
+        if not is_under_allowed:
+            return False, "Save path should be under user's local app data or profile"
+
+    # Check for protected directories (with allowed roots)
+    if allowed_roots and not is_safe_path(save_path, allowed_roots=allowed_roots):
         return False, "Path is in a protected system directory"
 
     return True, ""

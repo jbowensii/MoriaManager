@@ -103,6 +103,10 @@ def main():
     try:
         app = MoriaManagerApp()
         app.run()
+    except SystemExit:
+        # Clean exit requested (e.g., user cancelled first-run setup)
+        logger.info("Application exit requested")
+        raise
     except (OSError, IOError, RuntimeError, ValueError) as e:
         logger.exception("Fatal error during startup")
         # Show error dialog if something goes wrong during startup

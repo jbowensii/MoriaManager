@@ -136,8 +136,10 @@ class MainWindow(ctk.CTk):
     def _setup_background(self):
         """Set up the faded background image."""
         try:
-            # Try webp first, then jpg
-            bg_path = get_asset_path("background.webp")
+            # Try png first, then webp, then jpg
+            bg_path = get_asset_path("background.png")
+            if not bg_path.exists():
+                bg_path = get_asset_path("background.webp")
             if not bg_path.exists():
                 bg_path = get_asset_path("background.jpg")
 
@@ -271,8 +273,16 @@ class MainWindow(ctk.CTk):
         toolbar.pack(fill="x", padx=PADDING["medium"], pady=PADDING["medium"])
         toolbar.pack_propagate(False)
 
+        # Logo image before title
+        logo_image = self._load_icon("icons/logo.png", size=(32, 32))
+        if logo_image:
+            logo_label = ctk.CTkLabel(toolbar, image=logo_image, text="")
+            logo_label.pack(side="left", padx=(PADDING["medium"], 5), pady=PADDING["small"])
+            # Keep reference to prevent garbage collection
+            self._logo_image = logo_image
+
         title = ctk.CTkLabel(toolbar, text=__app_name__, font=FONTS["title"])
-        title.pack(side="left", padx=PADDING["medium"], pady=PADDING["small"])
+        title.pack(side="left", padx=(0 if logo_image else PADDING["medium"], PADDING["medium"]), pady=PADDING["small"])
 
         version = ctk.CTkLabel(toolbar, text=f"v{__version__}", font=FONTS["small"], text_color="gray")
         version.pack(side="left", pady=PADDING["small"])
@@ -1412,7 +1422,7 @@ class MainWindow(ctk.CTk):
             dest_path = mods_backup_path / safe_name
 
             # Validate destination path is safe and under backup root
-            if not is_safe_path(dest_path) or not is_path_under_root(dest_path, backup_root):
+            if not is_safe_path(dest_path, allowed_roots=[backup_root]) or not is_path_under_root(dest_path, backup_root):
                 self._set_status(f"Skipped: Invalid destination path for '{source_path.name}'")
                 skipped_count += 1
                 continue
@@ -1887,7 +1897,7 @@ class MainWindow(ctk.CTk):
                 self._set_status("Invalid save path configuration")
                 return
 
-            if not is_safe_path(main_file.file_path):
+            if not is_safe_path(main_file.file_path, allowed_roots=[save_path]):
                 self._set_status("Cannot operate on protected path")
                 return
 
@@ -2140,34 +2150,69 @@ class MainWindow(ctk.CTk):
     def _create_tooltip(self, widget, text: str):
         """Create a hover tooltip for a widget (displays above cursor)."""
         tooltip = None
+        after_id = None
 
         def show_tooltip(event):
-            nonlocal tooltip
-            # Position tooltip above the widget
-            x = widget.winfo_rootx()
-            y = widget.winfo_rooty() - 30  # Above the widget
+            nonlocal tooltip, after_id
+            # Cancel any pending show
+            if after_id:
+                widget.after_cancel(after_id)
+                after_id = None
+            # Hide any existing tooltip first
+            hide_tooltip(None)
 
-            tooltip = ctk.CTkToplevel(widget)
-            tooltip.wm_overrideredirect(True)
-            tooltip.wm_geometry(f"+{x}+{y}")
+            # Small delay before showing tooltip
+            def create_tooltip():
+                nonlocal tooltip
+                try:
+                    if not widget.winfo_exists():
+                        return
+                    # Position tooltip above the widget
+                    x = widget.winfo_rootx()
+                    y = widget.winfo_rooty() - 30  # Above the widget
 
-            label = ctk.CTkLabel(
-                tooltip, text=text,
-                font=FONTS["small"],
-                fg_color=("gray90", "gray20"),
-                corner_radius=4,
-                padx=8, pady=4
-            )
-            label.pack()
+                    tooltip = ctk.CTkToplevel(widget)
+                    tooltip.wm_overrideredirect(True)
+                    tooltip.wm_geometry(f"+{x}+{y}")
+                    tooltip.wm_attributes("-topmost", True)
+
+                    label = ctk.CTkLabel(
+                        tooltip, text=text,
+                        font=FONTS["small"],
+                        fg_color=("gray90", "gray20"),
+                        corner_radius=4,
+                        padx=8, pady=4
+                    )
+                    label.pack()
+
+                    # Auto-hide after 3 seconds as failsafe
+                    tooltip.after(3000, lambda: hide_tooltip(None))
+                except (tk.TclError, RuntimeError):
+                    pass  # Widget was destroyed
+
+            after_id = widget.after(200, create_tooltip)
 
         def hide_tooltip(event):
-            nonlocal tooltip
+            nonlocal tooltip, after_id
+            # Cancel any pending show
+            if after_id:
+                try:
+                    widget.after_cancel(after_id)
+                except (tk.TclError, RuntimeError):
+                    pass
+                after_id = None
+            # Destroy tooltip if it exists
             if tooltip:
-                tooltip.destroy()
+                try:
+                    tooltip.destroy()
+                except (tk.TclError, RuntimeError):
+                    pass  # Already destroyed
                 tooltip = None
 
         widget.bind("<Enter>", show_tooltip)
         widget.bind("<Leave>", hide_tooltip)
+        widget.bind("<Button-1>", hide_tooltip)  # Hide on click
+        widget.bind("<Destroy>", hide_tooltip)  # Cleanup when widget destroyed
 
     def _load_icon(self, relative_path: str, size: tuple[int, int] = (24, 24)) -> Optional[ctk.CTkImage]:
         try:
@@ -2887,7 +2932,7 @@ class MainWindow(ctk.CTk):
         dest_path = mods_backup_path / safe_name
 
         # Validate destination is safe
-        if not is_safe_path(dest_path) or not is_path_under_root(dest_path, backup_root):
+        if not is_safe_path(dest_path, allowed_roots=[backup_root]) or not is_path_under_root(dest_path, backup_root):
             self._set_status("Invalid destination path")
             return
 
@@ -2904,19 +2949,21 @@ class MainWindow(ctk.CTk):
         import time
         import os
         import stat
-        from ..config.path_validator import is_safe_path
-
-        # Validate path is safe to delete
-        if not is_safe_path(item_path):
-            self._set_status("Cannot remove: path is in a protected directory")
-            return
+        from ..config.path_validator import is_safe_path, is_path_under_root
 
         # Ensure path is under game installation
-        if self.current_installation and self.current_installation.game_path:
-            from ..config.path_validator import is_path_under_root
-            if not is_path_under_root(item_path, self.current_installation.game_path):
-                self._set_status("Cannot remove: path is outside game installation")
-                return
+        if not self.current_installation or not self.current_installation.game_path:
+            self._set_status("Cannot remove: no game installation configured")
+            return
+
+        if not is_path_under_root(item_path, self.current_installation.game_path):
+            self._set_status("Cannot remove: path is outside game installation")
+            return
+
+        # Validate path is safe to delete (with game path as allowed root)
+        if not is_safe_path(item_path, allowed_roots=[self.current_installation.game_path]):
+            self._set_status("Cannot remove: path is in a protected directory")
+            return
 
         message = f"The mod '{item_path.name}' is already in Available Mods.\n\nWould you like to remove it from Installed Mods?"
 

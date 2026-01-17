@@ -225,14 +225,12 @@ class ConfigDialog(ctk.CTkToplevel):
         save_btn.pack(side="right")
 
     def _cancel(self):
-        """Handle cancel button - close dialog or exit app on first run."""
-        if self.first_run:
-            # Exit the application on first run cancel
-            import sys
-            self.master.destroy()
-            sys.exit(0)
-        else:
-            self.destroy()
+        """Handle cancel button - close dialog or exit app on first run.
+
+        For first run, we just close the dialog without setting first_run_complete.
+        The app.py will detect this and exit gracefully.
+        """
+        self.destroy()
 
     def _save_and_close(self):
         """Save configuration and close dialog."""
