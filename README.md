@@ -1,5 +1,3 @@
-<img width="2597" height="1702" alt="image" src="https://github.com/user-attachments/assets/0449ef38-1531-4285-9a65-c0a0289b3249" />
-
 # Moria Manager
 
 A save game and mod manager for **Lord of the Rings: Return to Moria**.
@@ -34,7 +32,9 @@ A save game and mod manager for **Lord of the Rings: Return to Moria**.
 
 ## Screenshots
 
-*(Add screenshots here)*
+<img width="2597" height="1702" alt="image" src="https://github.com/user-attachments/assets/0449ef38-1531-4285-9a65-c0a0289b3249" />
+<img width="2607" height="1697" alt="image" src="https://github.com/user-attachments/assets/96083aab-84ad-479d-a3bd-814b94d33a6b" />
+<img width="2604" height="1683" alt="image" src="https://github.com/user-attachments/assets/dd1e21d4-8bfd-41be-b259-2911c531c183" />
 
 ## Installation
 
