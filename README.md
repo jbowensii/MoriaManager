@@ -2,6 +2,36 @@
 
 A save game and mod manager for **Lord of the Rings: Return to Moria**.
 
+---
+
+## Release v1.1
+
+### New Features
+
+#### Deletion Management
+- **Enable Deletion setting** - New configuration option to enable/disable deletion functionality
+- **Delete saves and backups** - Remove individual files or entire worlds/characters from backup and restore screens
+- **Delete mods** - Remove mods from the Available Mods pane (always enabled, separate from deletion setting)
+- **Visual indicators** - Yellow border highlights restore entries with no backups remaining
+- **Confirmation dialogs** - Context-aware delete prompts (shows "Delete World", "Delete Character", "Delete Mod", etc.)
+
+#### Trade Manager Improvements
+- **Quantity tracking** - 4-digit quantity field (0-9999) with up/down arrows for each trade item
+- **Smart collapse** - Merchants collapse by default; only expand if they have checked items
+- **State persistence** - Quantities are saved alongside checkbox state
+
+#### UI/UX Improvements
+- **Red trash icon** - Visual delete button appears on selected items when deletion is enabled
+- **Dual-pane refresh** - Both left and right panes refresh after deletion operations
+- **Fixed UTF-16 parsing** - Proper display of world names with special characters
+
+### Bug Fixes
+- Fixed delete confirmation dialog button cutoff issue
+- Fixed selection restoration after single file deletion
+- Fixed tooltip "sticking" on screen issue
+
+---
+
 ## Features
 
 ### Save Game Management
