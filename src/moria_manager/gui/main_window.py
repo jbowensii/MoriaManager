@@ -476,9 +476,26 @@ class MainWindow(ctk.CTk):
         self._create_trade_pane()
 
     def _create_trade_pane(self):
-        """Create the trade manager pane (hidden by default)."""
+        """Create the trade manager pane container (lazy loading - data loaded on first use)."""
         self.trade_pane = ctk.CTkFrame(self.content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
         # Don't grid initially - only shown in trade mode
+
+        # Store merchant data and UI references (initialized empty)
+        self.trade_merchants: list = []
+        self.trade_merchant_frames: dict = {}
+        self.trade_order_checkboxes: dict = {}
+        self.trade_column_frames: list = []
+        self.trade_current_columns: int = 0
+        self.trade_initialized: bool = False  # Track if trade UI has been built
+        self.trade_resize_pending: bool = False  # Debounce resize events
+        self.trade_scroll_frame: Optional[ctk.CTkScrollableFrame] = None
+
+    def _initialize_trade_ui(self):
+        """Initialize the trade manager UI (called on first use for lazy loading)."""
+        if self.trade_initialized:
+            return
+
+        self.trade_initialized = True
 
         # Header
         header_frame = ctk.CTkFrame(self.trade_pane, fg_color="transparent")
@@ -541,17 +558,10 @@ class MainWindow(ctk.CTk):
         self.trade_scroll_frame = ctk.CTkScrollableFrame(self.trade_pane, fg_color="transparent")
         self.trade_scroll_frame.pack(fill="both", expand=True, padx=PADDING["small"], pady=PADDING["small"])
 
-        # Store merchant data and UI references
-        self.trade_merchants: list = []
-        self.trade_merchant_frames: dict = {}
-        self.trade_order_checkboxes: dict = {}
-        self.trade_column_frames: list = []
-        self.trade_current_columns: int = 0
-
         # Load merchant data
         self._load_trade_data()
 
-        # Bind resize event to reflow columns
+        # Bind resize event to reflow columns (with debounce)
         self.trade_pane.bind("<Configure>", self._on_trade_pane_resize)
 
     def _load_trade_data(self):
@@ -604,10 +614,21 @@ class MainWindow(ctk.CTk):
             return 2  # Default to 2 columns
 
     def _on_trade_pane_resize(self, event=None):
-        """Handle trade pane resize to adjust column count."""
+        """Handle trade pane resize to adjust column count (with debounce)."""
         if not self.trade_merchants:
             return
 
+        new_columns = self._calculate_trade_columns()
+        if new_columns != self.trade_current_columns:
+            # Debounce: cancel any pending rebuild and schedule a new one
+            if self.trade_resize_pending:
+                return  # Already have a pending rebuild
+            self.trade_resize_pending = True
+            self.after(100, self._do_trade_resize_rebuild)
+
+    def _do_trade_resize_rebuild(self):
+        """Perform the actual column rebuild after debounce delay."""
+        self.trade_resize_pending = False
         new_columns = self._calculate_trade_columns()
         if new_columns != self.trade_current_columns:
             self._rebuild_trade_columns(new_columns)
@@ -3965,6 +3986,10 @@ class MainWindow(ctk.CTk):
 
         self.current_mode = "trade"
         self._update_toolbar_button_states()
+
+        # Lazy initialize trade UI on first use
+        if not self.trade_initialized:
+            self._initialize_trade_ui()
 
         # Reset expanded state based on checked orders
         self._reset_trade_expanded_state()

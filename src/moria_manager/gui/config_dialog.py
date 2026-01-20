@@ -48,7 +48,8 @@ class ConfigDialog(ctk.CTkToplevel):
 
         # Store widget references for saving
         self.installation_vars: dict[InstallationType, ctk.BooleanVar] = {}
-        self.path_selectors: dict[InstallationType, PathSelector] = {}
+        self.game_path_selectors: dict[InstallationType, PathSelector] = {}
+        self.save_path_selectors: dict[InstallationType, PathSelector] = {}
 
         self._create_ui()
 
@@ -136,43 +137,97 @@ class ConfigDialog(ctk.CTkToplevel):
         )
         cb.pack(anchor="w")
 
-        # Path selector for save path
+        # Path frame for both game path and save path
         path_frame = ctk.CTkFrame(row, fg_color="transparent")
         path_frame.pack(fill="x", padx=(25, 0), pady=(5, 0))
 
-        path_selector = PathSelector(
+        # Get default game path for Steam/Epic
+        default_game_path = None
+        if installation.id == InstallationType.STEAM:
+            default_game_path = GamePaths.STEAM_GAME_DEFAULT
+        elif installation.id == InstallationType.EPIC:
+            default_game_path = GamePaths.EPIC_GAME_DEFAULT
+
+        # Game Installation Path selector
+        # For Steam/Epic: show default path (read-only display)
+        # For Custom: editable path selector
+        if installation.id == InstallationType.CUSTOM:
+            # Custom installation - editable game path
+            game_path_selector = PathSelector(
+                path_frame,
+                label="Installation Path:",
+                initial_path=installation.game_path,
+                directory=True,
+            )
+            game_path_selector.pack(fill="x")
+            self.game_path_selectors[installation.id] = game_path_selector
+        else:
+            # Steam/Epic - show default game path with status
+            game_path_selector = PathSelector(
+                path_frame,
+                label="Installation Path:",
+                initial_path=default_game_path,
+                directory=True,
+            )
+            game_path_selector.pack(fill="x")
+            self.game_path_selectors[installation.id] = game_path_selector
+
+            # Status message for game path
+            if default_game_path and default_game_path.exists():
+                game_status_text = "Game detected at default location"
+                game_status_color = "green"
+            else:
+                game_status_text = "Game not found at default location"
+                game_status_color = "orange"
+
+            game_status = ctk.CTkLabel(
+                path_frame,
+                text=game_status_text,
+                font=FONTS["small"],
+                text_color=game_status_color
+            )
+            game_status.pack(anchor="w", pady=(2, 0))
+
+        # Save Path selector
+        save_path_selector = PathSelector(
             path_frame,
             label="Save Path:",
             initial_path=installation.save_path,
             directory=True,
         )
-        path_selector.pack(fill="x")
-        self.path_selectors[installation.id] = path_selector
+        save_path_selector.pack(fill="x", pady=(5, 0))
+        self.save_path_selectors[installation.id] = save_path_selector
 
-        # Status message
+        # Status message for save path (Steam/Epic only)
         if installation.id != InstallationType.CUSTOM:
             if installation.save_path and installation.save_path.exists():
-                status_text = "Detected at default location"
-                status_color = "green"
+                save_status_text = "Saves detected at default location"
+                save_status_color = "green"
             else:
-                status_text = "Not found at default location"
-                status_color = "orange"
+                save_status_text = "Saves not found at default location"
+                save_status_color = "orange"
 
-            status = ctk.CTkLabel(
+            save_status = ctk.CTkLabel(
                 path_frame,
-                text=status_text,
+                text=save_status_text,
                 font=FONTS["small"],
-                text_color=status_color
+                text_color=save_status_color
             )
-            status.pack(anchor="w", pady=(2, 0))
+            save_status.pack(anchor="w", pady=(2, 0))
 
-        # Enable/disable path selector based on checkbox
-        path_selector.set_enabled(var.get())
+        # Enable/disable path selectors based on checkbox
+        enabled = var.get()
+        if installation.id in self.game_path_selectors:
+            self.game_path_selectors[installation.id].set_enabled(enabled)
+        save_path_selector.set_enabled(enabled)
 
     def _on_installation_toggle(self, inst_type: InstallationType):
         """Handle installation checkbox toggle."""
         enabled = self.installation_vars[inst_type].get()
-        self.path_selectors[inst_type].set_enabled(enabled)
+        if inst_type in self.game_path_selectors:
+            self.game_path_selectors[inst_type].set_enabled(enabled)
+        if inst_type in self.save_path_selectors:
+            self.save_path_selectors[inst_type].set_enabled(enabled)
 
     def _create_backup_settings_section(self, parent):
         """Create the backup settings section."""
@@ -260,9 +315,17 @@ class ConfigDialog(ctk.CTkToplevel):
         # Update installation settings
         for installation in self.config_manager.config.installations:
             installation.enabled = self.installation_vars[installation.id].get()
-            path = self.path_selectors[installation.id].get_path()
-            if path:
-                installation.save_path = path
+
+            # Save game path (only for Custom - Steam/Epic use defaults)
+            if installation.id == InstallationType.CUSTOM:
+                game_path = self.game_path_selectors[installation.id].get_path()
+                if game_path:
+                    installation.game_path = game_path
+
+            # Save save path
+            save_path = self.save_path_selectors[installation.id].get_path()
+            if save_path:
+                installation.save_path = save_path
 
         # Update backup settings
         backup_path = self.backup_path_selector.get_path()

@@ -4,6 +4,24 @@ A save game and mod manager for **Lord of the Rings: Return to Moria**.
 
 ---
 
+## Release v1.2
+
+### New Features
+
+#### Settings Dialog Improvements
+- **Installation Path display** - Settings dialog now shows game installation paths for Steam and Epic
+- **Custom Installation support** - Custom installation now supports both Installation Path and Save Path configuration
+- **Path detection status** - Visual indicators show whether game/saves are detected at default locations
+
+#### Performance Improvements
+- **Lazy loading for Trade Manager** - Trade Manager UI is now loaded on first use instead of at startup, significantly improving application startup time
+- **Resize debouncing** - Trade Manager column rebuilds are now debounced to prevent multiple rapid rebuilds during window resize
+
+### Bug Fixes
+- Improved startup performance by deferring Trade Manager initialization
+
+---
+
 ## Release v1.1
 
 ### New Features
