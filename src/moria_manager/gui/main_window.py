@@ -709,23 +709,96 @@ class MainWindow(ctk.CTk):
             widget.configure(cursor="hand2")
 
     def _create_order_checkbox(self, parent, merchant, order):
-        """Create a checkbox for a single order."""
-        var = ctk.BooleanVar(value=order.checked)
+        """Create a checkbox row with quantity spinbox for a single order."""
+        # Container for the row
+        row_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        row_frame.pack(fill="x", pady=2)
 
+        # Checkbox
+        var = ctk.BooleanVar(value=order.checked)
         checkbox = ctk.CTkCheckBox(
-            parent,
+            row_frame,
             text=order.display_name,
             variable=var,
             font=FONTS["body"],
             command=lambda: self._on_order_toggle(merchant, order, var.get())
         )
-        checkbox.pack(anchor="w", pady=2)
+        checkbox.pack(side="left", anchor="w")
+
+        # Quantity spinbox container (on the right)
+        qty_frame = ctk.CTkFrame(row_frame, fg_color="transparent")
+        qty_frame.pack(side="right", padx=(10, 0))
+
+        # Down arrow button
+        down_btn = ctk.CTkButton(
+            qty_frame,
+            text="▼",
+            width=20,
+            height=20,
+            font=("Segoe UI", 8),
+            fg_color="transparent",
+            hover_color=("gray80", "gray30"),
+            command=lambda: self._on_quantity_change(merchant, order, qty_var, -1)
+        )
+        down_btn.pack(side="left")
+
+        # Quantity entry (4 digits, 0-9999)
+        qty_var = ctk.StringVar(value=str(order.quantity))
+        qty_entry = ctk.CTkEntry(
+            qty_frame,
+            textvariable=qty_var,
+            width=45,
+            height=22,
+            font=FONTS["small"],
+            justify="center"
+        )
+        qty_entry.pack(side="left", padx=2)
+        qty_entry.bind("<FocusOut>", lambda e: self._on_quantity_entry(merchant, order, qty_var))
+        qty_entry.bind("<Return>", lambda e: self._on_quantity_entry(merchant, order, qty_var))
+
+        # Up arrow button
+        up_btn = ctk.CTkButton(
+            qty_frame,
+            text="▲",
+            width=20,
+            height=20,
+            font=("Segoe UI", 8),
+            fg_color="transparent",
+            hover_color=("gray80", "gray30"),
+            command=lambda: self._on_quantity_change(merchant, order, qty_var, 1)
+        )
+        up_btn.pack(side="left")
 
         self.trade_order_checkboxes[merchant.raw_name][order.raw_name] = {
             "checkbox": checkbox,
             "var": var,
+            "qty_var": qty_var,
             "order": order
         }
+
+    def _on_quantity_change(self, merchant, order, qty_var, delta: int):
+        """Handle quantity up/down button click."""
+        try:
+            current = int(qty_var.get())
+        except ValueError:
+            current = 0
+
+        new_val = max(0, min(9999, current + delta))
+        qty_var.set(str(new_val))
+        order.quantity = new_val
+        self._save_trade_config()
+
+    def _on_quantity_entry(self, merchant, order, qty_var):
+        """Handle quantity entry field change."""
+        try:
+            val = int(qty_var.get())
+            val = max(0, min(9999, val))
+        except ValueError:
+            val = 0
+
+        qty_var.set(str(val))
+        order.quantity = val
+        self._save_trade_config()
 
     def _toggle_merchant_section(self, merchant):
         """Toggle the expanded/collapsed state of a merchant section."""
@@ -771,32 +844,41 @@ class MainWindow(ctk.CTk):
                     frame_data["orders_frame"].pack_forget()
 
     def _trade_clear_all(self):
-        """Clear all order checkmarks."""
+        """Clear all order checkmarks and quantities."""
         for merchant in self.trade_merchants:
             for order in merchant.orders:
                 order.checked = False
-            # Update UI checkboxes
+                order.quantity = 0
+            # Update UI checkboxes and quantities
             merchant_checkboxes = self.trade_order_checkboxes.get(merchant.raw_name, {})
             for order_data in merchant_checkboxes.values():
                 order_data["var"].set(False)
+                if "qty_var" in order_data:
+                    order_data["qty_var"].set("0")
         # Save state
         self._save_trade_config()
 
     def _save_trade_config(self):
-        """Save trade manager checkbox state to XML file."""
+        """Save trade manager checkbox state and quantity to XML file."""
         import xml.etree.ElementTree as ET
         from xml.dom import minidom
         from ..config.paths import GamePaths
 
         GamePaths.ensure_config_dir()
 
-        root = ET.Element("TradeManager", version="1.0")
+        root = ET.Element("TradeManager", version="1.1")
 
         for merchant in self.trade_merchants:
             merchant_elem = ET.SubElement(root, "Merchant", name=merchant.raw_name)
             for order in merchant.orders:
-                if order.checked:
-                    ET.SubElement(merchant_elem, "Order", name=order.raw_name, checked="true")
+                # Save order if checked or has a quantity > 0
+                if order.checked or order.quantity > 0:
+                    ET.SubElement(
+                        merchant_elem, "Order",
+                        name=order.raw_name,
+                        checked="true" if order.checked else "false",
+                        quantity=str(order.quantity)
+                    )
 
         # Write pretty-printed XML
         xml_str = minidom.parseString(ET.tostring(root, encoding="unicode")).toprettyxml(indent="  ")
@@ -806,7 +888,7 @@ class MainWindow(ctk.CTk):
         GamePaths.TRADE_CONFIG_FILE.write_text(xml_str, encoding="utf-8")
 
     def _load_trade_config(self):
-        """Load trade manager checkbox state from XML file."""
+        """Load trade manager checkbox state and quantity from XML file."""
         import xml.etree.ElementTree as ET
         from ..config.paths import GamePaths
 
@@ -817,19 +899,33 @@ class MainWindow(ctk.CTk):
             tree = ET.parse(GamePaths.TRADE_CONFIG_FILE)
             root = tree.getroot()
 
-            # Build a set of checked orders for fast lookup
-            checked_orders = set()
+            # Build a dict of order data for fast lookup: (merchant, order) -> (checked, quantity)
+            order_data = {}
             for merchant_elem in root.findall("Merchant"):
                 merchant_name = merchant_elem.get("name", "")
                 for order_elem in merchant_elem.findall("Order"):
                     order_name = order_elem.get("name", "")
-                    if order_elem.get("checked", "").lower() == "true":
-                        checked_orders.add((merchant_name, order_name))
+                    checked = order_elem.get("checked", "").lower() == "true"
+                    try:
+                        quantity = int(order_elem.get("quantity", "0"))
+                    except ValueError:
+                        quantity = 0
+                    order_data[(merchant_name, order_name)] = (checked, quantity)
 
             # Apply to current merchants
             for merchant in self.trade_merchants:
+                has_checked = False
                 for order in merchant.orders:
-                    order.checked = (merchant.raw_name, order.raw_name) in checked_orders
+                    key = (merchant.raw_name, order.raw_name)
+                    if key in order_data:
+                        order.checked, order.quantity = order_data[key]
+                        if order.checked:
+                            has_checked = True
+                    else:
+                        order.checked = False
+                        order.quantity = 0
+                # Expand merchant only if it has at least one checked order
+                merchant.expanded = has_checked
 
         except (OSError, ET.ParseError, KeyError) as e:
             # If file is corrupted, just continue with defaults
@@ -1677,8 +1773,24 @@ class MainWindow(ctk.CTk):
 
     def _create_item_row(self, item: WorldWithVersions | CharacterWithVersions):
         """Create a clickable row for a world or character."""
-        row = ctk.CTkFrame(self.item_list_frame, cursor="hand2")
+        # Check if this world/character has a main .sav file
+        has_main_file = item.main_file is not None
+
+        # Yellow border for items without a .sav file
+        if not has_main_file:
+            row = ctk.CTkFrame(
+                self.item_list_frame,
+                cursor="hand2",
+                border_width=2,
+                border_color=COLORS["warning"]
+            )
+        else:
+            row = ctk.CTkFrame(self.item_list_frame, cursor="hand2")
         row.pack(fill="x", pady=2)
+
+        # Add tooltip for items without main SAV file
+        if not has_main_file:
+            self._create_tooltip(row, "This file has no main SAV file")
 
         # Make the whole row clickable
         row.bind("<Button-1>", lambda e, i=item: self._on_item_selected(i))
@@ -1701,13 +1813,33 @@ class MainWindow(ctk.CTk):
         filename_label.pack(fill="x", padx=PADDING["small"], pady=(0, PADDING["small"]))
         filename_label.bind("<Button-1>", lambda e, i=item: self._on_item_selected(i))
 
-        # Version count badge
+        # Version count badge - position depends on whether trash icon is shown
         version_count = len(item.versions)
+        badge_x_offset = -PADDING["small"]
+
+        # Add trash icon if deletion is enabled
+        if self.config_manager.config.settings.enable_deletion:
+            trash_image = self._load_icon("icons/trash.png", size=(18, 18))
+            if trash_image:
+                trash_btn = ctk.CTkButton(
+                    row,
+                    image=trash_image,
+                    text="",
+                    width=24,
+                    height=24,
+                    fg_color="transparent",
+                    hover_color=("#ffcccc", "#4a1a1a"),
+                    command=lambda i=item: self._prompt_delete_world(i)
+                )
+                trash_btn.place(relx=1.0, rely=0.5, anchor="e", x=-PADDING["small"])
+                self._create_tooltip(trash_btn, "Delete All")
+                badge_x_offset = -PADDING["small"] - 28  # Move badge left to make room for trash icon
+
         badge = ctk.CTkLabel(
             row, text=f"{version_count} files",
             font=FONTS["small"], text_color="gray"
         )
-        badge.place(relx=1.0, rely=0.5, anchor="e", x=-PADDING["small"])
+        badge.place(relx=1.0, rely=0.5, anchor="e", x=badge_x_offset)
         badge.bind("<Button-1>", lambda e, i=item: self._on_item_selected(i))
 
     def _on_item_selected(self, item: WorldWithVersions | CharacterWithVersions):
@@ -1735,6 +1867,24 @@ class MainWindow(ctk.CTk):
         self._refresh_versions_list()
 
         self._set_status(f"Selected: {display_name}")
+
+    def _restore_selection_by_base_name(self, base_name: str):
+        """Try to restore selection to an item with the given base name after refresh."""
+        # Get the current items list
+        if self.current_view_type == "Worlds":
+            items = self.worlds_data
+        else:
+            items = self.characters_data
+
+        # Find the item with matching base_name
+        for item in items:
+            if item.base_name == base_name:
+                self._on_item_selected(item)
+                return
+
+        # If not found (world was completely deleted), clear selection
+        self.selected_item = None
+        self._refresh_versions_list()
 
     def _refresh_versions_list(self):
         """Refresh the file versions list for the selected world/character."""
@@ -1769,13 +1919,18 @@ class MainWindow(ctk.CTk):
         self.versions_header.configure(text=display_name)
         self.versions_count_label.configure(text=f"({len(self.selected_item.versions)} files)")
 
-        # Sort versions: main first, then fresh, then backups by number
+        # Sort versions: main first, then fresh, then backups by number, then bad files
         sorted_versions = []
         if self.selected_item.main_file:
             sorted_versions.append(self.selected_item.main_file)
         if self.selected_item.fresh_file:
             sorted_versions.append(self.selected_item.fresh_file)
         sorted_versions.extend(self.selected_item.backup_files)
+
+        # Add any "bad" or other files that aren't already included
+        for version in self.selected_item.versions:
+            if version not in sorted_versions:
+                sorted_versions.append(version)
 
         # Create row for each version
         for version in sorted_versions:
@@ -1801,7 +1956,7 @@ class MainWindow(ctk.CTk):
         name_label.bind("<Button-1>", lambda e, v=version: self._on_version_selected(v))
 
     def _on_version_selected(self, version: SaveFileVersion):
-        """Handle version selection - highlight and show restore/mark bad buttons."""
+        """Handle version selection - highlight and show restore/mark bad/delete buttons."""
         self.selected_version = version
 
         # Check if there's a main .sav file for this item
@@ -1818,6 +1973,25 @@ class MainWindow(ctk.CTk):
             row.configure(fg_color=("gray85", "gray25") if is_selected else ("gray95", "gray17"))
 
             if is_selected:
+                # Add delete button if deletion is enabled (for any file type)
+                if self.config_manager.config.settings.enable_deletion:
+                    trash_image = self._load_icon("icons/trash.png", size=(16, 16))
+                    if trash_image:
+                        delete_btn = ctk.CTkButton(
+                            row, image=trash_image, text="", width=24, height=24,
+                            fg_color="transparent", hover_color=("#ffcccc", "#4a1a1a"),
+                            command=lambda v=version: self._prompt_delete_single_file(v)
+                        )
+                    else:
+                        delete_btn = ctk.CTkButton(
+                            row, text="🗑", width=24, height=24,
+                            font=FONTS["small"], text_color="red",
+                            fg_color="transparent", hover_color=("#ffcccc", "#4a1a1a"),
+                            command=lambda v=version: self._prompt_delete_single_file(v)
+                        )
+                    delete_btn.pack(side="right", padx=(0, PADDING["small"]))
+                    self._create_tooltip(delete_btn, "Delete File")
+
                 if version.version_type == "main":
                     # Add "Mark Bad" button for main save file
                     mark_bad_image = self._load_icon("icons/mark_bad.png", size=(16, 16))
@@ -2420,11 +2594,22 @@ class MainWindow(ctk.CTk):
 
         # Create row for each entry
         for entry in sorted(self.restore_entries, key=lambda e: e.display_name.lower()):
-            self._create_restore_entry_row(entry)
+            self._create_restore_entry_row(entry, index_manager)
 
-    def _create_restore_entry_row(self, entry: BackupIndexEntry):
+    def _create_restore_entry_row(self, entry: BackupIndexEntry, index_manager: 'BackupIndexManager' = None):
         """Create a clickable row for a backup index entry in restore mode."""
-        row = ctk.CTkFrame(self.item_list_frame, cursor="hand2")
+        # Check if entry has any backups
+        has_backups = True
+        if index_manager:
+            timestamps = index_manager.get_backup_timestamps(entry)
+            has_backups = len(timestamps) > 0
+
+        # Create row with yellow border if no backups
+        if has_backups:
+            row = ctk.CTkFrame(self.item_list_frame, cursor="hand2")
+        else:
+            row = ctk.CTkFrame(self.item_list_frame, cursor="hand2",
+                              border_width=2, border_color="#ffc107")
         row.pack(fill="x", pady=2)
 
         # Make the whole row clickable
@@ -2442,6 +2627,27 @@ class MainWindow(ctk.CTk):
         )
         filename_label.pack(fill="x", padx=PADDING["small"], pady=(0, PADDING["small"]))
         filename_label.bind("<Button-1>", lambda e, ent=entry: self._on_restore_entry_selected(ent))
+
+        # Add tooltip for entries with no backups
+        if not has_backups:
+            self._create_tooltip(row, "No backups remaining")
+
+        # Add trash icon if deletion is enabled
+        if self.config_manager.config.settings.enable_deletion:
+            trash_image = self._load_icon("icons/trash.png", size=(18, 18))
+            if trash_image:
+                trash_btn = ctk.CTkButton(
+                    row,
+                    image=trash_image,
+                    text="",
+                    width=24,
+                    height=24,
+                    fg_color="transparent",
+                    hover_color=("#ffcccc", "#4a1a1a"),
+                    command=lambda ent=entry: self._prompt_delete_restore_entry(ent)
+                )
+                trash_btn.place(relx=1.0, rely=0.5, anchor="e", x=-PADDING["small"])
+                self._create_tooltip(trash_btn, "Delete All Backups")
 
     def _on_restore_entry_selected(self, entry: BackupIndexEntry):
         """Handle backup entry selection in restore mode."""
@@ -2563,6 +2769,25 @@ class MainWindow(ctk.CTk):
             row.configure(fg_color=("gray85", "gray25") if is_selected else ("gray95", "gray17"))
 
             if is_selected:
+                # Add delete button if deletion is enabled
+                if self.config_manager.config.settings.enable_deletion:
+                    trash_image = self._load_icon("icons/trash.png", size=(16, 16))
+                    if trash_image:
+                        delete_btn = ctk.CTkButton(
+                            row, image=trash_image, text="", width=24, height=24,
+                            fg_color="transparent", hover_color=("#ffcccc", "#4a1a1a"),
+                            command=lambda ts=timestamp_dir: self._prompt_delete_backup_timestamp(ts)
+                        )
+                    else:
+                        delete_btn = ctk.CTkButton(
+                            row, text="🗑", width=24, height=24,
+                            font=FONTS["small"], text_color="red",
+                            fg_color="transparent", hover_color=("#ffcccc", "#4a1a1a"),
+                            command=lambda ts=timestamp_dir: self._prompt_delete_backup_timestamp(ts)
+                        )
+                    delete_btn.pack(side="right", padx=(0, PADDING["small"]))
+                    self._create_tooltip(delete_btn, "Delete Backup")
+
                 # Add restore button
                 restore_image = self._load_icon("icons/restore_green.png", size=(16, 16))
                 if restore_image:
@@ -2951,6 +3176,11 @@ class MainWindow(ctk.CTk):
         import stat
         from ..config.path_validator import is_safe_path, is_path_under_root
 
+        # Check if deletion is enabled
+        if not self.config_manager.config.settings.enable_deletion:
+            self._set_status("Deletion is disabled. Enable it in Settings.")
+            return
+
         # Ensure path is under game installation
         if not self.current_installation or not self.current_installation.game_path:
             self._set_status("Cannot remove: no game installation configured")
@@ -3139,6 +3369,11 @@ class MainWindow(ctk.CTk):
 
     def _prompt_remove_installed_mod_files(self, item_path: Path):
         """Prompt to remove mod files from Installed Mods (game's Paks folder)."""
+        # Check if deletion is enabled
+        if not self.config_manager.config.settings.enable_deletion:
+            self._set_status("Deletion is disabled. Enable it in Settings.")
+            return
+
         mod_name = item_path.stem  # Filename without extension
         containing_dir = item_path.parent  # The directory containing the files
 
@@ -3307,6 +3542,24 @@ class MainWindow(ctk.CTk):
 
             # Add action buttons for selected item
             if is_selected:
+                # Red trash can button to delete (always visible)
+                trash_image = self._load_icon("icons/trash.png", size=(16, 16))
+                if trash_image:
+                    trash_btn = ctk.CTkButton(
+                        row, image=trash_image, text="", width=24, height=24,
+                        fg_color="transparent", hover_color=("#ffcccc", "#4a1a1a"),
+                        command=lambda p=item_path: self._prompt_delete_available_mod(p)
+                    )
+                else:
+                    trash_btn = ctk.CTkButton(
+                        row, text="🗑", width=24, height=24,
+                        font=FONTS["small"], text_color="red",
+                        fg_color="transparent", hover_color=("#ffcccc", "#4a1a1a"),
+                        command=lambda p=item_path: self._prompt_delete_available_mod(p)
+                    )
+                trash_btn.pack(side="right", padx=2)
+                self._create_tooltip(trash_btn, "Delete mod")
+
                 # Left arrow button to install
                 action_btn = ctk.CTkButton(
                     row, text="\u276E", width=28, height=24,  # Bold left arrow
@@ -3459,6 +3712,35 @@ class MainWindow(ctk.CTk):
 
         except (OSError, IOError, shutil.Error) as e:
             self._set_status(f"Failed to organize mod files: {e}")
+
+    def _prompt_delete_available_mod(self, item_path: Path):
+        """Prompt to delete a mod from the Available Mods directory."""
+        import shutil
+
+        mod_name = item_path.name
+
+        # Show confirmation dialog (always available, not tied to enable_deletion setting)
+        if not self._show_delete_confirm_dialog(mod_name, "mod"):
+            return
+
+        try:
+            if item_path.exists():
+                if item_path.is_dir():
+                    shutil.rmtree(item_path)
+                else:
+                    item_path.unlink()
+                logger.info("Deleted mod: %s", item_path)
+                self._set_status(f"Deleted mod '{mod_name}'")
+            else:
+                self._set_status(f"Mod not found: '{mod_name}'")
+
+            # Clear selection and refresh the available mods list
+            self.selected_available_mod = None
+            self._refresh_available_mods()
+
+        except (OSError, IOError) as e:
+            logger.error("Error deleting mod %s: %s", mod_name, e)
+            self._set_status(f"Error deleting mod: {e}")
 
     def _show_info_dialog(self, title: str, message: str):
         """Show a themed information dialog with OK button only.
@@ -3684,6 +3966,9 @@ class MainWindow(ctk.CTk):
         self.current_mode = "trade"
         self._update_toolbar_button_states()
 
+        # Reset expanded state based on checked orders
+        self._reset_trade_expanded_state()
+
         # Hide the left tabs
         self.tabs_frame.grid_forget()
 
@@ -3699,6 +3984,26 @@ class MainWindow(ctk.CTk):
         self.trade_pane.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=PADDING["medium"])
 
         self._set_status("Switched to Trade Manager")
+
+    def _reset_trade_expanded_state(self):
+        """Reset merchant expanded state based on whether they have checked orders."""
+        for merchant in self.trade_merchants:
+            # Check if any order is checked
+            has_checked = any(order.checked for order in merchant.orders)
+            merchant.expanded = has_checked
+
+            # Update UI if frame exists
+            frame_data = self.trade_merchant_frames.get(merchant.raw_name)
+            if frame_data:
+                arrow_label = frame_data["arrow"]
+                orders_frame = frame_data["orders_frame"]
+
+                if merchant.expanded:
+                    arrow_label.configure(text="▼")
+                    orders_frame.pack(fill="x", padx=PADDING["medium"], pady=(0, PADDING["small"]))
+                else:
+                    arrow_label.configure(text="▶")
+                    orders_frame.pack_forget()
 
     def _show_confirm_dialog(self, title: str, message: str) -> bool:
         """Show a themed confirmation dialog.
@@ -3792,6 +4097,254 @@ class MainWindow(ctk.CTk):
         dialog.wait_window()
 
         return result[0]
+
+    def _show_delete_confirm_dialog(self, item_name: str, item_type: str = "world") -> bool:
+        """Show a delete confirmation dialog with red Cancel and green Yes buttons.
+
+        Args:
+            item_name: Name of the item to delete
+            item_type: Type of item ("world", "character", "mod", "backup", etc.)
+
+        Returns:
+            True if user clicked Yes, False otherwise
+        """
+        result = [False]
+
+        dialog = ctk.CTkToplevel(self)
+        dialog.title("Confirm Delete")
+        dialog.geometry("450x230")
+        dialog.resizable(False, False)
+        dialog.transient(self)
+        dialog.grab_set()
+
+        # Center on parent
+        dialog.update_idletasks()
+        x = self.winfo_x() + (self.winfo_width() - 450) // 2
+        y = self.winfo_y() + (self.winfo_height() - 230) // 2
+        dialog.geometry(f"+{x}+{y}")
+
+        # Container
+        container = ctk.CTkFrame(dialog)
+        container.pack(fill="both", expand=True, padx=PADDING["medium"], pady=PADDING["medium"])
+
+        # Warning title - capitalize item type for display
+        title_text = f"Delete {item_type.title()}"
+        title_label = ctk.CTkLabel(
+            container,
+            text=title_text,
+            font=FONTS["heading"],
+            text_color=COLORS["danger"]
+        )
+        title_label.pack(anchor="w", pady=(0, PADDING["small"]))
+
+        # Message
+        message_label = ctk.CTkLabel(
+            container,
+            text=f"Are you sure you want to delete '{item_name}'?\n\nThis will delete ALL files for this {item_type} and cannot be undone.",
+            font=FONTS["body"],
+            wraplength=400,
+            justify="left"
+        )
+        message_label.pack(fill="x", expand=True, pady=PADDING["small"])
+
+        # Buttons
+        button_frame = ctk.CTkFrame(container, fg_color="transparent")
+        button_frame.pack(fill="x", pady=(PADDING["small"], 0))
+
+        def on_yes():
+            result[0] = True
+            dialog.destroy()
+
+        def on_cancel():
+            result[0] = False
+            dialog.destroy()
+
+        # Red Cancel button on the left
+        cancel_btn = ctk.CTkButton(
+            button_frame,
+            text="Cancel",
+            width=120,
+            fg_color=COLORS["danger"],
+            hover_color=COLORS["danger_hover"],
+            text_color="white",
+            command=on_cancel
+        )
+        cancel_btn.pack(side="left")
+
+        # Green Yes button on the right
+        yes_btn = ctk.CTkButton(
+            button_frame,
+            text="Yes",
+            width=120,
+            fg_color=COLORS["success"],
+            hover_color=COLORS["success_hover"],
+            text_color="white",
+            command=on_yes
+        )
+        yes_btn.pack(side="right")
+
+        # Handle window close
+        dialog.protocol("WM_DELETE_WINDOW", on_cancel)
+
+        # Wait for dialog to close
+        dialog.wait_window()
+
+        return result[0]
+
+    def _prompt_delete_world(self, item: 'WorldWithVersions | CharacterWithVersions'):
+        """Prompt to delete a world/character and all its files."""
+        # Get display name and item type
+        if isinstance(item, WorldWithVersions):
+            display_name = item.world_name
+            item_type = "world"
+        else:
+            display_name = item.display_name
+            item_type = "character"
+
+        # Show confirmation dialog
+        if not self._show_delete_confirm_dialog(display_name, item_type):
+            return
+
+        # Get the save directory
+        if not self.current_installation or not self.current_installation.save_path:
+            self._set_status("Cannot delete: no save path configured")
+            return
+
+        save_dir = self.current_installation.save_path
+        base_name = item.base_name  # e.g., "MW_ABC123" or "MC_DEF456"
+
+        # Find and delete all files matching the base name with any extension
+        deleted_count = 0
+        try:
+            for file_path in save_dir.iterdir():
+                if file_path.is_file() and file_path.name.startswith(base_name):
+                    file_path.unlink()
+                    deleted_count += 1
+                    logger.info("Deleted: %s", file_path)
+
+            if deleted_count > 0:
+                self._set_status(f"Deleted {deleted_count} files for '{display_name}'")
+            else:
+                self._set_status(f"No files found to delete for '{display_name}'")
+
+            # Refresh the lists
+            self._refresh_item_list()
+
+        except (OSError, IOError) as e:
+            logger.error("Error deleting files for %s: %s", display_name, e)
+            self._set_status(f"Error deleting files: {e}")
+
+    def _prompt_delete_single_file(self, version: 'SaveFileVersion'):
+        """Prompt to delete a single file from the versions pane."""
+        filename = version.filename
+
+        # Show confirmation dialog
+        if not self._show_delete_confirm_dialog(filename, "file"):
+            return
+
+        # Remember the current selection to restore it after refresh
+        current_item_base_name = self.selected_item.base_name if self.selected_item else None
+
+        # Delete the file
+        try:
+            if version.file_path.exists():
+                version.file_path.unlink()
+                logger.info("Deleted: %s", version.file_path)
+                self._set_status(f"Deleted '{filename}'")
+
+                # Refresh the lists and restore selection
+                self._refresh_item_list()
+
+                # Try to restore selection to the same world/character
+                if current_item_base_name:
+                    self._restore_selection_by_base_name(current_item_base_name)
+            else:
+                self._set_status(f"File not found: '{filename}'")
+
+        except (OSError, IOError) as e:
+            logger.error("Error deleting file %s: %s", filename, e)
+            self._set_status(f"Error deleting file: {e}")
+
+    def _prompt_delete_restore_entry(self, entry: BackupIndexEntry):
+        """Prompt to delete all backups for a world/character in restore mode."""
+        display_name = entry.display_name
+        item_type = "world" if self.current_view_type == "Worlds" else "character"
+
+        # Show confirmation dialog
+        if not self._show_delete_confirm_dialog(f"all backups for '{display_name}'", f"{item_type} backups"):
+            return
+
+        # Get backup root from config
+        backup_root = (
+            self.config_manager.config.settings.backup_location
+            or GamePaths.BACKUP_DEFAULT
+        )
+
+        category = "worlds" if self.current_view_type == "Worlds" else "characters"
+
+        try:
+            index_manager = BackupIndexManager(backup_root, category)
+            safe_name = index_manager._sanitize_dirname(entry.display_name)
+            item_dir = index_manager.category_dir / safe_name
+
+            if item_dir.exists():
+                import shutil
+                shutil.rmtree(item_dir)
+                logger.info("Deleted backup directory: %s", item_dir)
+
+                # Remove from index
+                if entry.filename in index_manager._entries:
+                    del index_manager._entries[entry.filename]
+                    index_manager._save_index()
+
+                self._set_status(f"Deleted all backups for '{display_name}'")
+            else:
+                self._set_status(f"Backup directory not found for '{display_name}'")
+
+            # Refresh both panes - left (entries) and right (timestamps)
+            self.selected_restore_entry = None
+            self._refresh_restore_list()
+            self._refresh_restore_timestamps()
+
+        except (OSError, IOError) as e:
+            logger.error("Error deleting backups for %s: %s", display_name, e)
+            self._set_status(f"Error deleting backups: {e}")
+
+    def _prompt_delete_backup_timestamp(self, timestamp_dir: Path):
+        """Prompt to delete a single backup timestamp directory in restore mode."""
+        # Parse timestamp for display
+        try:
+            dt = datetime.strptime(timestamp_dir.name, "%Y-%m-%d_%H%M%S")
+            display_text = dt.strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            display_text = timestamp_dir.name
+
+        # Show confirmation dialog
+        if not self._show_delete_confirm_dialog(f"backup from {display_text}", "backup"):
+            return
+
+        try:
+            if timestamp_dir.exists():
+                import shutil
+                shutil.rmtree(timestamp_dir)
+                logger.info("Deleted backup timestamp: %s", timestamp_dir)
+                self._set_status(f"Deleted backup from {display_text}")
+            else:
+                self._set_status(f"Backup not found: {display_text}")
+
+            # Refresh the timestamps list, keeping the current entry selected
+            self._refresh_restore_timestamps()
+
+            # Also refresh the left pane to update yellow border status
+            # Save and restore the current selection
+            current_entry = self.selected_restore_entry
+            self._refresh_restore_list()
+            if current_entry:
+                self._on_restore_entry_selected(current_entry)
+
+        except (OSError, IOError) as e:
+            logger.error("Error deleting backup %s: %s", timestamp_dir, e)
+            self._set_status(f"Error deleting backup: {e}")
 
     def _on_close(self):
         """Handle window close event."""

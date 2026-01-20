@@ -88,6 +88,7 @@ class ConfigurationManager:
                 first_run_complete=self._parse_bool(settings_elem, "FirstRunComplete", False),
                 backup_location=self._parse_path(settings_elem, "BackupLocation"),
                 auto_backup_on_launch=self._parse_bool(settings_elem, "AutoBackupOnLaunch", False),
+                enable_deletion=self._parse_bool(settings_elem, "EnableDeletion", False),
                 server_info=server_info,
             )
         else:
@@ -96,6 +97,7 @@ class ConfigurationManager:
                 first_run_complete=False,
                 backup_location=None,
                 auto_backup_on_launch=False,
+                enable_deletion=False,
                 server_info=None,
             )
 
@@ -160,6 +162,7 @@ class ConfigurationManager:
         ET.SubElement(settings_elem, "FirstRunComplete").text = str(self.config.settings.first_run_complete).lower()
         ET.SubElement(settings_elem, "BackupLocation").text = str(self.config.settings.backup_location or GamePaths.BACKUP_DEFAULT)
         ET.SubElement(settings_elem, "AutoBackupOnLaunch").text = str(self.config.settings.auto_backup_on_launch).lower()
+        ET.SubElement(settings_elem, "EnableDeletion").text = str(self.config.settings.enable_deletion).lower()
 
         # Server info section
         if self.config.settings.server_info:

@@ -783,6 +783,10 @@ class MoriaSaveParser:
 
         UE4 string format: property_name + null + type_byte + int32_length + string + null
 
+        In UE4, string length encoding:
+        - Positive length: UTF-8 encoded string, length is byte count including null terminator
+        - Negative length: UTF-16-LE encoded string, abs(length) is character count including null
+
         Args:
             data: Decompressed save data
             property_name: Property name to find (e.g., b"SG_WN")
@@ -803,12 +807,21 @@ class MoriaSaveParser:
             pos += 1
 
             if type_byte == 0x06:  # String type
-                # Read length (int32)
-                str_len = struct.unpack("<I", data[pos:pos + 4])[0]
+                # Read length as signed int32 (negative = UTF-16)
+                str_len = struct.unpack("<i", data[pos:pos + 4])[0]
                 pos += 4
 
-                # Read string (length includes null terminator)
-                value = data[pos:pos + str_len - 1].decode("utf-8", errors="replace")
+                if str_len < 0:
+                    # Negative length indicates UTF-16-LE encoding
+                    # abs(length) is character count including null terminator
+                    char_count = -str_len
+                    byte_count = char_count * 2  # UTF-16 = 2 bytes per char
+                    raw_bytes = data[pos:pos + byte_count - 2]  # Exclude null terminator (2 bytes)
+                    value = raw_bytes.decode("utf-16-le", errors="replace")
+                else:
+                    # Positive length is UTF-8, length includes null terminator
+                    value = data[pos:pos + str_len - 1].decode("utf-8", errors="replace")
+
                 return value
 
         except (struct.error, IndexError):

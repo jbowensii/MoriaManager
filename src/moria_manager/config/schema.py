@@ -47,6 +47,7 @@ class Settings:
     first_run_complete: bool = False
     backup_location: Optional[Path] = None
     auto_backup_on_launch: bool = False
+    enable_deletion: bool = False
     server_info: Optional[ServerInfo] = None
 
 

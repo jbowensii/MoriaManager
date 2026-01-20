@@ -194,6 +194,29 @@ class ConfigDialog(ctk.CTkToplevel):
         )
         self.backup_path_selector.pack(fill="x")
 
+        # Enable deletion checkbox
+        deletion_frame = ctk.CTkFrame(section, fg_color="transparent")
+        deletion_frame.pack(fill="x", padx=PADDING["medium"], pady=PADDING["small"])
+
+        self.enable_deletion_var = ctk.BooleanVar(
+            value=self.config_manager.config.settings.enable_deletion
+        )
+        deletion_cb = ctk.CTkCheckBox(
+            deletion_frame,
+            text="Enable Deletion",
+            variable=self.enable_deletion_var,
+            font=FONTS["body"],
+        )
+        deletion_cb.pack(anchor="w")
+
+        deletion_desc = ctk.CTkLabel(
+            deletion_frame,
+            text="Allow deleting mods from the Installed Mods folder",
+            font=FONTS["small"],
+            text_color="gray"
+        )
+        deletion_desc.pack(anchor="w", padx=(25, 0))
+
     def _create_buttons(self, parent):
         """Create the dialog buttons."""
         button_frame = ctk.CTkFrame(parent, fg_color="transparent")
@@ -245,6 +268,9 @@ class ConfigDialog(ctk.CTkToplevel):
         backup_path = self.backup_path_selector.get_path()
         if backup_path:
             self.config_manager.config.settings.backup_location = backup_path
+
+        # Update enable deletion setting
+        self.config_manager.config.settings.enable_deletion = self.enable_deletion_var.get()
 
         # Mark first run complete
         self.config_manager.config.settings.first_run_complete = True

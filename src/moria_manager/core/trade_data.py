@@ -12,6 +12,7 @@ class Order:
     raw_name: str  # e.g., "CarvedMuralSections_Order_Default"
     display_name: str  # e.g., "Carved Mural Sections"
     checked: bool = False
+    quantity: int = 0  # Quantity field (0-99)
 
 
 @dataclass
@@ -20,7 +21,7 @@ class Merchant:
     raw_name: str  # e.g., "ArnorOrders_Default"
     display_name: str  # e.g., "Arnor"
     orders: list[Order]
-    expanded: bool = True
+    expanded: bool = False  # Default collapsed, expand only if has checked orders
 
 
 def parse_order_name(raw_name: str) -> str:
