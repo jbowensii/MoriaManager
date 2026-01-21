@@ -72,11 +72,18 @@ class WorldSaveInfo:
 
     @property
     def base_name(self) -> str:
-        """Get the base filename without extension (e.g., MW_ABC123)."""
+        """Get the base filename without extension (e.g., MW_ABC123).
+
+        Handles all file types:
+        - MW_ABC123.sav -> MW_ABC123
+        - MW_ABC123.sav.fresh -> MW_ABC123
+        - MW_ABC123.01.bak -> MW_ABC123
+        - MW_ABC123.sav.01.bad -> MW_ABC123
+        """
         name = self.file_path.name
-        # Remove .sav extension
-        if name.endswith(".sav"):
-            return name[:-4]
+        # Extract everything before the first '.'
+        if '.' in name:
+            return name.split('.')[0]
         return name
 
 
@@ -130,10 +137,18 @@ class CharacterSaveInfo:
 
     @property
     def base_name(self) -> str:
-        """Get the base filename without extension (e.g., MC_ABC123)."""
+        """Get the base filename without extension (e.g., MC_ABC123).
+
+        Handles all file types:
+        - MC_ABC123.sav -> MC_ABC123
+        - MC_ABC123.sav.fresh -> MC_ABC123
+        - MC_ABC123.01.bak -> MC_ABC123
+        - MC_ABC123.sav.01.bad -> MC_ABC123
+        """
         name = self.file_path.name
-        if name.endswith(".sav"):
-            return name[:-4]
+        # Extract everything before the first '.'
+        if '.' in name:
+            return name.split('.')[0]
         return name
 
     @property

@@ -3736,7 +3736,9 @@ class MainWindow(ctk.CTk):
 
     def _prompt_delete_available_mod(self, item_path: Path):
         """Prompt to delete a mod from the Available Mods directory."""
+        import os
         import shutil
+        import stat
 
         mod_name = item_path.name
 
@@ -3744,11 +3746,35 @@ class MainWindow(ctk.CTk):
         if not self._show_delete_confirm_dialog(mod_name, "mod"):
             return
 
+        def remove_readonly(func, path, excinfo):
+            """Error handler for shutil.rmtree to handle read-only files."""
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+
+        def clear_readonly_recursive(path: Path):
+            """Clear read-only attribute from all files in a directory."""
+            try:
+                for root, dirs, files in os.walk(str(path)):
+                    for name in files:
+                        file_path = os.path.join(root, name)
+                        os.chmod(file_path, stat.S_IWRITE | stat.S_IREAD)
+                    for name in dirs:
+                        dir_path = os.path.join(root, name)
+                        os.chmod(dir_path, stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC)
+                # Also clear on the root path itself
+                os.chmod(str(path), stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC)
+            except OSError as e:
+                logger.warning("Could not clear read-only attributes: %s", e)
+
         try:
             if item_path.exists():
                 if item_path.is_dir():
-                    shutil.rmtree(item_path)
+                    # Clear read-only attributes first, then delete with error handler
+                    clear_readonly_recursive(item_path)
+                    shutil.rmtree(item_path, onerror=remove_readonly)
                 else:
+                    # Clear read-only on single file before deletion
+                    os.chmod(str(item_path), stat.S_IWRITE | stat.S_IREAD)
                     item_path.unlink()
                 logger.info("Deleted mod: %s", item_path)
                 self._set_status(f"Deleted mod '{mod_name}'")
@@ -4252,8 +4278,10 @@ class MainWindow(ctk.CTk):
             else:
                 self._set_status(f"No files found to delete for '{display_name}'")
 
-            # Refresh the lists
+            # Clear selection and refresh both panes
+            self.selected_item = None
             self._refresh_item_list()
+            self._refresh_versions_list()
 
         except (OSError, IOError) as e:
             logger.error("Error deleting files for %s: %s", display_name, e)
