@@ -266,7 +266,7 @@ class ConfigDialog(ctk.CTkToplevel):
 
         deletion_desc = ctk.CTkLabel(
             deletion_frame,
-            text="Allow deleting mods from the Installed Mods folder",
+            text="Allow deleting Worlds, Characters and Mods",
             font=FONTS["small"],
             text_color="gray"
         )

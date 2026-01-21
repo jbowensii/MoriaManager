@@ -565,27 +565,14 @@ class MainWindow(ctk.CTk):
         self.trade_pane.bind("<Configure>", self._on_trade_pane_resize)
 
     def _load_trade_data(self):
-        """Load merchant and order data from DT_OrderDecks.json."""
-        from ..core.trade_data import load_order_decks, get_default_order_decks_path
-
-        json_path = get_default_order_decks_path()
-        if not json_path or not json_path.exists():
-            # Show error message if file not found
-            error_label = ctk.CTkLabel(
-                self.trade_scroll_frame,
-                text="Could not find DT_OrderDecks.json\n\nPlace the file in the gamesource directory.",
-                font=FONTS["body"],
-                text_color="orange",
-                justify="center"
-            )
-            error_label.pack(expand=True, pady=PADDING["large"])
-            return
+        """Load merchant and order data from embedded data."""
+        from ..core.trade_data import load_merchants
 
         try:
-            self.trade_merchants = load_order_decks(json_path)
+            self.trade_merchants = load_merchants()
             self._load_trade_config()  # Load saved checkbox state
             self._build_trade_ui()
-        except (OSError, IOError, json.JSONDecodeError, KeyError, ValueError) as e:
+        except (KeyError, ValueError) as e:
             error_label = ctk.CTkLabel(
                 self.trade_scroll_frame,
                 text=f"Error loading trade data:\n\n{e}",
