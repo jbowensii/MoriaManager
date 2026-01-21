@@ -14,26 +14,49 @@ except ImportError:
 
 
 def create_gear_icon(size: int = 32) -> Image.Image:
-    """Create a simple gear icon."""
+    """Create a gear icon with visible teeth."""
+    import math
+
     img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
     center = size // 2
     outer_radius = size // 2 - 2
-    inner_radius = size // 4
-    teeth = 8
+    inner_radius = outer_radius * 0.65
+    hole_radius = size // 6
+    num_teeth = 8
+    tooth_depth = outer_radius - inner_radius
 
-    # Draw gear teeth as a circle with notches
+    # Build gear shape as polygon points
+    points = []
+    for i in range(num_teeth * 2):
+        angle = (i * math.pi / num_teeth) - math.pi / 2
+        # Alternate between outer and inner radius
+        if i % 2 == 0:
+            # Outer point (tooth tip)
+            r = outer_radius
+        else:
+            # Inner point (between teeth)
+            r = inner_radius
+        x = center + r * math.cos(angle)
+        y = center + r * math.sin(angle)
+        points.append((x, y))
+
+    # Draw the gear body
+    draw.polygon(points, fill=(150, 150, 150, 255))
+
+    # Draw center hub (darker circle)
+    hub_radius = inner_radius * 0.7
     draw.ellipse(
-        [center - outer_radius, center - outer_radius,
-         center + outer_radius, center + outer_radius],
-        fill=(100, 100, 100, 255)
+        [center - hub_radius, center - hub_radius,
+         center + hub_radius, center + hub_radius],
+        fill=(120, 120, 120, 255)
     )
 
     # Draw center hole
     draw.ellipse(
-        [center - inner_radius, center - inner_radius,
-         center + inner_radius, center + inner_radius],
+        [center - hole_radius, center - hole_radius,
+         center + hole_radius, center + hole_radius],
         fill=(0, 0, 0, 0)
     )
 

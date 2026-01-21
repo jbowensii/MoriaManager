@@ -28,6 +28,7 @@ FONTS = {
     "heading": ("Segoe UI", 14, "bold"), # Section headers
     "body": ("Segoe UI", 12),            # Standard body text
     "small": ("Segoe UI", 10),           # Captions, status text
+    "small_bold": ("Segoe UI", 10, "bold"),  # Bold captions, column headers
 }
 
 # Padding and spacing values in pixels

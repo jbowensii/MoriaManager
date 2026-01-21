@@ -236,6 +236,47 @@ class BackupIndexManager:
         """
         return list(self._entries.values())
 
+    def cleanup_stale_entries(self) -> int:
+        """Remove index entries that have no backup directory or empty directories.
+
+        This cleans up entries where:
+        - The backup directory doesn't exist
+        - The backup directory exists but has no timestamp subdirectories
+
+        Returns:
+            Number of stale entries removed
+        """
+        stale_filenames = []
+
+        for filename, entry in self._entries.items():
+            safe_name = self._sanitize_dirname(entry.display_name)
+            item_dir = self.category_dir / safe_name
+
+            # Check if directory exists
+            if not item_dir.exists():
+                stale_filenames.append(filename)
+                continue
+
+            # Check if directory has any timestamp subdirectories
+            has_timestamps = False
+            for subdir in item_dir.iterdir():
+                if subdir.is_dir():
+                    has_timestamps = True
+                    break
+
+            if not has_timestamps:
+                stale_filenames.append(filename)
+
+        # Remove stale entries
+        for filename in stale_filenames:
+            del self._entries[filename]
+
+        # Save updated index if any entries were removed
+        if stale_filenames:
+            self._save_index()
+
+        return len(stale_filenames)
+
     def get_backup_timestamps(self, entry: BackupIndexEntry) -> list[Path]:
         """Get all backup timestamp directories for an entry.
 

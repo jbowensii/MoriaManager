@@ -753,8 +753,12 @@ class MoriaSaveParser:
     def _extract_character_name(self, data: bytes) -> Optional[str]:
         """Extract character name from a character save file.
 
-        Character saves have two CSDC blocks. The second block contains
-        an "SDCP" section with the character name at a fixed offset.
+        Character saves have multiple CSDC blocks. The block containing
+        the "SDCP" marker has the character name at offset 29/33.
+
+        Name encoding:
+        - Positive length: UTF-8 encoded, length is byte count including null
+        - Negative length: UTF-16-LE encoded, abs(length) is char count including null
 
         Args:
             data: Raw save file data
@@ -762,36 +766,49 @@ class MoriaSaveParser:
         Returns:
             Character name or None if extraction fails
         """
-        # Find the second CSDC block
-        first_csdc = data.find(b"CSDC")
-        if first_csdc == -1:
-            return None
-
-        second_csdc = data.find(b"CSDC", first_csdc + 4)
-        if second_csdc == -1:
-            return None
-
-        # Decompress the second CSDC block
-        try:
-            decompressed = zlib.decompress(data[second_csdc + 60:])
-        except zlib.error:
-            return None
-
-        # Verify SDCP marker at offset 4
-        if len(decompressed) < 40 or decompressed[4:8] != b"SDCP":
-            return None
-
-        # Character name length is at offset 29 (little-endian int32)
-        # Character name string follows at offset 33
-        try:
-            name_len = struct.unpack("<I", decompressed[29:33])[0]
-            if name_len < 1 or name_len > 100:  # Sanity check
+        # Find all CSDC blocks and look for one with SDCP marker
+        pos = 0
+        while True:
+            csdc_pos = data.find(b"CSDC", pos)
+            if csdc_pos == -1:
                 return None
-            # Read string (length includes null terminator)
-            name = decompressed[33:33 + name_len - 1].decode("utf-8", errors="replace")
-            return name
-        except (struct.error, IndexError):
-            return None
+
+            # Try to decompress this block
+            try:
+                decompressed = zlib.decompress(data[csdc_pos + 60:])
+            except zlib.error:
+                pos = csdc_pos + 4
+                continue
+
+            # Check for SDCP marker at offset 4
+            if len(decompressed) >= 40 and decompressed[4:8] == b"SDCP":
+                # Found the SDCP block - extract name
+                try:
+                    # Name length is at offset 29 (signed int32)
+                    name_len = struct.unpack("<i", decompressed[29:33])[0]
+
+                    if name_len > 0:
+                        # Positive: UTF-8 encoded, length is byte count including null
+                        if name_len > 100:  # Sanity check
+                            return None
+                        name = decompressed[33:33 + name_len - 1].decode("utf-8", errors="replace")
+                        return name
+                    elif name_len < 0:
+                        # Negative: UTF-16-LE encoded, abs(length) is char count including null
+                        char_count = abs(name_len)
+                        if char_count > 100:  # Sanity check
+                            return None
+                        byte_count = char_count * 2
+                        # Exclude null terminator (2 bytes for UTF-16)
+                        name = decompressed[33:33 + byte_count - 2].decode("utf-16-le", errors="replace")
+                        return name
+                    else:
+                        return None
+                except (struct.error, IndexError, UnicodeDecodeError):
+                    return None
+
+            # Move to next CSDC block
+            pos = csdc_pos + 4
 
     def _extract_string_property(self, data: bytes, property_name: bytes) -> Optional[str]:
         """Extract a string property from decompressed save data.
