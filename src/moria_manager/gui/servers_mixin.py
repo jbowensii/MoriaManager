@@ -1868,6 +1868,403 @@ class ServersMixin:
             output_text.insert("end", f"Error: {e}\n")
 
     # =========================================================================
+    # INI Editor
+    # =========================================================================
+
+    def _show_ini_editor(self, server: dict, config_path: str, parent_dialog):
+        """Show the INI Editor dialog for MoriaServerConfig.ini."""
+        import tempfile
+        from configparser import ConfigParser
+
+        server_name = server["name"]
+
+        # Validate the config path
+        if not config_path or not config_path.strip():
+            self._show_info_dialog(
+                "Missing Path",
+                "Please enter the path to MoriaServerConfig.ini first.")
+            return
+
+        # Automatically append filename if path is just a directory
+        config_path = config_path.strip()
+        if not config_path.lower().endswith('.ini'):
+            # It's a directory path, append the filename
+            if config_path.endswith('/'):
+                config_path = config_path + "MoriaServerConfig.ini"
+            else:
+                config_path = config_path + "/MoriaServerConfig.ini"
+            logger.debug("INI Editor: Appended filename, full path: %s", config_path)
+
+        # Check if connected
+        conn_state = self.server_connection_states.get(server_name, "disconnected")
+        protocol = server.get("protocol", "FTP")
+
+        # Debug info for connection check
+        logger.debug("INI Editor: server=%s, protocol=%s, conn_state=%s", server_name, protocol, conn_state)
+        logger.debug("INI Editor: config_path=%s", config_path)
+        logger.debug("INI Editor: sftp_connections keys=%s", list(self.sftp_connections.keys()))
+        logger.debug("INI Editor: ftp_connections keys=%s", list(self.ftp_connections.keys()))
+
+        if conn_state != "connected":
+            self._show_info_dialog(
+                "Not Connected",
+                f"Please connect to the server first before editing the INI file.\n\n"
+                f"Current state: {conn_state}")
+            return
+
+        # Download the INI file
+        try:
+            if protocol == "SFTP":
+                sftp = self.sftp_connections.get(server_name)
+                if not sftp:
+                    raise RuntimeError(f"SFTP connection object not found for '{server_name}'")
+                # Download to temp file
+                temp_file = tempfile.NamedTemporaryFile(
+                    mode='w', suffix='.ini', delete=False, encoding='utf-8')
+                temp_path = temp_file.name
+                temp_file.close()
+                logger.debug("INI Editor: Downloading via SFTP from %s to %s", config_path, temp_path)
+                sftp.get(config_path, temp_path)
+            else:
+                ftp = self.ftp_connections.get(server_name)
+                if not ftp:
+                    raise RuntimeError(f"FTP connection object not found for '{server_name}'")
+                temp_file = tempfile.NamedTemporaryFile(
+                    mode='wb', suffix='.ini', delete=False)
+                temp_path = temp_file.name
+                logger.debug("INI Editor: Downloading via FTP from %s to %s", config_path, temp_path)
+                ftp.retrbinary(f"RETR {config_path}", temp_file.write)
+                temp_file.close()
+
+            # Read the file content
+            with open(temp_path, 'r', encoding='utf-8') as f:
+                ini_content = f.read()
+
+        except Exception as e:
+            logger.error("INI Editor download failed: %s", e, exc_info=True)
+            self._show_info_dialog(
+                "Download Error",
+                f"Failed to download INI file from:\n{config_path}\n\nError: {e}")
+            return
+
+        # Parse INI (with multi-line handling)
+        ini_data = self._parse_ini_content(ini_content)
+
+        # Create the editor dialog
+        dialog = ctk.CTkToplevel(parent_dialog)
+        dialog.title(f"INI Editor - {server_name}")
+        dialog.geometry("700x700")
+        dialog.resizable(True, True)
+        dialog.transient(parent_dialog)
+        dialog.grab_set()
+
+        # Center on screen
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() - 700) // 2
+        y = (dialog.winfo_screenheight() - 700) // 2
+        dialog.geometry(f"+{x}+{y}")
+        self._set_dialog_icon(dialog)
+
+        # Main container
+        container = ctk.CTkFrame(dialog, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=PADDING["medium"], pady=PADDING["medium"])
+
+        # Title
+        title_label = ctk.CTkLabel(
+            container, text="Server Configuration Editor",
+            font=FONTS["title"], anchor="w")
+        title_label.pack(fill="x", pady=(0, PADDING["small"]))
+
+        # Scrollable content area
+        scroll_frame = ctk.CTkScrollableFrame(container, fg_color=("#e8e8e8", "#2a2a2a"))
+        scroll_frame.pack(fill="both", expand=True, pady=(0, PADDING["medium"]))
+
+        # Store widget references for reading values
+        field_widgets = {}
+
+        # Define field configurations
+        field_config = {
+            "Host": {
+                "ListenPort": {"type": "entry", "label": "Listen Port"},
+                "ListenAddress": {"type": "entry", "label": "Listen Address"},
+                "AdvertiseAddress": {"type": "entry", "label": "Advertise Address"},
+                "AdvertisePort": {"type": "entry", "label": "Advertise Port"},
+                "InitialConnectionRetryTime": {"type": "entry", "label": "Initial Retry Time (sec)"},
+                "AfterDisconnectionRetryTime": {"type": "entry", "label": "After Disconnect Retry Time (sec)"},
+            },
+            "Main": {
+                "OptionalPassword": {"type": "entry", "label": "Server Password"},
+            },
+            "World": {
+                "Name": {"type": "entry", "label": "World Name"},
+                "OptionalWorldFilename": {"type": "entry", "label": "World Filename"},
+            },
+            "World.Create": {
+                "Type": {"type": "dropdown", "label": "World Type",
+                         "values": ["campaign", "sandbox"]},
+                "Seed": {"type": "entry", "label": "Seed"},
+                "Difficulty.Preset": {"type": "dropdown", "label": "Difficulty Preset",
+                                      "values": ["story", "solo", "normal", "hard", "custom"]},
+                "Difficulty.Custom.CombatDifficulty": {"type": "dropdown", "label": "Combat Difficulty",
+                                                       "values": ["verylow", "low", "default", "high", "veryhigh"]},
+                "Difficulty.Custom.EnemyAggression": {"type": "dropdown", "label": "Enemy Aggression",
+                                                      "values": ["low", "default", "high", "veryhigh"]},
+                "Difficulty.Custom.SurvivalDifficulty": {"type": "dropdown", "label": "Survival Difficulty",
+                                                         "values": ["verylow", "low", "default", "high"]},
+                "Difficulty.Custom.MiningDrops": {"type": "dropdown", "label": "Mining Drops",
+                                                   "values": ["verylow", "low", "default", "high"]},
+                "Difficulty.Custom.WorldDrops": {"type": "dropdown", "label": "World Drops",
+                                                  "values": ["verylow", "low", "default", "high"]},
+                "Difficulty.Custom.HordeFrequency": {"type": "dropdown", "label": "Horde Frequency",
+                                                      "values": ["verylow", "low", "default", "high", "veryhigh"]},
+                "Difficulty.Custom.SiegeFrequency": {"type": "dropdown", "label": "Siege Frequency",
+                                                      "values": ["verylow", "low", "default", "high", "veryhigh"]},
+                "Difficulty.Custom.PatrolFrequency": {"type": "dropdown", "label": "Patrol Frequency",
+                                                       "values": ["verylow", "low", "default", "high", "veryhigh"]},
+                "UpgradeOptionalDLC.Array": {"type": "entry", "label": "Upgrade DLC Array"},
+                "OptionalDLC.Array": {"type": "entry", "label": "Optional DLC Array"},
+            },
+            "Console": {
+                "Enabled": {"type": "dropdown", "label": "Console Enabled",
+                            "values": ["true", "false"]},
+            },
+            "Performance": {
+                "ServerFPS": {"type": "dropdown", "label": "Server FPS",
+                              "values": ["30", "60"]},
+                "LoadedAreaLimit": {"type": "slider", "label": "Loaded Area Limit",
+                                    "min": 4, "max": 32},
+            },
+        }
+
+        # Create sections
+        for section_name, fields in field_config.items():
+            # Section header
+            section_frame = ctk.CTkFrame(scroll_frame, fg_color=("#d0d0d0", "#3a3a3a"))
+            section_frame.pack(fill="x", padx=5, pady=(10, 5))
+
+            section_label = ctk.CTkLabel(
+                section_frame, text=f"[{section_name}]",
+                font=FONTS["heading"], anchor="w",
+                text_color=("#1a5fb4", "#5b9bd5"))
+            section_label.pack(fill="x", padx=10, pady=5)
+
+            # Fields container
+            fields_frame = ctk.CTkFrame(scroll_frame, fg_color="transparent")
+            fields_frame.pack(fill="x", padx=15, pady=(0, 5))
+
+            for key, config in fields.items():
+                # Get current value from parsed INI
+                current_value = ini_data.get(section_name, {}).get(key, "")
+
+                # Field row
+                row_frame = ctk.CTkFrame(fields_frame, fg_color="transparent")
+                row_frame.pack(fill="x", pady=3)
+
+                label = ctk.CTkLabel(
+                    row_frame, text=config["label"] + ":",
+                    font=FONTS["body"], anchor="w", width=180)
+                label.pack(side="left", padx=(0, 10))
+
+                widget_key = f"{section_name}.{key}"
+
+                if config["type"] == "entry":
+                    widget = ctk.CTkEntry(row_frame, font=FONTS["body"], height=28, width=300)
+                    widget.insert(0, current_value)
+                    widget.pack(side="left", fill="x", expand=True)
+                    field_widgets[widget_key] = ("entry", widget)
+
+                elif config["type"] == "dropdown":
+                    var = ctk.StringVar(value=current_value if current_value else config["values"][0])
+                    widget = ctk.CTkOptionMenu(
+                        row_frame, values=config["values"], variable=var,
+                        width=200, height=28, font=FONTS["body"])
+                    widget.pack(side="left")
+                    field_widgets[widget_key] = ("dropdown", var)
+
+                elif config["type"] == "combobox":
+                    # Combobox allows both dropdown and freeform entry
+                    var = ctk.StringVar(value=current_value if current_value else "")
+                    widget = ctk.CTkComboBox(
+                        row_frame, values=config["values"], variable=var,
+                        width=200, height=28, font=FONTS["body"])
+                    widget.pack(side="left")
+                    field_widgets[widget_key] = ("combobox", var)
+
+                elif config["type"] == "slider":
+                    # Slider with label showing value
+                    slider_frame = ctk.CTkFrame(row_frame, fg_color="transparent")
+                    slider_frame.pack(side="left", fill="x", expand=True)
+
+                    try:
+                        init_val = int(float(current_value)) if current_value else config["min"]
+                    except ValueError:
+                        init_val = config["min"]
+                    init_val = max(config["min"], min(config["max"], init_val))
+
+                    value_label = ctk.CTkLabel(slider_frame, text=str(init_val), font=FONTS["body"], width=40)
+                    value_label.pack(side="right", padx=(10, 0))
+
+                    def make_slider_callback(lbl):
+                        def callback(val):
+                            lbl.configure(text=str(int(val)))
+                        return callback
+
+                    widget = ctk.CTkSlider(
+                        slider_frame, from_=config["min"], to=config["max"],
+                        number_of_steps=config["max"] - config["min"],
+                        width=200, command=make_slider_callback(value_label))
+                    widget.set(init_val)
+                    widget.pack(side="left")
+                    field_widgets[widget_key] = ("slider", widget)
+
+        # Bottom button frame
+        btn_frame = ctk.CTkFrame(container, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=(PADDING["small"], 0))
+
+        def on_cancel():
+            # Clean up temp file
+            try:
+                import os
+                os.unlink(temp_path)
+            except Exception:
+                pass
+            dialog.destroy()
+
+        def on_save():
+            logger.debug("INI Editor: Save button clicked")
+            # Collect all values
+            new_ini_data = {}
+            for widget_key, (widget_type, widget) in field_widgets.items():
+                section, key = widget_key.split(".", 1)
+                if section not in new_ini_data:
+                    new_ini_data[section] = {}
+
+                if widget_type == "entry":
+                    value = widget.get()
+                elif widget_type in ("dropdown", "combobox"):
+                    value = widget.get()
+                elif widget_type == "slider":
+                    value = str(int(widget.get()))
+                else:
+                    value = ""
+
+                new_ini_data[section][key] = value
+
+            # Generate INI content
+            new_content = self._generate_ini_content(new_ini_data)
+            logger.debug("INI Editor: Generated new content (%d bytes)", len(new_content))
+
+            # Write to temp file
+            try:
+                with open(temp_path, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+                logger.debug("INI Editor: Wrote to temp file: %s", temp_path)
+            except Exception as e:
+                logger.error("INI Editor: Failed to write temp file: %s", e)
+                self._show_info_dialog("Save Error", f"Failed to write temp file:\n{e}")
+                return
+
+            # Upload back to server
+            try:
+                protocol = server.get("protocol", "FTP")
+                logger.debug("INI Editor: Uploading via %s to %s", protocol, config_path)
+                if protocol == "SFTP":
+                    sftp = self.sftp_connections.get(server_name)
+                    if sftp:
+                        sftp.put(temp_path, config_path)
+                        logger.info("INI Editor: Successfully uploaded via SFTP to %s", config_path)
+                    else:
+                        raise RuntimeError("SFTP connection lost")
+                else:
+                    ftp = self.ftp_connections.get(server_name)
+                    if ftp:
+                        with open(temp_path, 'rb') as f:
+                            ftp.storbinary(f"STOR {config_path}", f)
+                        logger.info("INI Editor: Successfully uploaded via FTP to %s", config_path)
+                    else:
+                        raise RuntimeError("FTP connection lost")
+
+                # Delete temp file after successful upload
+                try:
+                    import os
+                    os.unlink(temp_path)
+                    logger.debug("INI Editor: Deleted temp file after upload")
+                except Exception:
+                    pass
+
+                self._show_info_dialog(
+                    "Saved",
+                    "Configuration saved successfully!\n\nNote: Server restart may be required for changes to take effect.")
+                dialog.destroy()
+
+            except Exception as e:
+                logger.error("INI Editor: Upload failed: %s", e, exc_info=True)
+                self._show_info_dialog("Upload Error", f"Failed to upload INI file:\n{e}")
+
+        cancel_btn = ctk.CTkButton(
+            btn_frame, text="Cancel", width=100,
+            fg_color="gray50", hover_color="gray40",
+            text_color="white",
+            command=on_cancel)
+        cancel_btn.pack(side="left")
+
+        save_btn = ctk.CTkButton(
+            btn_frame, text="Save", width=100,
+            fg_color="#2d8a4e", hover_color="#1e5c34",
+            text_color="white",
+            command=on_save)
+        save_btn.pack(side="right")
+
+        dialog.protocol("WM_DELETE_WINDOW", on_cancel)
+        dialog.wait_window()
+
+    def _parse_ini_content(self, content: str) -> dict:
+        """Parse INI content into a nested dict structure."""
+        result = {}
+        current_section = None
+
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith(';') or line.startswith('#'):
+                continue
+
+            if line.startswith('[') and line.endswith(']'):
+                current_section = line[1:-1]
+                if current_section not in result:
+                    result[current_section] = {}
+            elif '=' in line and current_section:
+                key, _, value = line.partition('=')
+                key = key.strip()
+                value = value.strip()
+                # Remove quotes if present
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
+                result[current_section][key] = value
+
+        return result
+
+    def _generate_ini_content(self, data: dict) -> str:
+        """Generate INI content from a nested dict structure."""
+        lines = []
+
+        # Define section order
+        section_order = ["Host", "Main", "World", "World.Create", "Console", "Performance"]
+
+        for section in section_order:
+            if section not in data:
+                continue
+            lines.append(f"[{section}]")
+            for key, value in data[section].items():
+                # Quote values with spaces
+                if ' ' in value or not value:
+                    lines.append(f'{key} = "{value}"')
+                else:
+                    lines.append(f'{key} = {value}')
+            lines.append("")  # Blank line between sections
+
+        return "\n".join(lines)
+
+    # =========================================================================
     # Server Edit / Delete Dialogs
     # =========================================================================
 
@@ -2090,14 +2487,37 @@ class ServersMixin:
             font=FONTS["heading"], anchor="w")
         paths_label.pack(fill="x", pady=(0, 8))
 
-        # MoriaServerConfig.ini path
+        # MoriaServerConfig.ini path with INI Editor button
         config_path_label = ctk.CTkLabel(
             right_col, text="MoriaServerConfig.ini:",
             font=FONTS["body"], anchor="w")
         config_path_label.pack(fill="x", pady=(0, 2))
-        config_path_entry = ctk.CTkEntry(right_col, font=FONTS["body"], height=28)
+
+        config_path_frame = ctk.CTkFrame(right_col, fg_color="transparent")
+        config_path_frame.pack(fill="x", pady=(0, 8))
+
+        config_path_entry = ctk.CTkEntry(config_path_frame, font=FONTS["body"], height=28)
         config_path_entry.insert(0, server.get("config_path", ""))
-        config_path_entry.pack(fill="x", pady=(0, 8))
+        config_path_entry.pack(side="left", fill="x", expand=True, padx=(0, 5))
+
+        def on_ini_editor():
+            config_path = config_path_entry.get().strip()
+            if not config_path:
+                from tkinter import messagebox
+                messagebox.showwarning(
+                    "Missing Path",
+                    "Please enter the MoriaServerConfig.ini path first.",
+                    parent=dialog)
+                return
+            self._show_ini_editor(server, config_path, dialog)
+
+        ini_editor_btn = ctk.CTkButton(
+            config_path_frame, text="INI Editor", width=90,
+            fg_color="#e65100", hover_color="#bf360c",
+            text_color="white", font=FONTS["body"],
+            command=on_ini_editor
+        )
+        ini_editor_btn.pack(side="right")
 
         # Pak file location path
         pak_path_label = ctk.CTkLabel(
