@@ -72,26 +72,47 @@ def extract_armor_names(armor_data: dict) -> list[str]:
 
 
 def build_recipe_map(recipes_data: list) -> dict:
-    """Build recipe name → materials mapping from DT_ItemRecipes.json."""
+    """Build recipe name → materials mapping from DT_ItemRecipes.json.
+    
+    Returns a dict with both DefaultRequiredMaterials and SandboxRequiredMaterials.
+    """
     recipes = {}
     
     for entry in recipes_data:
         if entry.get("Type") == "DataTable":
             rows = entry.get("Rows", {})
             for recipe_name, recipe_data in rows.items():
-                materials = []
+                default_materials = []
+                sandbox_materials = []
+                
+                # Extract DefaultRequiredMaterials
                 for mat in recipe_data.get("DefaultRequiredMaterials", []):
                     mat_handle = mat.get("MaterialHandle", {})
                     row_name = mat_handle.get("RowName", "")
                     count = mat.get("Count", 0)
                     if row_name and row_name != "None":
-                        materials.append({
+                        default_materials.append({
                             "item": row_name,
                             "quantity": count
                         })
                 
-                if materials:
-                    recipes[recipe_name] = materials
+                # Extract SandboxRequiredMaterials
+                for mat in recipe_data.get("SandboxRequiredMaterials", []):
+                    mat_handle = mat.get("MaterialHandle", {})
+                    row_name = mat_handle.get("RowName", "")
+                    count = mat.get("Count", 0)
+                    if row_name and row_name != "None":
+                        sandbox_materials.append({
+                            "item": row_name,
+                            "quantity": count
+                        })
+                
+                # Keep recipe if either list has data
+                if default_materials or sandbox_materials:
+                    recipes[recipe_name] = {
+                        "default": default_materials,
+                        "sandbox": sandbox_materials
+                    }
     
     print(f"  Loaded {len(recipes)} recipes with materials")
     return recipes
@@ -126,38 +147,64 @@ def find_display_name(internal_name: str, string_table: dict, item_type: str = "
     # For armor: Parse the name pattern
     if item_type == "armor":
         parts = internal_name.split("_")
-        if len(parts) >= 2:
-            set_name = parts[0]  # e.g., "Belegost", "Khazad", etc.
-            # Try to find the armor type
-            armor_type = None
-            for part in parts:
-                part_lower = part.lower()
-                if "boots" in part_lower:
-                    armor_type = "Boots"
-                elif "gloves" in part_lower or "gauntlet" in part_lower:
-                    armor_type = "Gloves"
-                elif "helmet" in part_lower or "helm" in part_lower:
-                    armor_type = "Helmet"
-                elif "torso" in part_lower:
-                    armor_type = "Torso"
-                elif "shield" in part_lower:
-                    armor_type = "Shield"
+        # Filter out common non-meaningful parts
+        meaningful_parts = [p for p in parts if p.lower() not in ("set", "apset", "armor")]
+        
+        # Extract the set name and armor type
+        set_name = parts[0] if parts else None
+        armor_type = None
+        for part in parts:
+            part_lower = part.lower()
+            if "boots" in part_lower:
+                armor_type = "Boots"
+            elif "gloves" in part_lower or "gauntlet" in part_lower:
+                armor_type = "Gloves"
+            elif "helmet" in part_lower or "helm" in part_lower:
+                armor_type = "Helmet"
+            elif "torso" in part_lower:
+                armor_type = "Torso"
+            elif "shield" in part_lower:
+                armor_type = "Shield"
+        
+        # Find best match with most parts matching
+        best_match = None
+        best_match_count = 0
+        
+        for key, value in string_table.items():
+            key_lower = key.lower()
+            if not key_lower.startswith("armor.") or not key_lower.endswith(".name"):
+                continue
+            if "broken" in key_lower or "broken" in value.lower():
+                continue
             
-            if armor_type:
-                key = f"Armor.{set_name}.{armor_type}.Name"
-                if key in string_table:
-                    return string_table[key]
-                # Try case-insensitive search
-                key_lower = key.lower()
-                for k, v in string_table.items():
-                    if k.lower() == key_lower:
-                        return v
+            key_parts = key_lower.replace(".name", "").split(".")
+            # Count how many meaningful parts match
+            matches = sum(1 for p in meaningful_parts if p.lower() in key_parts)
+            
+            # Bonus for matching armor type
+            if armor_type and armor_type.lower() in key_parts:
+                matches += 1
+            
+            if matches > best_match_count:
+                best_match = value
+                best_match_count = matches
+        
+        if best_match:
+            return best_match
     
     # For weapons: Parse the name pattern
     if item_type == "weapon":
         parts = internal_name.split("_")
-        if len(parts) >= 1:
-            weapon_type = parts[0]  # e.g., "Sword", "Spear", "WarAxe", etc.
+        # Filter out tier indicators like "1h", "2h", "t1", "t2", etc.
+        meaningful_parts = [p for p in parts if not p.lower().startswith("t") 
+                          and p.lower() not in ("1h", "2h")]
+        
+        # Find the best match (most parts matching)
+        best_match = None
+        best_match_count = 0
+        
+        # Try each meaningful part as the weapon type
+        for weapon_type in meaningful_parts:
             # Search for any key that has this weapon type and ends with .Name
             for key, value in string_table.items():
                 key_lower = key.lower()
@@ -171,7 +218,16 @@ def find_display_name(internal_name: str, string_table: dict, item_type: str = "
                 if (weapon_type.lower() in key_lower and 
                     key_lower.endswith(".name") and 
                     key_lower.startswith("weapons.")):
-                    return value
+                    # For patterns like Weapons.Mattock.Mithril.Name, check if other parts match
+                    key_parts = key_lower.replace(".name", "").split(".")
+                    # Check if multiple meaningful parts appear in the key
+                    matches = sum(1 for p in meaningful_parts if p.lower() in key_parts)
+                    if matches > best_match_count:
+                        best_match = value
+                        best_match_count = matches
+        
+        if best_match:
+            return best_match
     
     return None
 
@@ -245,9 +301,25 @@ def main():
     
     # Build lookups
     string_table = build_string_table(items_data)
-    weapon_names = extract_weapon_names(weapons_data)
-    armor_names = extract_armor_names(armor_data)
+    weapon_names = set(extract_weapon_names(weapons_data))
+    armor_names = set(extract_armor_names(armor_data))
     recipes = build_recipe_map(recipes_data)
+    
+    # Also include recipes that look like weapons/armor even if not in the data tables
+    weapon_keywords = ["sword", "mattock", "spear", "battleaxe", "halberd", "hammer", 
+                       "shield", "axe", "weapon", "crossbow", "bow", "dagger"]
+    armor_keywords = ["armor", "boots", "gloves", "helmet", "torso", "gauntlet", "helm"]
+    
+    # Find all recipe names that might be weapons or armor
+    for recipe_name in recipes.keys():
+        name_lower = recipe_name.lower()
+        if any(kw in name_lower for kw in weapon_keywords) and recipe_name not in weapon_names:
+            weapon_names.add(recipe_name)
+        if any(kw in name_lower for kw in armor_keywords) and recipe_name not in armor_names:
+            armor_names.add(recipe_name)
+    
+    print(f"  Total weapon candidates (including recipes): {len(weapon_names)}")
+    print(f"  Total armor candidates (including recipes): {len(armor_names)}")
     
     print()
     print("=" * 60)
@@ -272,11 +344,21 @@ def main():
             weapons_no_recipe.append((name, display_name))
             continue
         
-        # Convert material internal names to display names
-        materials_with_display = []
-        for mat in recipe:
+        # Convert default material internal names to display names
+        default_materials_with_display = []
+        for mat in recipe.get("default", []):
             mat_display = find_material_display_name(mat["item"], string_table)
-            materials_with_display.append({
+            default_materials_with_display.append({
+                "internal": mat["item"],
+                "display": mat_display,
+                "quantity": mat["quantity"]
+            })
+        
+        # Convert sandbox material internal names to display names
+        sandbox_materials_with_display = []
+        for mat in recipe.get("sandbox", []):
+            mat_display = find_material_display_name(mat["item"], string_table)
+            sandbox_materials_with_display.append({
                 "internal": mat["item"],
                 "display": mat_display,
                 "quantity": mat["quantity"]
@@ -285,7 +367,8 @@ def main():
         weapons_with_recipes.append({
             "internal_name": name,
             "display_name": display_name,
-            "materials": materials_with_display
+            "default_materials": default_materials_with_display,
+            "sandbox_materials": sandbox_materials_with_display
         })
     
     print(f"\nWeapons with display names and recipes: {len(weapons_with_recipes)}")
@@ -315,11 +398,21 @@ def main():
             armor_no_recipe.append((name, display_name))
             continue
         
-        # Convert material internal names to display names
-        materials_with_display = []
-        for mat in recipe:
+        # Convert default material internal names to display names
+        default_materials_with_display = []
+        for mat in recipe.get("default", []):
             mat_display = find_material_display_name(mat["item"], string_table)
-            materials_with_display.append({
+            default_materials_with_display.append({
+                "internal": mat["item"],
+                "display": mat_display,
+                "quantity": mat["quantity"]
+            })
+        
+        # Convert sandbox material internal names to display names
+        sandbox_materials_with_display = []
+        for mat in recipe.get("sandbox", []):
+            mat_display = find_material_display_name(mat["item"], string_table)
+            sandbox_materials_with_display.append({
                 "internal": mat["item"],
                 "display": mat_display,
                 "quantity": mat["quantity"]
@@ -328,7 +421,8 @@ def main():
         armor_with_recipes.append({
             "internal_name": name,
             "display_name": display_name,
-            "materials": materials_with_display
+            "default_materials": default_materials_with_display,
+            "sandbox_materials": sandbox_materials_with_display
         })
     
     print(f"\nArmor with display names and recipes: {len(armor_with_recipes)}")
@@ -344,8 +438,14 @@ def main():
     print("\n--- WEAPONS ---")
     for item in weapons_with_recipes[:10]:  # First 10
         print(f"\n{item['display_name']} ({item['internal_name']})")
-        for mat in item['materials']:
-            print(f"  - {mat['quantity']}x {mat['display']} ({mat['internal']})")
+        if item['default_materials']:
+            print("  Default Materials:")
+            for mat in item['default_materials']:
+                print(f"    - {mat['quantity']}x {mat['display']} ({mat['internal']})")
+        if item['sandbox_materials']:
+            print("  Sandbox Materials:")
+            for mat in item['sandbox_materials']:
+                print(f"    - {mat['quantity']}x {mat['display']} ({mat['internal']})")
     
     if len(weapons_with_recipes) > 10:
         print(f"\n... and {len(weapons_with_recipes) - 10} more weapons")
@@ -353,8 +453,14 @@ def main():
     print("\n--- ARMOR ---")
     for item in armor_with_recipes[:10]:  # First 10
         print(f"\n{item['display_name']} ({item['internal_name']})")
-        for mat in item['materials']:
-            print(f"  - {mat['quantity']}x {mat['display']} ({mat['internal']})")
+        if item['default_materials']:
+            print("  Default Materials:")
+            for mat in item['default_materials']:
+                print(f"    - {mat['quantity']}x {mat['display']} ({mat['internal']})")
+        if item['sandbox_materials']:
+            print("  Sandbox Materials:")
+            for mat in item['sandbox_materials']:
+                print(f"    - {mat['quantity']}x {mat['display']} ({mat['internal']})")
     
     if len(armor_with_recipes) > 10:
         print(f"\n... and {len(armor_with_recipes) - 10} more armor pieces")
