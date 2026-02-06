@@ -1,4 +1,13 @@
-"""Configuration data models"""
+"""Configuration data models for the application.
+
+Defines the core data structures used throughout the application:
+- InstallationType: Enum for Steam, Epic, and Custom installations
+- Installation: Game installation with paths and enabled state
+- ServerInfo: FTP/SFTP server connection details
+- Settings: Application preferences (backup location, deletion toggle)
+- BackupRecord: A single backup file with metadata
+- AppConfiguration: Top-level container holding all settings, installations, and backups
+"""
 
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -108,7 +117,9 @@ class AppConfiguration:
         """
         return [inst for inst in self.installations if inst.enabled]
 
-    def get_backups_for_installation(self, installation_type: InstallationType) -> list[BackupRecord]:
+    def get_backups_for_installation(
+        self, installation_type: InstallationType
+    ) -> list[BackupRecord]:
         """Get all backups for a specific installation.
 
         Args:

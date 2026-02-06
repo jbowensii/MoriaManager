@@ -3,3 +3,4 @@ cryptography>=41.0.0
 pillow>=10.0.0
 pyinstaller>=6.0.0
 tkinterdnd2>=0.4.0
+paramiko>=3.0.0

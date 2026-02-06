@@ -1,6 +1,9 @@
-"""Generate placeholder icons for the application.
+"""Generate procedural placeholder icons for the application.
 
-Run this script directly to generate icons:
+These are used as fallbacks when PNG icon assets are not available.
+Each function draws a simple vector icon using Pillow's ImageDraw.
+
+Run this script directly to regenerate all icons:
     python -m moria_manager.assets.icon_generator
 """
 
@@ -13,8 +16,10 @@ except ImportError:
     raise
 
 
+# --- Individual Icon Generators ---
+
 def create_gear_icon(size: int = 32) -> Image.Image:
-    """Create a gear icon with visible teeth."""
+    """Create a gear/cog icon with 8 teeth for the Settings button."""
     import math
 
     img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
@@ -25,8 +30,6 @@ def create_gear_icon(size: int = 32) -> Image.Image:
     inner_radius = outer_radius * 0.65
     hole_radius = size // 6
     num_teeth = 8
-    tooth_depth = outer_radius - inner_radius
-
     # Build gear shape as polygon points
     points = []
     for i in range(num_teeth * 2):
@@ -116,7 +119,7 @@ def create_restore_icon(size: int = 32) -> Image.Image:
 
 
 def create_app_icon(size: int = 256) -> Image.Image:
-    """Create a simple application icon."""
+    """Create the application icon — blue circle with a stylized 'M' for Moria."""
     img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
@@ -159,6 +162,8 @@ def create_app_icon(size: int = 256) -> Image.Image:
     return img
 
 
+# --- Batch Generation ---
+
 def generate_all_icons(output_dir: Path | None = None):
     """Generate all icons and save them to the icons directory."""
     if output_dir is None:
@@ -187,9 +192,6 @@ def generate_all_icons(output_dir: Path | None = None):
     print(f"Created: {output_dir / 'app_icon.png'}")
 
     # Create ICO file with multiple sizes
-    app_48 = create_app_icon(48)
-    app_32 = create_app_icon(32)
-    app_16 = create_app_icon(16)
     app_256.save(
         output_dir / "app_icon.ico",
         format='ICO',

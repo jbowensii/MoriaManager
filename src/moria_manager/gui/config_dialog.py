@@ -1,17 +1,17 @@
-"""Configuration/Settings dialog"""
-
-from typing import Optional
+"""Configuration/Settings dialog for managing game installations and backup preferences."""
 
 import customtkinter as ctk
 
 from ..config.manager import ConfigurationManager
 from ..config.paths import GamePaths
 from ..config.schema import InstallationType
-from .styles import COLORS, FONTS, PADDING, WINDOW_SIZES
+from .styles import (
+    COLORS, FONTS, PADDING, WINDOW_SIZES, DialogIconMixin
+)
 from .widgets.path_selector import PathSelector
 
 
-class ConfigDialog(ctk.CTkToplevel):
+class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
     """Configuration/Settings dialog with installation and backup settings.
 
     This dialog is shown automatically on first run and can be accessed
@@ -51,6 +51,9 @@ class ConfigDialog(ctk.CTkToplevel):
         self.game_path_selectors: dict[InstallationType, PathSelector] = {}
         self.save_path_selectors: dict[InstallationType, PathSelector] = {}
 
+        self.backup_path_selector = None
+        self.enable_deletion_var = None
+
         self._create_ui()
 
         # Center on screen and make visible
@@ -66,11 +69,18 @@ class ConfigDialog(ctk.CTkToplevel):
             self.transient(parent)
 
         self.grab_set()
+
+        # Set application icon (only for non-first-run since frameless has no title bar)
+        if not first_run:
+            self._set_dialog_icon()
+
         self.focus_force()
         self.lift()
 
+    # --- UI Construction ---
+
     def _create_ui(self):
-        """Create the dialog UI."""
+        """Create the dialog UI: title, installation rows, backup settings, and buttons."""
         # Main container with padding
         container = ctk.CTkFrame(self)
         container.pack(fill="both", expand=True, padx=PADDING["large"], pady=PADDING["large"])
@@ -86,7 +96,10 @@ class ConfigDialog(ctk.CTkToplevel):
         title = ctk.CTkLabel(container, text=title_text, font=FONTS["title"])
         title.pack(anchor="w", pady=(0, 5))
 
-        subtitle = ctk.CTkLabel(container, text=subtitle_text, font=FONTS["body"], text_color="gray")
+        subtitle = ctk.CTkLabel(
+            container, text=subtitle_text,
+            font=FONTS["body"], text_color="gray"
+        )
         subtitle.pack(anchor="w", pady=(0, PADDING["large"]))
 
         # Scrollable frame for content - fixed height to leave room for buttons
@@ -221,8 +234,10 @@ class ConfigDialog(ctk.CTkToplevel):
             self.game_path_selectors[installation.id].set_enabled(enabled)
         save_path_selector.set_enabled(enabled)
 
+    # --- Event Handlers ---
+
     def _on_installation_toggle(self, inst_type: InstallationType):
-        """Handle installation checkbox toggle."""
+        """Handle installation checkbox toggle — enable/disable path selectors."""
         enabled = self.installation_vars[inst_type].get()
         if inst_type in self.game_path_selectors:
             self.game_path_selectors[inst_type].set_enabled(enabled)
@@ -244,7 +259,10 @@ class ConfigDialog(ctk.CTkToplevel):
         self.backup_path_selector = PathSelector(
             backup_frame,
             label="Backup Location:",
-            initial_path=self.config_manager.config.settings.backup_location or GamePaths.BACKUP_DEFAULT,
+            initial_path=(
+                self.config_manager.config.settings.backup_location
+                or GamePaths.BACKUP_DEFAULT
+            ),
             directory=True,
         )
         self.backup_path_selector.pack(fill="x")
@@ -301,6 +319,8 @@ class ConfigDialog(ctk.CTkToplevel):
             command=self._save_and_close,
         )
         save_btn.pack(side="right")
+
+    # --- Save / Cancel ---
 
     def _cancel(self):
         """Handle cancel button - close dialog or exit app on first run.

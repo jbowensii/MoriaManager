@@ -1,4 +1,9 @@
-"""Default paths for game installations and saves"""
+"""Default paths for game installations, saves, and application data.
+
+All paths use Windows environment variables (%LOCALAPPDATA%, %APPDATA%, etc.)
+expanded at import time. The GamePaths class centralizes all filesystem
+locations so they can be easily patched in tests.
+"""
 
 import os
 from pathlib import Path
@@ -11,7 +16,10 @@ class GamePaths:
     """
 
     # Steam paths
-    STEAM_GAME_DEFAULT = Path(r"C:\Program Files (x86)\Steam\steamapps\common\The Lord of the Rings Return to Moria™")
+    STEAM_GAME_DEFAULT = Path(
+        r"C:\Program Files (x86)\Steam\steamapps\common"
+        r"\The Lord of the Rings Return to Moria™"
+    )
     STEAM_SAVE_DEFAULT = Path(os.path.expandvars(r"%LOCALAPPDATA%\Moria\Saved\SaveGamesSteam"))
 
     # Epic paths

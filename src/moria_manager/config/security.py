@@ -9,8 +9,6 @@ the same machine.
 import base64
 import hashlib
 import os
-from typing import Optional
-
 from ..logging_config import get_logger
 
 logger = get_logger("security")
@@ -58,7 +56,10 @@ def _get_cipher():
         from cryptography.fernet import Fernet
         return Fernet(_get_machine_key())
     except ImportError:
-        logger.warning("cryptography package not installed - passwords will be stored in plain text")
+        logger.warning(
+            "cryptography package not installed"
+            " - passwords will be stored in plain text"
+        )
         return None
 
 
@@ -84,7 +85,7 @@ def encrypt_password(plain_text: str) -> str:
         encrypted = cipher.encrypt(plain_text.encode('utf-8'))
         return f"ENC:{encrypted.decode('utf-8')}"
     except (TypeError, ValueError, UnicodeError) as e:
-        logger.error(f"Failed to encrypt password: {e}")
+        logger.error("Failed to encrypt password: %s", e)
         return plain_text
 
 
@@ -113,11 +114,12 @@ def decrypt_password(encrypted_text: str) -> str:
         return ""
 
     try:
+        from cryptography.fernet import InvalidToken  # pylint: disable=import-outside-toplevel
         encrypted_data = encrypted_text[4:].encode('utf-8')  # Remove 'ENC:' prefix
         decrypted = cipher.decrypt(encrypted_data)
         return decrypted.decode('utf-8')
-    except (TypeError, ValueError, UnicodeError) as e:
-        logger.error(f"Failed to decrypt password: {e}")
+    except (TypeError, ValueError, UnicodeError, InvalidToken) as e:
+        logger.error("Failed to decrypt password: %s", e)
         # Return empty string for security rather than the encrypted data
         return ""
 

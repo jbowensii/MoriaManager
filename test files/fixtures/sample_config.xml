@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<MoriaManager version="1.0">
+  <Settings>
+    <FirstRunComplete>true</FirstRunComplete>
+    <BackupLocation>C:\Users\TestUser\GameBackups</BackupLocation>
+    <AutoBackupOnLaunch>false</AutoBackupOnLaunch>
+    <EnableDeletion>true</EnableDeletion>
+    <ServerInfo>
+      <Name>Test Server</Name>
+      <Address>192.168.1.100</Address>
+      <Password>plaintext_pass</Password>
+      <Notes>Test server notes</Notes>
+    </ServerInfo>
+  </Settings>
+  <Installations>
+    <Installation id="steam" enabled="true">
+      <DisplayName>Steam</DisplayName>
+      <GamePath>C:\Program Files (x86)\Steam\steamapps\common\The Lord of the Rings Return to Moria</GamePath>
+      <SavePath>C:\Users\TestUser\AppData\Local\Moria\Saved\SaveGamesSteam</SavePath>
+    </Installation>
+    <Installation id="epic" enabled="false">
+      <DisplayName>Epic Games</DisplayName>
+      <GamePath>C:\Program Files\Epic Games\ReturnToMoria</GamePath>
+      <SavePath>C:\Users\TestUser\AppData\Local\Moria\Saved\SaveGamesEpic</SavePath>
+    </Installation>
+  </Installations>
+  <Backups>
+    <Backup id="backup-001" installation="steam" timestamp="2025-01-15T14:30:52">
+      <Description>Test backup</Description>
+      <FilePath>C:\Users\TestUser\GameBackups\worlds\TestWorld\2025-01-15_143052\MW_ABC123.sav</FilePath>
+    </Backup>
+  </Backups>
+</MoriaManager>

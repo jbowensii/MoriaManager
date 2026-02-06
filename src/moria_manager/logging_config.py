@@ -6,7 +6,6 @@ Log files are stored in the application's config directory.
 
 import logging
 import sys
-from pathlib import Path
 
 from .config.paths import GamePaths
 

@@ -8,7 +8,14 @@ Constants:
     FONTS: Font family, size, and weight configurations
     PADDING: Spacing values for margins and padding
     WINDOW_SIZES: Default and minimum window dimensions
+
+Classes:
+    DialogIconMixin: Shared icon setup for dialog windows
 """
+
+import tkinter as tk
+
+from ..assets.loader import get_asset_path
 
 # Color palette - semantic color names for consistent theming
 COLORS = {
@@ -44,3 +51,26 @@ WINDOW_SIZES = {
     "config_dialog": (750, 650), # Configuration dialog size
     "min_main": (700, 500),      # Minimum main window size
 }
+
+
+class DialogIconMixin:  # pylint: disable=too-few-public-methods
+    """Mixin providing shared dialog icon setup."""
+
+    def _set_dialog_icon(self):
+        """Set the application icon on this dialog."""
+        try:
+            icon_path = get_asset_path("icons/app_icon.ico")
+            if icon_path.exists():
+                self.after(
+                    200, lambda: self._apply_icon(str(icon_path))
+                )
+        except (OSError, tk.TclError):
+            pass
+
+    def _apply_icon(self, icon_path: str):
+        """Apply the icon after delay."""
+        try:
+            if self.winfo_exists():
+                self.iconbitmap(icon_path)
+        except (OSError, tk.TclError):
+            pass

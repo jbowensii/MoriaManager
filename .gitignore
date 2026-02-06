@@ -1,9 +1,8 @@
 # Project-specific
-test files/
-graphic assets/
 _ul
 _ul-*
 .claude/
+tmpclaude-*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

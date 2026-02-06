@@ -1,4 +1,9 @@
-"""Configuration management - load/save XML configuration"""
+"""Configuration management - load/save XML configuration.
+
+Persists all application state (settings, installations, backups, server info)
+to a single XML file at %APPDATA%/MoriaManager/config.xml. Handles first-run
+detection, default creation, and round-trip serialization with pretty-printing.
+"""
 
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -32,6 +37,8 @@ class ConfigurationManager:
         self.config_path = GamePaths.CONFIG_FILE
         self.config: Optional[AppConfiguration] = None
 
+    # --- First-Run Detection ---
+
     def is_first_run(self) -> bool:
         """Check if this is the first run of the application.
 
@@ -50,8 +57,10 @@ class ConfigurationManager:
             return not self.config.settings.first_run_complete
         except (ET.ParseError, FileNotFoundError, ValueError, KeyError) as e:
             # Corrupted config = treat as first run
-            logger.warning(f"Could not load config, treating as first run: {e}")
+            logger.warning("Could not load config, treating as first run: %s", e)
             return True
+
+    # --- Loading Configuration from XML ---
 
     def load(self) -> AppConfiguration:
         """Load configuration from XML file.
@@ -63,14 +72,14 @@ class ConfigurationManager:
             FileNotFoundError: If config file doesn't exist
             ET.ParseError: If XML is malformed
         """
-        logger.debug(f"Loading configuration from {self.config_path}")
+        logger.debug("Loading configuration from %s", self.config_path)
         tree = ET.parse(self.config_path)
         root = tree.getroot()
 
         # Parse settings
         settings_elem = root.find("Settings")
 
-        # Parse server info if present
+        # ServerInfo is nested inside <Settings> and contains encrypted password
         server_info = None
         if settings_elem is not None:
             server_elem = settings_elem.find("ServerInfo")
@@ -131,7 +140,7 @@ class ConfigurationManager:
                     backups.append(backup)
                 except (ValueError, TypeError) as e:
                     # Skip malformed backup entries
-                    logger.warning(f"Skipping malformed backup entry: {e}")
+                    logger.warning("Skipping malformed backup entry: %s", e)
                     continue
 
         self.config = AppConfiguration(
@@ -139,8 +148,13 @@ class ConfigurationManager:
             installations=installations,
             backups=backups,
         )
-        logger.debug(f"Configuration loaded: {len(installations)} installations, {len(backups)} backups")
+        logger.debug(
+            "Configuration loaded: %d installations, %d backups",
+            len(installations), len(backups)
+        )
         return self.config
+
+    # --- Saving Configuration to XML ---
 
     def save(self) -> None:
         """Save current configuration to XML file.
@@ -150,7 +164,7 @@ class ConfigurationManager:
         if self.config is None:
             raise ValueError("No configuration to save")
 
-        logger.debug(f"Saving configuration to {self.config_path}")
+        logger.debug("Saving configuration to %s", self.config_path)
 
         # Ensure config directory exists
         GamePaths.ensure_config_dir()
@@ -159,18 +173,30 @@ class ConfigurationManager:
 
         # Settings section
         settings_elem = ET.SubElement(root, "Settings")
-        ET.SubElement(settings_elem, "FirstRunComplete").text = str(self.config.settings.first_run_complete).lower()
-        ET.SubElement(settings_elem, "BackupLocation").text = str(self.config.settings.backup_location or GamePaths.BACKUP_DEFAULT)
-        ET.SubElement(settings_elem, "AutoBackupOnLaunch").text = str(self.config.settings.auto_backup_on_launch).lower()
-        ET.SubElement(settings_elem, "EnableDeletion").text = str(self.config.settings.enable_deletion).lower()
+        s = self.config.settings
+        ET.SubElement(settings_elem, "FirstRunComplete").text = (
+            str(s.first_run_complete).lower()
+        )
+        ET.SubElement(settings_elem, "BackupLocation").text = (
+            str(s.backup_location or GamePaths.BACKUP_DEFAULT)
+        )
+        ET.SubElement(settings_elem, "AutoBackupOnLaunch").text = (
+            str(s.auto_backup_on_launch).lower()
+        )
+        ET.SubElement(settings_elem, "EnableDeletion").text = (
+            str(s.enable_deletion).lower()
+        )
 
         # Server info section
-        if self.config.settings.server_info:
+        if s.server_info:
             server_elem = ET.SubElement(settings_elem, "ServerInfo")
-            ET.SubElement(server_elem, "Name").text = self.config.settings.server_info.name or ""
-            ET.SubElement(server_elem, "Address").text = self.config.settings.server_info.address or ""
-            ET.SubElement(server_elem, "Password").text = encrypt_password(self.config.settings.server_info.password or "")
-            ET.SubElement(server_elem, "Notes").text = self.config.settings.server_info.notes or ""
+            si = s.server_info
+            ET.SubElement(server_elem, "Name").text = si.name or ""
+            ET.SubElement(server_elem, "Address").text = si.address or ""
+            ET.SubElement(server_elem, "Password").text = (
+                encrypt_password(si.password or "")
+            )
+            ET.SubElement(server_elem, "Notes").text = si.notes or ""
 
         # Installations section
         installations_elem = ET.SubElement(root, "Installations")
@@ -181,9 +207,15 @@ class ConfigurationManager:
                 id=installation.id.value,
                 enabled=str(installation.enabled).lower(),
             )
-            ET.SubElement(inst_elem, "DisplayName").text = installation.display_name
-            ET.SubElement(inst_elem, "GamePath").text = str(installation.game_path) if installation.game_path else ""
-            ET.SubElement(inst_elem, "SavePath").text = str(installation.save_path) if installation.save_path else ""
+            ET.SubElement(inst_elem, "DisplayName").text = (
+                installation.display_name
+            )
+            ET.SubElement(inst_elem, "GamePath").text = (
+                str(installation.game_path) if installation.game_path else ""
+            )
+            ET.SubElement(inst_elem, "SavePath").text = (
+                str(installation.save_path) if installation.save_path else ""
+            )
 
         # Backups section
         backups_elem = ET.SubElement(root, "Backups")
@@ -198,13 +230,15 @@ class ConfigurationManager:
             ET.SubElement(backup_elem, "Description").text = backup.description
             ET.SubElement(backup_elem, "FilePath").text = str(backup.file_path)
 
-        # Write pretty-printed XML
-        xml_str = minidom.parseString(ET.tostring(root, encoding="unicode")).toprettyxml(indent="  ")
-        # Remove extra blank lines that minidom adds
+        # Pretty-print via minidom; strip the extra blank lines minidom introduces
+        raw_xml = ET.tostring(root, encoding="unicode")
+        xml_str = minidom.parseString(raw_xml).toprettyxml(indent="  ")
         lines = [line for line in xml_str.split('\n') if line.strip()]
         xml_str = '\n'.join(lines)
 
         self.config_path.write_text(xml_str, encoding="utf-8")
+
+    # --- Default Configuration ---
 
     def create_default(self, installations: list[Installation] | None = None) -> AppConfiguration:
         """Create a default configuration.
@@ -228,6 +262,8 @@ class ConfigurationManager:
             backups=[],
         )
         return self.config
+
+    # --- Backup Record Management ---
 
     def add_backup(self, backup: BackupRecord) -> None:
         """Add a backup record and save configuration.
@@ -259,7 +295,8 @@ class ConfigurationManager:
                 return True
         return False
 
-    # Helper methods for XML parsing
+    # --- XML Parsing Helpers ---
+
     @staticmethod
     def _get_text(parent: ET.Element, tag: str, default: str = "") -> str:
         """Get text content of a child element."""

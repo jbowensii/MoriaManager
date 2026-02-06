@@ -105,7 +105,7 @@ def is_safe_path(path: Path, allowed_roots: Optional[list[Path]] = None) -> bool
             # Only block if path IS the protected directory itself
             # (not subdirectories, which may be legitimate game installs)
             if resolved == protected_path:
-                logger.warning("Path %s is a protected directory", path, protected_path)
+                logger.warning("Path %s is a protected directory: %s", path, protected_path)
                 return False
         except (OSError, ValueError):
             pass

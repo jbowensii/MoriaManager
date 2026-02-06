@@ -1,4 +1,13 @@
-"""Backup index management for tracking world/character backups."""
+"""Backup index management for tracking world/character backups.
+
+Maintains XML index files that map save-file base names (e.g., "MW_12345678")
+to their human-readable display names (world or character names). The index is
+stored in %APPDATA%/MoriaManager while actual backup files live under the
+user-configured backup location, organized into per-item subdirectories.
+
+Separation of index (config dir) from data (backup dir) allows the backup
+location to be changed without losing the name-to-file mapping.
+"""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,12 +17,16 @@ import xml.etree.ElementTree as ET
 from ..config.paths import GamePaths
 
 
+# --- Data Model ---
+
 @dataclass
 class BackupIndexEntry:
     """An entry in the backup index mapping filename to display name."""
     filename: str  # Base filename without extension (e.g., "MW_12345678")
     display_name: str  # World name or character name
 
+
+# --- Index Manager ---
 
 class BackupIndexManager:
     """Manages the index.xml file for a backup category (worlds or characters).
@@ -64,8 +77,10 @@ class BackupIndexManager:
         self._entries: dict[str, BackupIndexEntry] = {}
         self._load_index()
 
+    # --- Index Persistence (Load / Save) ---
+
     def _load_index(self):
-        """Load the index from XML file."""
+        """Load the index from XML file, silently starting fresh if corrupted."""
         if not self.index_file.exists():
             return
 
@@ -86,7 +101,7 @@ class BackupIndexManager:
             self._entries = {}
 
     def _save_index(self):
-        """Save the index to XML file."""
+        """Save the index to XML file, sorted alphabetically by display name."""
         root = ET.Element("backup_index")
         root.set("category", self.category)
 
@@ -98,6 +113,8 @@ class BackupIndexManager:
         tree = ET.ElementTree(root)
         ET.indent(tree, space="  ")
         tree.write(self.index_file, encoding="unicode", xml_declaration=True)
+
+    # --- Directory Name Helpers ---
 
     def _sanitize_dirname(self, name: str) -> str:
         """Sanitize a display name for use as a directory name.
@@ -122,6 +139,8 @@ class BackupIndexManager:
             result = "Unknown"
 
         return result
+
+    # --- Entry Lookup and Directory Resolution ---
 
     def get_entry(self, filename: str) -> Optional[BackupIndexEntry]:
         """Get an index entry by filename.
@@ -153,10 +172,9 @@ class BackupIndexManager:
         safe_name = self._sanitize_dirname(display_name)
 
         if existing_entry is None:
-            # New entry
+            # New entry - assign a directory, appending a numeric suffix if
+            # the sanitized name collides with an existing entry's directory
             backup_dir = self.category_dir / safe_name
-
-            # Handle case where directory name already exists for different file
             counter = 1
             while backup_dir.exists() and self._is_directory_in_use(safe_name, filename):
                 backup_dir = self.category_dir / f"{safe_name}_{counter}"
@@ -183,10 +201,9 @@ class BackupIndexManager:
             old_dir.mkdir(parents=True, exist_ok=True)
             return old_dir
 
-        # Name changed - update index and rename directory
+        # Name changed (e.g., world was renamed in-game) - rename the directory
+        # to match the new display name, handling collisions with other entries
         new_dir = self.category_dir / safe_name
-
-        # Handle case where new name conflicts with another entry
         counter = 1
         while new_dir.exists() and self._is_directory_in_use(safe_name, filename):
             new_dir = self.category_dir / f"{safe_name}_{counter}"
@@ -228,6 +245,8 @@ class BackupIndexManager:
                     return True
         return False
 
+    # --- Enumeration and Cleanup ---
+
     def list_entries(self) -> list[BackupIndexEntry]:
         """List all entries in the index.
 
@@ -257,7 +276,8 @@ class BackupIndexManager:
                 stale_filenames.append(filename)
                 continue
 
-            # Check if directory has any timestamp subdirectories
+            # An entry is stale if its directory has no timestamp subdirectories
+            # (each backup creates a YYYY-MM-DD_HHMMSS subfolder)
             has_timestamps = False
             for subdir in item_dir.iterdir():
                 if subdir.is_dir():
@@ -276,6 +296,8 @@ class BackupIndexManager:
             self._save_index()
 
         return len(stale_filenames)
+
+    # --- Backup File Retrieval ---
 
     def get_backup_timestamps(self, entry: BackupIndexEntry) -> list[Path]:
         """Get all backup timestamp directories for an entry.

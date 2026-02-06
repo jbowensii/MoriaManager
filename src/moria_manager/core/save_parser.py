@@ -29,6 +29,9 @@ from ..logging_config import get_logger
 logger = get_logger("save_parser")
 
 
+# --- Data Models ---
+
+
 @dataclass
 class SaveFileVersion:
     """A single version of a save file (main, fresh, backup, or bad)."""
@@ -40,18 +43,19 @@ class SaveFileVersion:
 
     @property
     def filename(self) -> str:
+        """The on-disk filename (basename only)."""
         return self.file_path.name
 
     @property
     def display_name(self) -> str:
-        """Human-readable name for this version."""
+        """Human-readable label including version type and extension hint."""
         if self.version_type == "main":
             return "Current Save (.sav)"
-        elif self.version_type == "fresh":
+        if self.version_type == "fresh":
             return "Fresh Backup (.sav.fresh)"
-        elif self.version_type == "backup":
+        if self.version_type == "backup":
             return f"Backup #{self.backup_number:02d} (.{self.backup_number:02d}.bak)"
-        elif self.version_type == "bad":
+        if self.version_type == "bad":
             return f"Marked Bad #{self.backup_number:02d} (.sav.{self.backup_number:02d}.bad)"
         return self.filename
 
@@ -68,6 +72,7 @@ class WorldSaveInfo:
 
     @property
     def filename(self) -> str:
+        """The on-disk filename (basename only)."""
         return self.file_path.name
 
     @property
@@ -81,7 +86,7 @@ class WorldSaveInfo:
         - MW_ABC123.sav.01.bad -> MW_ABC123
         """
         name = self.file_path.name
-        # Extract everything before the first '.'
+        # Extract everything before the first '.' to strip all suffixes
         if '.' in name:
             return name.split('.')[0]
         return name
@@ -95,10 +100,12 @@ class WorldWithVersions:
 
     @property
     def world_name(self) -> str:
+        """The in-game world name extracted from the save file."""
         return self.info.world_name
 
     @property
     def base_name(self) -> str:
+        """The save file base name (e.g., 'MW_ABC123')."""
         return self.info.base_name
 
     @property
@@ -133,6 +140,7 @@ class CharacterSaveInfo:
 
     @property
     def filename(self) -> str:
+        """The on-disk filename (basename only)."""
         return self.file_path.name
 
     @property
@@ -146,7 +154,7 @@ class CharacterSaveInfo:
         - MC_ABC123.sav.01.bad -> MC_ABC123
         """
         name = self.file_path.name
-        # Extract everything before the first '.'
+        # Extract everything before the first '.' to strip all suffixes
         if '.' in name:
             return name.split('.')[0]
         return name
@@ -165,10 +173,12 @@ class CharacterWithVersions:
 
     @property
     def display_name(self) -> str:
+        """The character name, or base filename if name is unavailable."""
         return self.info.display_name
 
     @property
     def base_name(self) -> str:
+        """The save file base name (e.g., 'MC_ABC123')."""
         return self.info.base_name
 
     @property
@@ -194,18 +204,24 @@ class CharacterWithVersions:
         return sorted(backups, key=lambda v: v.backup_number or 0)
 
 
+# --- Save File Parser ---
+
+
 class MoriaSaveParser:
     """Parser for Return to Moria save game files.
 
     Handles the GVAS format with CSDC compression used by UE4.27.
+    The binary layout is: GVAS header -> one or more CSDC compressed blocks,
+    each containing zlib-compressed property data with SG_* tagged fields.
     """
 
-    # Save file prefixes
+    # Save file prefixes (Moria convention: MW=world, MC=character, MA=account)
     WORLD_PREFIX = "MW_"
     CHARACTER_PREFIX = "MC_"
     ACCOUNT_PREFIX = "MA_"
 
-    # Property keys in the save data
+    # Property keys embedded in the decompressed save data.
+    # These short tags are Moria-specific identifiers, not standard UE4 names.
     PROP_WORLD_NAME = b"SG_WN"  # World Name
     PROP_WORLD_GUID = b"SG_WGUID"  # World GUID
     PROP_WORLD_SEED = b"SG_WS"  # World Seed
@@ -213,6 +229,8 @@ class MoriaSaveParser:
 
     def __init__(self):
         pass
+
+    # --- Single-File Parsing ---
 
     def parse_world_save(self, file_path: Path) -> Optional[WorldSaveInfo]:
         """Parse a world save file and extract metadata.
@@ -296,6 +314,8 @@ class MoriaSaveParser:
             logger.warning("Error parsing character save %s: %s", file_path, e)
             return None
 
+    # --- Directory Scanning (Simple Lists) ---
+
     def get_world_saves(self, save_directory: Path) -> list[WorldSaveInfo]:
         """Get all world saves from a directory.
 
@@ -348,7 +368,11 @@ class MoriaSaveParser:
         characters.sort(key=lambda c: c.modified_time or datetime.min, reverse=True)
         return characters
 
-    def get_worlds_with_versions(self, save_directory: Path) -> list[WorldWithVersions]:
+    # --- Directory Scanning (Grouped with Versions) ---
+
+    def get_worlds_with_versions(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+        self, save_directory: Path
+    ) -> list[WorldWithVersions]:
         """Get all world saves with their related file versions.
 
         Scans the directory for MW_* files, parses them for world names,
@@ -373,13 +397,17 @@ class MoriaSaveParser:
             base_name = world_info.base_name
             world_map[base_name] = WorldWithVersions(info=world_info, versions=[])
 
-        # Patterns for related files
+        # Regex patterns to identify the three auxiliary file types by extension.
+        # Group(1) captures the base name; group(2) (if present) captures the number.
         backup_pattern = re.compile(r"^(MW_[A-F0-9]+)\.(\d{2})\.bak$", re.IGNORECASE)
         fresh_pattern = re.compile(r"^(MW_[A-F0-9]+)\.sav\.fresh$", re.IGNORECASE)
         bad_pattern = re.compile(r"^(MW_[A-F0-9]+)\.sav\.(\d{2})\.bad$", re.IGNORECASE)
 
-        # Collect orphan files (files without a main .sav) to process later
-        orphan_files: dict[str, list[tuple[Path, str, Optional[int]]]] = {}  # base_name -> [(path, type, num)]
+        # Orphan files belong to a base name that has no main .sav on disk.
+        # They are collected here and processed afterward to create synthetic entries.
+        orphan_files: dict[
+            str, list[tuple[Path, str, Optional[int]]]
+        ] = {}
 
         for file_path in save_directory.iterdir():
             if not file_path.is_file():
@@ -477,7 +505,10 @@ class MoriaSaveParser:
             best_file = None
 
             # Prefer fresh > backup > bad for parsing
-            for file_path, file_type, _ in sorted(files, key=lambda x: {"fresh": 0, "backup": 1, "bad": 2}.get(x[1], 3)):
+            priority = {"fresh": 0, "backup": 1, "bad": 2}
+            for file_path, file_type, _ in sorted(
+                files, key=lambda x, p=priority: p.get(x[1], 3)
+            ):
                 parsed = self.parse_world_save(file_path)
                 if parsed and parsed.world_name:
                     world_name = parsed.world_name
@@ -545,7 +576,9 @@ class MoriaSaveParser:
         worlds = self.get_world_saves(save_directory)
         return {world.base_name: world.world_name for world in worlds}
 
-    def get_characters_with_versions(self, save_directory: Path) -> list[CharacterWithVersions]:
+    def get_characters_with_versions(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+        self, save_directory: Path
+    ) -> list[CharacterWithVersions]:
         """Get all character saves with their related file versions.
 
         Scans the directory for MC_* files and groups all related files
@@ -672,7 +705,10 @@ class MoriaSaveParser:
             char_name = None
             best_file = None
 
-            for file_path, file_type, _ in sorted(files, key=lambda x: {"fresh": 0, "backup": 1, "bad": 2}.get(x[1], 3)):
+            priority = {"fresh": 0, "backup": 1, "bad": 2}
+            for file_path, file_type, _ in sorted(
+                files, key=lambda x, p=priority: p.get(x[1], 3)
+            ):
                 parsed = self.parse_character_save(file_path)
                 if parsed and parsed.character_name:
                     char_name = parsed.character_name
@@ -725,8 +761,14 @@ class MoriaSaveParser:
 
         return result
 
+    # --- Binary Format Parsing (GVAS / CSDC / Property Extraction) ---
+
     def _decompress_first_csdc(self, data: bytes) -> Optional[bytes]:
         """Find and decompress the first CSDC block.
+
+        CSDC blocks have a variable-length header before the zlib stream.
+        The header size differs between game versions, so we brute-force
+        several known offsets and validate the result contains SG_* tags.
 
         Args:
             data: Raw save file data
@@ -738,7 +780,7 @@ class MoriaSaveParser:
         if csdc_pos == -1:
             return None
 
-        # Try various offsets for zlib data (header size varies)
+        # Brute-force known header sizes (60 is most common in current builds)
         for offset_add in [60, 24, 36, 48, 52, 56, 64]:
             try:
                 decompressed = zlib.decompress(data[csdc_pos + offset_add:])
@@ -750,7 +792,9 @@ class MoriaSaveParser:
 
         return None
 
-    def _extract_character_name(self, data: bytes) -> Optional[str]:
+    def _extract_character_name(  # pylint: disable=too-many-return-statements
+        self, data: bytes
+    ) -> Optional[str]:
         """Extract character name from a character save file.
 
         Character saves have multiple CSDC blocks. The block containing
@@ -766,44 +810,46 @@ class MoriaSaveParser:
         Returns:
             Character name or None if extraction fails
         """
-        # Find all CSDC blocks and look for one with SDCP marker
+        # Walk through all CSDC blocks in the file until we find the one
+        # whose decompressed payload starts with "SDCP" (Save Data Character Payload)
         pos = 0
         while True:
             csdc_pos = data.find(b"CSDC", pos)
             if csdc_pos == -1:
                 return None
 
-            # Try to decompress this block
+            # Decompress using the standard 60-byte header offset
             try:
                 decompressed = zlib.decompress(data[csdc_pos + 60:])
             except zlib.error:
                 pos = csdc_pos + 4
                 continue
 
-            # Check for SDCP marker at offset 4
+            # SDCP marker at byte 4 identifies the character-data block
             if len(decompressed) >= 40 and decompressed[4:8] == b"SDCP":
-                # Found the SDCP block - extract name
                 try:
-                    # Name length is at offset 29 (signed int32)
+                    # SDCP layout: [4 bytes preamble][SDCP][21 bytes header][int32 name_len][name bytes...]
+                    # Name length at offset 29 is a signed int32 that also encodes the string type
                     name_len = struct.unpack("<i", decompressed[29:33])[0]
 
                     if name_len > 0:
-                        # Positive: UTF-8 encoded, length is byte count including null
-                        if name_len > 100:  # Sanity check
+                        # Positive: UTF-8 string; length = byte count including null terminator
+                        if name_len > 100:
                             return None
                         name = decompressed[33:33 + name_len - 1].decode("utf-8", errors="replace")
                         return name
-                    elif name_len < 0:
-                        # Negative: UTF-16-LE encoded, abs(length) is char count including null
+                    if name_len < 0:
+                        # Negative: UTF-16-LE string; abs(length) = char count including null
                         char_count = abs(name_len)
-                        if char_count > 100:  # Sanity check
+                        if char_count > 100:
                             return None
-                        byte_count = char_count * 2
-                        # Exclude null terminator (2 bytes for UTF-16)
-                        name = decompressed[33:33 + byte_count - 2].decode("utf-16-le", errors="replace")
+                        byte_count = char_count * 2  # 2 bytes per UTF-16 character
+                        raw = decompressed[33:33 + byte_count - 2]  # strip null terminator
+                        name = raw.decode(
+                            "utf-16-le", errors="replace"
+                        )
                         return name
-                    else:
-                        return None
+                    return None
                 except (struct.error, IndexError, UnicodeDecodeError):
                     return None
 
@@ -813,11 +859,12 @@ class MoriaSaveParser:
     def _extract_string_property(self, data: bytes, property_name: bytes) -> Optional[str]:
         """Extract a string property from decompressed save data.
 
-        UE4 string format: property_name + null + type_byte + int32_length + string + null
+        Binary layout of a tagged property in the decompressed stream::
 
-        In UE4, string length encoding:
-        - Positive length: UTF-8 encoded string, length is byte count including null terminator
-        - Negative length: UTF-16-LE encoded string, abs(length) is character count including null
+            [property_name bytes] [0x00] [type_byte] [int32 length] [string bytes] [0x00]
+
+        The type byte 0x06 means "string". The sign of the int32 length
+        determines encoding: positive = UTF-8, negative = UTF-16-LE.
 
         Args:
             data: Decompressed save data
@@ -831,27 +878,26 @@ class MoriaSaveParser:
             return None
 
         try:
-            # Skip property name + null terminator
+            # Advance past the property name and its null terminator
             pos += len(property_name) + 1
 
-            # Read type byte (0x06 for string)
+            # Type byte: 0x06 = string, 0x02 = int32
             type_byte = data[pos]
             pos += 1
 
             if type_byte == 0x06:  # String type
-                # Read length as signed int32 (negative = UTF-16)
+                # Signed int32: positive = UTF-8 byte count, negative = UTF-16 char count
                 str_len = struct.unpack("<i", data[pos:pos + 4])[0]
                 pos += 4
 
                 if str_len < 0:
-                    # Negative length indicates UTF-16-LE encoding
-                    # abs(length) is character count including null terminator
+                    # UTF-16-LE: each char is 2 bytes; length includes null terminator
                     char_count = -str_len
-                    byte_count = char_count * 2  # UTF-16 = 2 bytes per char
-                    raw_bytes = data[pos:pos + byte_count - 2]  # Exclude null terminator (2 bytes)
+                    byte_count = char_count * 2
+                    raw_bytes = data[pos:pos + byte_count - 2]  # exclude 2-byte null
                     value = raw_bytes.decode("utf-16-le", errors="replace")
                 else:
-                    # Positive length is UTF-8, length includes null terminator
+                    # UTF-8: length is byte count including 1-byte null terminator
                     value = data[pos:pos + str_len - 1].decode("utf-8", errors="replace")
 
                 return value
@@ -863,6 +909,9 @@ class MoriaSaveParser:
 
     def _extract_int_property(self, data: bytes, property_name: bytes) -> Optional[int]:
         """Extract an integer property from decompressed save data.
+
+        Same binary layout as string properties, but type byte 0x02 indicates
+        an unsigned 32-bit integer (little-endian) immediately follows.
 
         Args:
             data: Decompressed save data
@@ -876,14 +925,12 @@ class MoriaSaveParser:
             return None
 
         try:
-            # Skip property name + null terminator
-            pos += len(property_name) + 1
+            pos += len(property_name) + 1  # skip name + null terminator
 
-            # Read type byte
             type_byte = data[pos]
             pos += 1
 
-            if type_byte == 0x02:  # Int32 type
+            if type_byte == 0x02:  # Unsigned int32 (little-endian)
                 value = struct.unpack("<I", data[pos:pos + 4])[0]
                 return value
 
@@ -893,7 +940,9 @@ class MoriaSaveParser:
         return None
 
 
-# Convenience function
+# --- Convenience Function ---
+
+
 def get_world_name(save_file: Path) -> Optional[str]:
     """Quick helper to get just the world name from a save file.
 

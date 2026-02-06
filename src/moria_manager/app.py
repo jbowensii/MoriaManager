@@ -24,7 +24,7 @@ from .config.manager import ConfigurationManager
 from .core.game_detector import GameDetector
 from .gui.config_dialog import ConfigDialog
 from .gui.main_window import MainWindow
-from .logging_config import setup_logging, get_logger
+from .logging_config import setup_logging
 from . import __version__
 
 
@@ -98,7 +98,7 @@ def main():
     """Application entry point."""
     # Initialize logging first
     logger = setup_logging(debug="--debug" in sys.argv)
-    logger.info(f"Starting Moria Manager v{__version__}")
+    logger.info("Starting Moria Manager v%s", __version__)
 
     try:
         app = MoriaManagerApp()

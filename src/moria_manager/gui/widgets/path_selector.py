@@ -7,14 +7,14 @@ from typing import Callable, Optional
 import customtkinter as ctk
 
 
-class PathSelector(ctk.CTkFrame):
+class PathSelector(ctk.CTkFrame):  # pylint: disable=too-many-ancestors
     """A widget for selecting file or directory paths.
 
     Combines a text entry field with a browse button that opens
     a file dialog for path selection.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         master,
         label: str = "Path:",
@@ -94,7 +94,7 @@ class PathSelector(ctk.CTkFrame):
         if selected:
             self.set_path(Path(selected))
 
-    def _on_entry_change(self, *args):
+    def _on_entry_change(self, *_args):
         """Handle entry text changes."""
         self._update_status()
         if self.on_change:
