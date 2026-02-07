@@ -459,6 +459,12 @@ class ModsMixin:
         # Get pak_path from server config
         pak_path = server.get("pak_path", "")
         server_name = server.get("name", "Unknown")
+        protocol = server.get("protocol", "FTP")
+
+        logger.debug(
+            "_refresh_mods_list_from_server: server=%s, protocol=%s, pak_path='%s'",
+            server_name, protocol, pak_path
+        )
 
         if not pak_path:
             placeholder = ctk.CTkLabel(
@@ -675,7 +681,14 @@ class ModsMixin:
 
         server = self.current_server
         pak_path = server.get("pak_path", "")
+        protocol = server.get("protocol", "FTP")
+        server_name = server.get("name", "Unknown")
         mod_name = item_path.stem if not is_dir else item_path.name  # Directories use full name
+
+        logger.debug(
+            "_delete_mod_from_server: server=%s, protocol=%s, pak_path='%s', mod_name='%s', is_dir=%s",
+            server_name, protocol, pak_path, mod_name, is_dir
+        )
 
         if not pak_path:
             self._set_status("No Paks path configured for server")
@@ -2200,8 +2213,6 @@ class ModsMixin:
         For loose ``.pak`` mods, the three companion files are uploaded
         directly into the server's Paks root.
         """
-        logger.info("_install_mod_to_server called with: %s", item_path)
-
         if not self.current_server:
             self._set_status("No server selected")
             return
@@ -2209,8 +2220,12 @@ class ModsMixin:
         server = self.current_server
         pak_path = server.get("pak_path", "")
         server_name = server.get("name", "Unknown")
+        protocol = server.get("protocol", "FTP")
 
-        logger.info("Server: %s, pak_path: %s", server_name, pak_path)
+        logger.debug(
+            "_install_mod_to_server: server=%s, protocol=%s, pak_path='%s', item_path='%s'",
+            server_name, protocol, pak_path, item_path
+        )
 
         if not pak_path:
             self._set_status("No Paks path configured for server")

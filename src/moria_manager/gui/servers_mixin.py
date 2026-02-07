@@ -917,6 +917,11 @@ class ServersMixin:
         protocol = server.get("protocol", "FTP")
         files = []
 
+        logger.debug(
+            "_server_list_files: server=%s, protocol=%s, remote_path='%s', pattern='%s'",
+            server_name, protocol, remote_path, pattern
+        )
+
         try:
             if protocol == "FTP":
                 ftp = self.ftp_connections.get(server_name)
@@ -934,18 +939,23 @@ class ServersMixin:
             else:  # SFTP
                 sftp = self.sftp_connections.get(server_name)
                 if not sftp:
+                    logger.debug("_server_list_files: No SFTP connection for %s", server_name)
                     return []
 
                 # List directory and filter
+                logger.debug("_server_list_files: Calling sftp.listdir('%s')", remote_path)
                 all_files = sftp.listdir(remote_path)
+                logger.debug("_server_list_files: sftp.listdir returned %d entries", len(all_files))
                 for f in all_files:
                     if fnmatch.fnmatch(f.lower(), pattern.lower()):
                         files.append(f)
 
         except Exception as e:
             logger.error("Error listing files on %s: %s", server_name, e)
+            logger.debug("_server_list_files: Exception details - type=%s, args=%s", type(e).__name__, e.args)
             self._set_status(f"Error listing files: {e}")
 
+        logger.debug("_server_list_files: Returning %d files matching pattern", len(files))
         return files
 
     def _server_list_entries(self, server: dict, remote_path: str) -> list[tuple[str, bool]]:
@@ -963,6 +973,11 @@ class ServersMixin:
         server_name = server["name"]
         protocol = server.get("protocol", "FTP")
         entries = []
+
+        logger.debug(
+            "_server_list_entries: server=%s, protocol=%s, remote_path='%s'",
+            server_name, protocol, remote_path
+        )
 
         try:
             if protocol == "FTP":
@@ -1000,19 +1015,23 @@ class ServersMixin:
             else:  # SFTP
                 sftp = self.sftp_connections.get(server_name)
                 if not sftp:
+                    logger.debug("_server_list_entries: No SFTP connection for %s", server_name)
                     return []
 
                 # SFTP's listdir_attr returns SFTPAttributes with st_mode,
                 # letting us check the directory bit without extra round trips.
+                logger.debug("_server_list_entries: Calling sftp.listdir_attr('%s')", remote_path)
                 for attr in sftp.listdir_attr(remote_path):
                     name = attr.filename
                     if name in (".", ".."):
                         continue
                     is_dir = stat.S_ISDIR(attr.st_mode)
                     entries.append((name, is_dir))
+                logger.debug("_server_list_entries: Found %d entries", len(entries))
 
         except Exception as e:
             logger.error("Error listing entries on %s: %s", server_name, e)
+            logger.debug("_server_list_entries: Exception details - type=%s, args=%s", type(e).__name__, e.args)
             self._set_status(f"Error listing entries: {e}")
 
         return entries
@@ -1031,27 +1050,38 @@ class ServersMixin:
         server_name = server["name"]
         protocol = server.get("protocol", "FTP")
 
+        logger.debug(
+            "_server_download_file: server=%s, protocol=%s, remote_path='%s', local_path='%s'",
+            server_name, protocol, remote_path, local_path
+        )
+
         try:
             if protocol == "FTP":
                 ftp = self.ftp_connections.get(server_name)
                 if not ftp:
+                    logger.debug("_server_download_file: No FTP connection for %s", server_name)
                     return False
 
                 # FTP binary download via RETR command; writes chunks
                 # to local file through the callback.
                 with open(local_path, 'wb') as f:
                     ftp.retrbinary(f'RETR {remote_path}', f.write)
+                logger.debug("_server_download_file: FTP download successful")
                 return True
             # SFTP transfers the entire file in one call
             sftp = self.sftp_connections.get(server_name)
             if not sftp:
+                logger.debug("_server_download_file: No SFTP connection for %s", server_name)
                 return False
 
+            logger.debug("_server_download_file: Calling sftp.get('%s', '%s')", remote_path, local_path)
             sftp.get(remote_path, local_path)
+            logger.debug("_server_download_file: SFTP download successful")
             return True
 
         except Exception as e:
             logger.error("Error downloading from %s: %s", server_name, e)
+            logger.debug("_server_download_file: Exception details - type=%s, args=%s", type(e).__name__, e.args)
             self._set_status(f"Download failed: {e}")
             return False
 
@@ -1069,26 +1099,37 @@ class ServersMixin:
         server_name = server["name"]
         protocol = server.get("protocol", "FTP")
 
+        logger.debug(
+            "_server_upload_file: server=%s, protocol=%s, local_path='%s', remote_path='%s'",
+            server_name, protocol, local_path, remote_path
+        )
+
         try:
             if protocol == "FTP":
                 ftp = self.ftp_connections.get(server_name)
                 if not ftp:
+                    logger.debug("_server_upload_file: No FTP connection for %s", server_name)
                     return False
 
                 # FTP binary upload via STOR command
                 with open(local_path, 'rb') as f:
                     ftp.storbinary(f'STOR {remote_path}', f)
+                logger.debug("_server_upload_file: FTP upload successful")
                 return True
             # SFTP upload is a single put() call
             sftp = self.sftp_connections.get(server_name)
             if not sftp:
+                logger.debug("_server_upload_file: No SFTP connection for %s", server_name)
                 return False
 
+            logger.debug("_server_upload_file: Calling sftp.put('%s', '%s')", local_path, remote_path)
             sftp.put(local_path, remote_path)
+            logger.debug("_server_upload_file: SFTP upload successful")
             return True
 
         except Exception as e:
             logger.error("Error uploading to %s: %s", server_name, e)
+            logger.debug("_server_upload_file: Exception details - type=%s, args=%s", type(e).__name__, e.args)
             self._set_status(f"Upload failed: {e}")
             return False
 
@@ -1105,24 +1146,35 @@ class ServersMixin:
         server_name = server["name"]
         protocol = server.get("protocol", "FTP")
 
+        logger.debug(
+            "_server_delete_file: server=%s, protocol=%s, remote_path='%s'",
+            server_name, protocol, remote_path
+        )
+
         try:
             if protocol == "FTP":
                 ftp = self.ftp_connections.get(server_name)
                 if not ftp:
+                    logger.debug("_server_delete_file: No FTP connection for %s", server_name)
                     return False
 
                 ftp.delete(remote_path)
+                logger.debug("_server_delete_file: FTP delete successful")
                 return True
             # SFTP
             sftp = self.sftp_connections.get(server_name)
             if not sftp:
+                logger.debug("_server_delete_file: No SFTP connection for %s", server_name)
                 return False
 
+            logger.debug("_server_delete_file: Calling sftp.remove('%s')", remote_path)
             sftp.remove(remote_path)
+            logger.debug("_server_delete_file: SFTP delete successful")
             return True
 
         except Exception as e:
             logger.error("Error deleting on %s: %s", server_name, e)
+            logger.debug("_server_delete_file: Exception details - type=%s, args=%s", type(e).__name__, e.args)
             self._set_status(f"Delete failed: {e}")
             return False
 
@@ -1140,24 +1192,35 @@ class ServersMixin:
         server_name = server["name"]
         protocol = server.get("protocol", "FTP")
 
+        logger.debug(
+            "_server_rename_file: server=%s, protocol=%s, old='%s', new='%s'",
+            server_name, protocol, old_remote_path, new_remote_path
+        )
+
         try:
             if protocol == "FTP":
                 ftp = self.ftp_connections.get(server_name)
                 if not ftp:
+                    logger.debug("_server_rename_file: No FTP connection for %s", server_name)
                     return False
 
                 ftp.rename(old_remote_path, new_remote_path)
+                logger.debug("_server_rename_file: FTP rename successful")
                 return True
             # SFTP
             sftp = self.sftp_connections.get(server_name)
             if not sftp:
+                logger.debug("_server_rename_file: No SFTP connection for %s", server_name)
                 return False
 
+            logger.debug("_server_rename_file: Calling sftp.rename('%s', '%s')", old_remote_path, new_remote_path)
             sftp.rename(old_remote_path, new_remote_path)
+            logger.debug("_server_rename_file: SFTP rename successful")
             return True
 
         except Exception as e:
             logger.error("Error renaming on %s: %s", server_name, e)
+            logger.debug("_server_rename_file: Exception details - type=%s, args=%s", type(e).__name__, e.args)
             self._set_status(f"Rename failed: {e}")
             return False
 
@@ -1174,10 +1237,16 @@ class ServersMixin:
         server_name = server["name"]
         protocol = server.get("protocol", "FTP")
 
+        logger.debug(
+            "_server_mkdir: server=%s, protocol=%s, remote_path='%s'",
+            server_name, protocol, remote_path
+        )
+
         try:
             if protocol == "FTP":
                 ftp = self.ftp_connections.get(server_name)
                 if not ftp:
+                    logger.debug("_server_mkdir: No FTP connection for %s", server_name)
                     return False
 
                 try:
@@ -2580,6 +2649,19 @@ class ServersMixin:
                 new_name, host, port, protocol,
                 username, password, config_path,
                 pak_path, save_path)
+
+            # Update current_server if this is the server being edited
+            if self.current_server and self.current_server.get("name") == original_name:
+                self.current_server["name"] = new_name
+                self.current_server["host"] = host
+                self.current_server["port"] = port
+                self.current_server["protocol"] = protocol
+                self.current_server["username"] = username
+                self.current_server["password"] = password
+                self.current_server["config_path"] = config_path
+                self.current_server["pak_path"] = pak_path
+                self.current_server["save_path"] = save_path
+
             dialog.destroy()
             self._refresh_tabs()
             self._set_status(f"Server '{new_name}' updated successfully")

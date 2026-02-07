@@ -111,6 +111,12 @@ class BackupMixin:
         server = self.current_server
         server_name = server["name"]
         save_path = server.get("save_path", "")
+        protocol = server.get("protocol", "FTP")
+
+        logger.debug(
+            "_refresh_item_list_from_server: server=%s, protocol=%s, save_path='%s'",
+            server_name, protocol, save_path
+        )
 
         # Check for save path
         if not save_path:
@@ -608,6 +614,11 @@ class BackupMixin:
                     new_remote = (
                         f"{save_path}{sep}{base_name}.sav")
 
+                    logger.debug(
+                        "_restore_as_main: server=%s, old_remote='%s', new_remote='%s'",
+                        server.get("name"), old_remote, new_remote
+                    )
+
                     if self._server_rename_file(server, old_remote, new_remote):
                         # Also rename locally
                         version.file_path.rename(new_path)
@@ -899,6 +910,12 @@ class BackupMixin:
         server_name = server["name"]
         save_path = server.get("save_path", "")
         base_name = item.base_name
+        protocol = server.get("protocol", "FTP")
+
+        logger.debug(
+            "_delete_world_on_server: server=%s, protocol=%s, save_path='%s', base_name='%s'",
+            server_name, protocol, save_path, base_name
+        )
 
         if not save_path:
             self._set_status("Cannot delete: no server save path configured")

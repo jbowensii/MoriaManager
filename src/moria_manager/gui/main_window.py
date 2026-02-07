@@ -184,12 +184,13 @@ class MainWindow(
             except (RuntimeError, OSError, tk.TclError) as e:
                 logger.debug("tkdnd not available: %s", e)
 
-        self._set_app_icon()
-
         # Store overlay images to prevent garbage collection
         self._overlay_images = []
 
         self._create_ui()
+
+        # Set app icon after UI is created to ensure window is fully ready
+        self._set_app_icon()
 
         # Initialize mode UI (ensure backup mode is properly shown on startup)
         self._update_toolbar_button_states()
@@ -206,10 +207,25 @@ class MainWindow(
         """Set the application icon on the main window title bar."""
         try:
             icon_path = get_asset_path("icons/app_icon.ico")
+            logger.debug("Setting app icon from: %s (exists=%s)", icon_path, icon_path.exists())
             if icon_path.exists():
-                self.iconbitmap(str(icon_path))
+                icon_path_str = str(icon_path)
+                # Set icon using wm_iconbitmap with default=True for better Windows support
+                self.wm_iconbitmap(default=icon_path_str)
+                self.iconbitmap(icon_path_str)
+                # Also set it again after a delay to ensure it persists
+                self.after(100, lambda: self._apply_icon_safe(icon_path_str))
+                logger.debug("App icon set successfully")
         except (OSError, tk.TclError) as e:
             logger.debug("Could not set app icon: %s", e)
+
+    def _apply_icon_safe(self, icon_path_str: str):
+        """Apply icon after window is fully initialized."""
+        try:
+            if self.winfo_exists():
+                self.iconbitmap(icon_path_str)
+        except (OSError, tk.TclError):
+            pass
 
     def _set_dialog_icon(self, dialog):
         """Set the application icon on a dialog window."""
