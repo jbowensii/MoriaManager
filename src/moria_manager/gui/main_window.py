@@ -11,7 +11,7 @@ from .. import __app_name__, __version__
 from ..assets.loader import get_asset_path
 from ..config.manager import ConfigurationManager
 from ..config.schema import Installation
-from ..core.backup_index import BackupIndexManager, BackupIndexEntry
+from ..core.backup_index import BackupIndexEntry
 from ..core.save_parser import (
     MoriaSaveParser, WorldWithVersions, CharacterWithVersions, SaveFileVersion
 )
@@ -353,7 +353,6 @@ class MainWindow(
         The panes themselves use opaque dark colors for proper widget rendering.
         """
         # No overlays needed - background shows in gaps, panes are opaque
-        pass
 
     def _on_window_resize(self, event):
         """Handle window resize to update background."""
@@ -1513,7 +1512,9 @@ class MainWindow(
         self.content_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
         # Show materials pane spanning both columns
-        self.materials_pane.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=PADDING["medium"])
+        self.materials_pane.grid(
+            row=0, column=0, columnspan=2, sticky="nsew", padx=PADDING["medium"]
+        )
 
         self._set_status("Switched to Materials Calculator")
 

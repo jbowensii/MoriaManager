@@ -1,4 +1,4 @@
-"""Generate procedural placeholder icons for the application.
+﻿"""Generate procedural placeholder icons for the application.
 
 These are used as fallbacks when PNG icon assets are not available.
 Each function draws a simple vector icon using Pillow's ImageDraw.
@@ -119,7 +119,7 @@ def create_restore_icon(size: int = 32) -> Image.Image:
 
 
 def create_app_icon(size: int = 256) -> Image.Image:
-    """Create the application icon — blue circle with a stylized 'M' for Moria."""
+    """Create the application icon â€” blue circle with a stylized 'M' for Moria."""
     img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
@@ -168,18 +168,18 @@ def create_materials_icon(size: int = 32) -> Image.Image:
     draw = ImageDraw.Draw(img)
 
     margin = size // 8
-    
+
     # Sack body (rounded bottom rectangle shape)
     sack_top = margin + size // 6
     sack_bottom = size - margin
     sack_left = margin + 2
     sack_right = size - margin - 2
     sack_width = sack_right - sack_left
-    
+
     # Draw main sack body - light gray fill with dark outline
     body_color = (200, 200, 200, 255)  # Light gray
     outline_color = (60, 60, 60, 255)  # Dark gray
-    
+
     # Draw sack body as rounded rectangle
     draw.rounded_rectangle(
         [sack_left, sack_top, sack_right, sack_bottom],
@@ -188,12 +188,12 @@ def create_materials_icon(size: int = 32) -> Image.Image:
         outline=outline_color,
         width=2
     )
-    
+
     # Draw tied top/neck of sack
     neck_width = sack_width // 2
     neck_left = sack_left + sack_width // 4
     neck_top = margin
-    
+
     # Neck/tied part (narrower rectangle)
     draw.rectangle(
         [neck_left + 2, neck_top, neck_left + neck_width - 2, sack_top + 2],
@@ -201,7 +201,7 @@ def create_materials_icon(size: int = 32) -> Image.Image:
         outline=outline_color,
         width=1
     )
-    
+
     # Draw tie/knot (horizontal line with bulge)
     tie_y = sack_top - 1
     draw.line(
@@ -209,12 +209,12 @@ def create_materials_icon(size: int = 32) -> Image.Image:
         fill=outline_color,
         width=2
     )
-    
+
     # Draw small decorative lines on sack (texture)
     line_color = (120, 120, 120, 255)
     center_x = (sack_left + sack_right) // 2
     center_y = (sack_top + sack_bottom) // 2
-    
+
     # Three horizontal lines for texture
     line_length = sack_width // 3
     for offset in [-size // 8, 0, size // 8]:

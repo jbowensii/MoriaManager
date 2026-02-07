@@ -836,7 +836,9 @@ class MoriaSaveParser:
                         # Positive: UTF-8 string; length = byte count including null terminator
                         if name_len > 100:
                             return None
-                        name = decompressed[33:33 + name_len - 1].decode("utf-8", errors="replace")
+                        name = decompressed[33:33 + name_len - 1].decode(
+                            "utf-8", errors="replace"
+                        )
                         return name
                     if name_len < 0:
                         # Negative: UTF-16-LE string; abs(length) = char count including null

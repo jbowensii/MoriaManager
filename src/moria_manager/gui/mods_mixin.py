@@ -686,7 +686,8 @@ class ModsMixin:
         mod_name = item_path.stem if not is_dir else item_path.name  # Directories use full name
 
         logger.debug(
-            "_delete_mod_from_server: server=%s, protocol=%s, pak_path='%s', mod_name='%s', is_dir=%s",
+            "_delete_mod_from_server: server=%s, protocol=%s, "
+            "pak_path='%s', mod_name='%s', is_dir=%s",
             server_name, protocol, pak_path, mod_name, is_dir
         )
 

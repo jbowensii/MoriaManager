@@ -1943,7 +1943,6 @@ class ServersMixin:
     def _show_ini_editor(self, server: dict, config_path: str, parent_dialog):
         """Show the INI Editor dialog for MoriaServerConfig.ini."""
         import tempfile
-        from configparser import ConfigParser
 
         server_name = server["name"]
 

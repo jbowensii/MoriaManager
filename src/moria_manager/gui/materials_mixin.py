@@ -2,20 +2,16 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 import customtkinter as ctk
 
+from ..core.recipes_data_embedded import get_recipes_data
 from ..logging_config import get_logger
 from .styles import FONTS, PADDING
 
 logger = get_logger("materials_mixin")
 
-# Path to recipes data file
-RECIPES_FILE = Path(__file__).parent.parent.parent.parent / "helper" / "recipes_output.json"
 
-
+# pylint: disable=too-many-instance-attributes,too-few-public-methods
 class MaterialsMixin:
     """Mixin providing the Materials Calculator tab for MainWindow.
 
@@ -52,6 +48,7 @@ class MaterialsMixin:
         self.materials_armor_widgets: list = []  # Store checkbox widgets for clearing
         self.materials_initialized: bool = False
 
+    # pylint: disable=too-many-locals,too-many-statements
     def _initialize_materials_ui(self):
         """Initialize the materials calculator UI (called on first use for lazy loading)."""
         if self.materials_initialized:
@@ -66,7 +63,9 @@ class MaterialsMixin:
         header_frame = ctk.CTkFrame(self.materials_pane, fg_color="transparent")
         header_frame.pack(fill="x", padx=PADDING["small"], pady=PADDING["small"])
 
-        header_label = ctk.CTkLabel(header_frame, text="Materials Calculator", font=FONTS["heading"])
+        header_label = ctk.CTkLabel(
+            header_frame, text="Materials Calculator", font=FONTS["heading"]
+        )
         header_label.pack(side="left")
 
         # Options row: Dwarves and Game Type
@@ -144,7 +143,10 @@ class MaterialsMixin:
             scrollbar_button_color=("gray50", "gray60"),
             scrollbar_button_hover_color=("gray40", "gray50")
         )
-        self.weapons_scroll.pack(fill="both", expand=True, padx=PADDING["small"], pady=(0, PADDING["small"]))
+        self.weapons_scroll.pack(
+            fill="both", expand=True,
+            padx=PADDING["small"], pady=(0, PADDING["small"])
+        )
 
         # Middle column: Armor
         armor_frame = ctk.CTkFrame(columns_frame, fg_color=("#4a4a4a", "#252525"))
@@ -160,13 +162,18 @@ class MaterialsMixin:
             scrollbar_button_color=("gray50", "gray60"),
             scrollbar_button_hover_color=("gray40", "gray50")
         )
-        self.armor_scroll.pack(fill="both", expand=True, padx=PADDING["small"], pady=(0, PADDING["small"]))
+        self.armor_scroll.pack(
+            fill="both", expand=True,
+            padx=PADDING["small"], pady=(0, PADDING["small"])
+        )
 
         # Right column: Materials
         materials_frame = ctk.CTkFrame(columns_frame, fg_color=("#4a4a4a", "#252525"))
         materials_frame.grid(row=0, column=2, sticky="nsew", padx=(PADDING["small"], 0))
 
-        materials_header = ctk.CTkLabel(materials_frame, text="Materials Needed", font=FONTS["heading"])
+        materials_header = ctk.CTkLabel(
+            materials_frame, text="Materials Needed", font=FONTS["heading"]
+        )
         materials_header.pack(pady=PADDING["small"])
 
         # Scrollable frame for materials results
@@ -176,7 +183,10 @@ class MaterialsMixin:
             scrollbar_button_color=("gray50", "gray60"),
             scrollbar_button_hover_color=("gray40", "gray50")
         )
-        self.materials_results_scroll.pack(fill="both", expand=True, padx=PADDING["small"], pady=(0, PADDING["small"]))
+        self.materials_results_scroll.pack(
+            fill="both", expand=True,
+            padx=PADDING["small"], pady=(0, PADDING["small"])
+        )
 
         # Label to show results (will be updated by Gather)
         self.materials_results_label = ctk.CTkLabel(
@@ -193,22 +203,15 @@ class MaterialsMixin:
         self._populate_armor_list()
 
     def _load_recipes_data(self):
-        """Load weapon and armor recipes from the JSON file."""
-        try:
-            if RECIPES_FILE.exists():
-                with open(RECIPES_FILE, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    self.materials_weapons = data.get("weapons", [])
-                    self.materials_armor = data.get("armor", [])
-                    logger.info(f"Loaded {len(self.materials_weapons)} weapons and {len(self.materials_armor)} armor pieces")
-            else:
-                logger.warning(f"Recipes file not found: {RECIPES_FILE}")
-                self.materials_weapons = []
-                self.materials_armor = []
-        except Exception as e:
-            logger.error(f"Error loading recipes: {e}")
-            self.materials_weapons = []
-            self.materials_armor = []
+        """Load weapon and armor recipes from embedded data."""
+        data = get_recipes_data()
+        self.materials_weapons = data.get("weapons", [])
+        self.materials_armor = data.get("armor", [])
+        logger.info(
+            "Loaded %d weapons and %d armor pieces",
+            len(self.materials_weapons),
+            len(self.materials_armor),
+        )
 
     def _populate_weapons_list(self):
         """Populate the weapons list with checkboxes based on game type."""

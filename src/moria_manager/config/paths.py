@@ -32,6 +32,7 @@ class GamePaths:
     # Configuration file location
     CONFIG_DIR = Path(os.path.expandvars(r"%APPDATA%\MoriaManager"))
     CONFIG_FILE = CONFIG_DIR / "configuration.xml"
+    SETTINGS_INI_FILE = CONFIG_DIR / "settings.ini"
 
     # Index files for backup tracking (stored in config dir, not backup dir)
     WORLDS_INDEX_FILE = CONFIG_DIR / "index_worlds.xml"
