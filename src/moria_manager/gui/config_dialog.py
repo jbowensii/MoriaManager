@@ -5,8 +5,12 @@ import customtkinter as ctk
 from ..config.manager import ConfigurationManager
 from ..config.paths import GamePaths
 from ..config.schema import InstallationType
+from ..logging_config import (
+    get_theme_setting, set_theme_setting,
+    THEME_LIGHT, THEME_DARK, THEME_SYSTEM
+)
 from .styles import (
-    COLORS, FONTS, PADDING, WINDOW_SIZES, DialogIconMixin
+    COLORS, FONTS, PADDING, WINDOW_SIZES, DialogIconMixin, THEME_COLORS
 )
 from .widgets.path_selector import PathSelector
 
@@ -53,6 +57,7 @@ class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
 
         self.backup_path_selector = None
         self.enable_deletion_var = None
+        self.theme_var = None
 
         self._create_ui()
 
@@ -93,38 +98,39 @@ class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
             title_text = "Settings"
             subtitle_text = "Configure your installations and backup preferences"
 
-        title = ctk.CTkLabel(container, text=title_text, font=FONTS["title"])
+        title = ctk.CTkLabel(container, text=title_text, font=FONTS["title"], text_color=THEME_COLORS["text"])
         title.pack(anchor="w", pady=(0, 5))
 
         subtitle = ctk.CTkLabel(
             container, text=subtitle_text,
-            font=FONTS["body"], text_color="gray"
+            font=FONTS["body_bold"], text_color=THEME_COLORS["text_secondary"]
         )
         subtitle.pack(anchor="w", pady=(0, PADDING["large"]))
 
         # Scrollable frame for content - fixed height to leave room for buttons
-        scroll_frame = ctk.CTkScrollableFrame(container, height=420)
+        scroll_frame = ctk.CTkScrollableFrame(container, height=480)
         scroll_frame.pack(fill="x", pady=(0, PADDING["medium"]))
 
         self._create_installation_section(scroll_frame)
         self._create_backup_settings_section(scroll_frame)
+        self._create_appearance_section(scroll_frame)
 
         # Buttons
         self._create_buttons(container)
 
     def _create_installation_section(self, parent):
         """Create the game installations section."""
-        section = ctk.CTkFrame(parent)
+        section = ctk.CTkFrame(parent, fg_color="transparent")
         section.pack(fill="x", pady=(0, PADDING["large"]))
 
-        header = ctk.CTkLabel(section, text="Game Installations", font=FONTS["heading"])
+        header = ctk.CTkLabel(section, text="Game Installations", font=FONTS["heading"], text_color=THEME_COLORS["text"])
         header.pack(anchor="w", padx=PADDING["medium"], pady=PADDING["small"])
 
         desc = ctk.CTkLabel(
             section,
             text="Select which game versions you have installed:",
-            font=FONTS["small"],
-            text_color="gray"
+            font=FONTS["small_bold"],
+            text_color=THEME_COLORS["text_secondary"]
         )
         desc.pack(anchor="w", padx=PADDING["medium"], pady=(0, PADDING["small"]))
 
@@ -134,7 +140,7 @@ class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
 
     def _create_installation_row(self, parent, installation):
         """Create a row for a single installation type."""
-        row = ctk.CTkFrame(parent)
+        row = ctk.CTkFrame(parent, fg_color="transparent")
         row.pack(fill="x", padx=PADDING["medium"], pady=PADDING["small"])
 
         # Checkbox for enabling
@@ -145,7 +151,8 @@ class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
             row,
             text=installation.display_name,
             variable=var,
-            font=FONTS["body"],
+            font=FONTS["body_bold"],
+            text_color=THEME_COLORS["text"],
             command=lambda inst=installation: self._on_installation_toggle(inst.id),
         )
         cb.pack(anchor="w")
@@ -196,7 +203,7 @@ class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
             game_status = ctk.CTkLabel(
                 path_frame,
                 text=game_status_text,
-                font=FONTS["small"],
+                font=FONTS["small_bold"],
                 text_color=game_status_color
             )
             game_status.pack(anchor="w", pady=(2, 0))
@@ -223,7 +230,7 @@ class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
             save_status = ctk.CTkLabel(
                 path_frame,
                 text=save_status_text,
-                font=FONTS["small"],
+                font=FONTS["small_bold"],
                 text_color=save_status_color
             )
             save_status.pack(anchor="w", pady=(2, 0))
@@ -246,10 +253,10 @@ class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
 
     def _create_backup_settings_section(self, parent):
         """Create the backup settings section."""
-        section = ctk.CTkFrame(parent)
+        section = ctk.CTkFrame(parent, fg_color="transparent")
         section.pack(fill="x", pady=(0, PADDING["large"]))
 
-        header = ctk.CTkLabel(section, text="Backup Settings", font=FONTS["heading"])
+        header = ctk.CTkLabel(section, text="Backup Settings", font=FONTS["heading"], text_color=THEME_COLORS["text"])
         header.pack(anchor="w", padx=PADDING["medium"], pady=PADDING["small"])
 
         # Backup location
@@ -278,17 +285,60 @@ class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
             deletion_frame,
             text="Enable Deletion",
             variable=self.enable_deletion_var,
-            font=FONTS["body"],
+            font=FONTS["body_bold"],
+            text_color=THEME_COLORS["text"],
         )
         deletion_cb.pack(anchor="w")
 
         deletion_desc = ctk.CTkLabel(
             deletion_frame,
             text="Allow deleting Worlds, Characters and Mods",
-            font=FONTS["small"],
-            text_color="gray"
+            font=FONTS["small_bold"],
+            text_color=THEME_COLORS["text_secondary"]
         )
         deletion_desc.pack(anchor="w", padx=(25, 0))
+
+    def _create_appearance_section(self, parent):
+        """Create the appearance settings section."""
+        section = ctk.CTkFrame(parent, fg_color="transparent")
+        section.pack(fill="x", pady=(0, PADDING["large"]))
+
+        header = ctk.CTkLabel(section, text="Appearance", font=FONTS["heading"], text_color=THEME_COLORS["text"])
+        header.pack(anchor="w", padx=PADDING["medium"], pady=PADDING["small"])
+
+        # Theme selector
+        theme_frame = ctk.CTkFrame(section, fg_color="transparent")
+        theme_frame.pack(fill="x", padx=PADDING["medium"], pady=PADDING["small"])
+
+        theme_label = ctk.CTkLabel(
+            theme_frame,
+            text="Theme:",
+            font=FONTS["body_bold"],
+            text_color=THEME_COLORS["text"],
+        )
+        theme_label.pack(side="left")
+
+        # Map settings.ini values to display names
+        theme_options = ["Light", "Dark", "Match Windows"]
+        theme_values = [THEME_LIGHT, THEME_DARK, THEME_SYSTEM]
+
+        # Get current theme and find display name
+        current_theme = get_theme_setting()
+        current_display = "Match Windows"
+        for i, val in enumerate(theme_values):
+            if val == current_theme:
+                current_display = theme_options[i]
+                break
+
+        self.theme_var = ctk.StringVar(value=current_display)
+        theme_dropdown = ctk.CTkOptionMenu(
+            theme_frame,
+            variable=self.theme_var,
+            values=theme_options,
+            width=150,
+            font=FONTS["body"],
+        )
+        theme_dropdown.pack(side="left", padx=(10, 0))
 
     def _create_buttons(self, parent):
         """Create the dialog buttons."""
@@ -354,6 +404,19 @@ class ConfigDialog(DialogIconMixin, ctk.CTkToplevel):
 
         # Update enable deletion setting
         self.config_manager.config.settings.enable_deletion = self.enable_deletion_var.get()
+
+        # Update theme setting in settings.ini
+        theme_display = self.theme_var.get()
+        theme_map = {
+            "Light": THEME_LIGHT,
+            "Dark": THEME_DARK,
+            "Match Windows": THEME_SYSTEM,
+        }
+        theme_value = theme_map.get(theme_display, THEME_SYSTEM)
+        set_theme_setting(theme_value)
+
+        # Apply theme immediately
+        ctk.set_appearance_mode(theme_value)
 
         # Mark first run complete
         self.config_manager.config.settings.first_run_complete = True

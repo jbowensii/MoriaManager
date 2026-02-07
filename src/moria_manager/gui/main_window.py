@@ -5,7 +5,7 @@ from typing import Optional
 import tkinter as tk
 
 import customtkinter as ctk
-from PIL import Image, ImageTk, ImageEnhance
+from PIL import Image
 
 from .. import __app_name__, __version__
 from ..assets.loader import get_asset_path
@@ -17,7 +17,7 @@ from ..core.save_parser import (
 )
 from ..logging_config import get_logger
 from .config_dialog import ConfigDialog
-from .styles import COLORS, FONTS, PADDING, WINDOW_SIZES
+from .styles import COLORS, FONTS, PADDING, WINDOW_SIZES, THEME_COLORS
 from .backup_mixin import BackupMixin
 from .import_mixin import ImportMixin
 from .materials_mixin import MaterialsMixin
@@ -123,12 +123,6 @@ class MainWindow(
         self.current_server: Optional[dict] = None
         self._server_temp_save_path: Optional[Path] = None  # Temp dir for downloaded server saves
         self._server_temp_mods_path: Optional[Path] = None  # Temp dir for downloaded server mods
-
-        # Background image references
-        self.bg_image_original: Optional[Image.Image] = None
-        self.bg_image_tk: Optional[ImageTk.PhotoImage] = None
-        self.bg_canvas: Optional[tk.Canvas] = None
-        self._overlay_rects: dict[str, int] = {}  # Track overlay rectangles on canvas
 
         # UI widget references (initialized in _create_ui)
         self._logo_image = None
@@ -263,116 +257,15 @@ class MainWindow(
         except (tk.TclError, AttributeError) as e:
             logger.debug("Could not reset scroll position: %s", e)
 
-    # --- Background Image ---
+    # --- Background ---
 
     def _setup_background(self):
-        """Set up the faded background image behind all UI panes."""
-        try:
-            # Try png first, then webp, then jpg
-            bg_path = get_asset_path("background.png")
-            if not bg_path.exists():
-                bg_path = get_asset_path("background.webp")
-            if not bg_path.exists():
-                bg_path = get_asset_path("background.jpg")
+        """Set up the background (solid color, no image).
 
-            if bg_path.exists():
-                # Load and darken/fade the image
-                self.bg_image_original = Image.open(bg_path)
-
-                # Darken the image slightly for contrast with UI elements
-                enhancer = ImageEnhance.Brightness(self.bg_image_original)
-                self.bg_image_original = enhancer.enhance(0.6)  # 60% brightness (brighter)
-
-                # Create canvas for background - use black as fallback
-                self.bg_canvas = tk.Canvas(self, highlightthickness=0, bg="#1a1a1a")
-                self.bg_canvas.place(x=0, y=0, relwidth=1, relheight=1)
-
-                # Initial background render (delayed to ensure window is ready)
-                self.after(100, self._update_background)
-
-                # Bind resize event
-                self.bind("<Configure>", self._on_window_resize)
-        except (OSError, IOError, ValueError) as e:
-            logger.warning("Could not load background image: %s", e)
-
-    def _update_background(self):
-        """Update background image to fit window size."""
-        if not self.bg_image_original or not self.bg_canvas:
-            return
-
-        # Get current window size
-        width = self.winfo_width()
-        height = self.winfo_height()
-
-        if width < 10 or height < 10:  # Window not yet rendered
-            return
-
-        # Resize image to cover window (maintain aspect ratio, crop excess)
-        img_ratio = self.bg_image_original.width / self.bg_image_original.height
-        win_ratio = width / height
-
-        if win_ratio > img_ratio:
-            # Window is wider than image - fit width
-            new_width = width
-            new_height = int(width / img_ratio)
-        else:
-            # Window is taller than image - fit height
-            new_height = height
-            new_width = int(height * img_ratio)
-
-        # Resize and crop to center
-        resized = self.bg_image_original.resize((new_width, new_height), Image.Resampling.LANCZOS)
-
-        # Crop to window size (centered)
-        left = (new_width - width) // 2
-        top = (new_height - height) // 2
-        cropped = resized.crop((left, top, left + width, top + height))
-
-        # Create a composite image with semi-transparent overlays baked in
-        # This is the only way to achieve true transparency in tkinter
-        composite = cropped.convert('RGBA')
-
-        # Draw semi-transparent overlays for UI panes
-        self._draw_pane_overlays(composite, width, height)
-
-        # Convert to PhotoImage and display
-        self.bg_image_tk = ImageTk.PhotoImage(composite)
-        self.bg_canvas.delete("all")
-        self.bg_canvas.create_image(0, 0, anchor="nw", image=self.bg_image_tk)
-
-        # Ensure canvas stays behind other widgets
-        try:
-            self.bg_canvas.tk.call('lower', self.bg_canvas._w)
-        except tk.TclError as e:
-            logger.debug("Could not lower canvas: %s", e)
-
-    def _draw_pane_overlays(self, composite: Image.Image, width: int, height: int):
-        """Draw semi-transparent overlays on the background for each pane area.
-
-        Note: This is now only used for visual effect in the gaps between panes.
-        The panes themselves use opaque dark colors for proper widget rendering.
+        Background image support was removed for cleaner light/dark mode.
+        The main window uses fg_color from CustomTkinter for theming.
         """
-        # No overlays needed - background shows in gaps, panes are opaque
-
-    def _on_window_resize(self, event):
-        """Handle window resize to update background."""
-        if event.widget == self:
-            self._update_background()
-
-    def _create_transparent_overlay(
-        self, width: int, height: int,
-        color: tuple = (0, 0, 0), alpha: int = 128
-    ) -> ImageTk.PhotoImage:
-        """Create a semi-transparent overlay image.
-
-        Args:
-            width: Width in pixels
-            height: Height in pixels
-            color: RGB tuple (default black)
-            alpha: Transparency 0-255 (0=transparent, 255=opaque). Default 128 = 50%
-        """
-        overlay = Image.new('RGBA', (width, height), (*color, alpha))
-        return ImageTk.PhotoImage(overlay)
+        # No background image - CustomTkinter handles theme colors
 
     # --- UI Construction ---
 
@@ -408,7 +301,7 @@ class MainWindow(
     def _create_toolbar(self):
         """Create the top toolbar with semi-transparent dark appearance."""
         # Use a dark color with some transparency appearance
-        toolbar = ctk.CTkFrame(self, height=50, fg_color=("#3d3d3d", "#1a1a1a"))
+        toolbar = ctk.CTkFrame(self, height=50, fg_color=THEME_COLORS["bg_main"])
         toolbar.pack(fill="x", padx=PADDING["medium"], pady=PADDING["medium"])
         toolbar.pack_propagate(False)
 
@@ -589,10 +482,10 @@ class MainWindow(
         self._create_tooltip(self.settings_btn, "Settings")
 
     def _create_vertical_tabs(self):
-        """Create vertical tab buttons on the left side with semi-transparent dark appearance."""
+        """Create vertical tab buttons on the left side with theme-aware appearance."""
         self.tabs_frame = ctk.CTkFrame(
             self.main_container, width=135,
-            fg_color=("#3d3d3d", "#1a1a1a")
+            fg_color=THEME_COLORS["bg_pane"]
         )
         self.tabs_frame.grid(row=0, column=0, sticky="ns", padx=(0, PADDING["medium"]))
         self.tabs_frame.grid_propagate(False)
@@ -638,11 +531,11 @@ class MainWindow(
             btn = ctk.CTkButton(
                 self.tab_buttons_frame,
                 text=installation.display_name,
-                font=FONTS["body"],
+                font=FONTS["body_bold"],
                 anchor="w",
                 fg_color="transparent",
-                text_color=("gray10", "gray90"),
-                hover_color=("gray80", "gray30"),
+                text_color=THEME_COLORS["text"],
+                hover_color=THEME_COLORS["bg_tab_hover"],
                 height=40,
                 command=lambda inst=installation: self._on_tab_selected(inst),
             )
@@ -670,24 +563,24 @@ class MainWindow(
                 server_name = server["name"]
                 conn_state = self.server_connection_states.get(server_name, "disconnected")
                 if conn_state == "connected":
-                    btn_fg_color = "#00AA00"  # Green
+                    btn_fg_color = THEME_COLORS["server_connected"]
                     btn_text_color = "white"
                 elif conn_state == "error":
-                    btn_fg_color = "#c01c28"  # Red
+                    btn_fg_color = THEME_COLORS["server_error"]
                     btn_text_color = "white"
                 else:  # disconnected or connecting
-                    btn_fg_color = "#1a5fb4"  # Blue
+                    btn_fg_color = THEME_COLORS["server_disconnected"]
                     btn_text_color = "white"
 
                 # Server name button (no icons - use right-click for menu)
                 server_btn = ctk.CTkButton(
                     server_frame,
                     text=server["name"],
-                    font=FONTS["body"],
+                    font=FONTS["body_bold"],
                     anchor="w",
                     fg_color=btn_fg_color,
                     text_color=btn_text_color,
-                    hover_color=("gray80", "gray30"),
+                    hover_color=THEME_COLORS["bg_tab_hover"],
                     height=40,
                     command=lambda s=server: self._on_server_tab_selected(s),
                 )
@@ -730,7 +623,7 @@ class MainWindow(
 
     def _create_world_list_pane(self):
         """Create the left pane showing world/character names and filenames."""
-        self.world_pane = ctk.CTkFrame(self.content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
+        self.world_pane = ctk.CTkFrame(self.content_frame, fg_color=THEME_COLORS["bg_pane_content"])
         self.world_pane.grid(row=0, column=0, sticky="nsew", padx=(0, PADDING["medium"]))
 
         # Header with dropdown
@@ -811,7 +704,7 @@ class MainWindow(
         # Scrollable list
         self.item_list_frame = ctk.CTkScrollableFrame(
             self.world_pane,
-            fg_color=("#3d3d3d", "#1a1a1a")
+            fg_color=THEME_COLORS["bg_pane_content"]
         )
         self.item_list_frame.pack(
             fill="both", expand=True,
@@ -830,7 +723,7 @@ class MainWindow(
 
     def _create_versions_pane(self):
         """Create the right pane showing file versions for selected world."""
-        self.versions_pane = ctk.CTkFrame(self.content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
+        self.versions_pane = ctk.CTkFrame(self.content_frame, fg_color=THEME_COLORS["bg_pane_content"])
         self.versions_pane.grid(row=0, column=1, sticky="nsew")
 
         # Header
@@ -867,7 +760,7 @@ class MainWindow(
         # Scrollable list
         self.versions_list_frame = ctk.CTkScrollableFrame(
             self.versions_pane,
-            fg_color=("#3d3d3d", "#1a1a1a")
+            fg_color=THEME_COLORS["bg_pane_content"]
         )
         self.versions_list_frame.pack(
             fill="both", expand=True,
@@ -888,41 +781,50 @@ class MainWindow(
         self._setup_dnd_for_available_mods()
 
     def _create_status_bar(self):
-        """Create the bottom status bar with semi-transparent dark appearance."""
-        self.status_bar = ctk.CTkFrame(self, height=30, fg_color=("#3d3d3d", "#1a1a1a"))
+        """Create the bottom status bar with theme-aware appearance."""
+        self.status_bar = ctk.CTkFrame(self, height=30, fg_color=THEME_COLORS["bg_main"])
         self.status_bar.pack(fill="x", side="bottom")
         self.status_bar.pack_propagate(False)
 
-        # Import button on the left
+        # Import button on the left (light lavender background in light mode)
         import_image = self._load_icon("icons/import.png", size=(20, 20))
         if import_image:
             self.import_btn = ctk.CTkButton(
                 self.status_bar, image=import_image,
-                text="Import Old Backups", width=140, height=24,
-                font=FONTS["small"], fg_color="transparent", hover_color=("gray80", "gray30"),
+                text="Import Old Backups", width=160, height=24,
+                font=FONTS["small_bold"], fg_color=THEME_COLORS["button_import_bg"],
+                hover_color=THEME_COLORS["bg_tab_hover"],
+                border_width=1, border_color=THEME_COLORS["button_outline"],
+                text_color=THEME_COLORS["text"],
                 command=self._show_import_dialog,
             )
         else:
             self.import_btn = ctk.CTkButton(
-                self.status_bar, text="Import Old Backups", width=140, height=24,
-                font=FONTS["small"], fg_color="transparent", hover_color=("gray80", "gray30"),
+                self.status_bar, text="Import Old Backups", width=160, height=24,
+                font=FONTS["small_bold"], fg_color=THEME_COLORS["button_import_bg"],
+                hover_color=THEME_COLORS["bg_tab_hover"],
+                border_width=1, border_color=THEME_COLORS["button_outline"],
+                text_color=THEME_COLORS["text"],
                 command=self._show_import_dialog,
             )
         self.import_btn.pack(side="left", padx=PADDING["small"], pady=2)
         self._create_tooltip(self.import_btn, "Import archived save files")
 
-        # Add Server button
+        # Add Server button (light orange background in light mode)
         self.add_server_btn = ctk.CTkButton(
             self.status_bar, text="Add Server", width=100, height=24,
-            font=FONTS["small"], fg_color="transparent", hover_color=("gray80", "gray30"),
+            font=FONTS["small_bold"], fg_color=THEME_COLORS["button_add_server_bg"],
+            hover_color=THEME_COLORS["bg_tab_hover"],
+            border_width=1, border_color=THEME_COLORS["button_outline"],
+            text_color=THEME_COLORS["text"],
             command=self._show_add_server_dialog,
         )
         self.add_server_btn.pack(side="left", padx=PADDING["small"], pady=2)
         self._create_tooltip(self.add_server_btn, "Add a remote server installation")
 
         self.status_label = ctk.CTkLabel(
-            self.status_bar, text="Ready", font=FONTS["small"],
-            text_color=("#cccccc", "#999999"))
+            self.status_bar, text="Ready", font=FONTS["small_bold"],
+            text_color=THEME_COLORS["text"])
         self.status_label.pack(side="left", padx=PADDING["medium"], pady=PADDING["small"])
 
     # --- Tab Selection and Mode Switching ---
@@ -945,7 +847,17 @@ class MainWindow(
         # Update button states (highlight selected)
         for inst_id, btn in self.tab_buttons.items():
             if inst_id == installation.id.value:
-                btn.configure(fg_color=("gray75", "gray35"))
+                btn.configure(fg_color=THEME_COLORS["bg_tab_selected"])
+            elif inst_id.startswith("server_"):
+                # Keep server buttons at their connection-state color
+                server_name = inst_id[7:]  # Remove "server_" prefix
+                conn_state = self.server_connection_states.get(server_name, "disconnected")
+                if conn_state == "connected":
+                    btn.configure(fg_color=THEME_COLORS["server_connected"])
+                elif conn_state == "error":
+                    btn.configure(fg_color=THEME_COLORS["server_error"])
+                else:
+                    btn.configure(fg_color=THEME_COLORS["server_disconnected"])
             else:
                 btn.configure(fg_color="transparent")
 
@@ -1161,17 +1073,17 @@ class MainWindow(
 
         # Highlight active mode button
         if self.current_mode == "backup":
-            self.toolbar_backup_btn.configure(fg_color=("gray75", "gray35"))
+            self.toolbar_backup_btn.configure(fg_color=THEME_COLORS["bg_tab_selected"])
         elif self.current_mode == "restore":
-            self.toolbar_restore_btn.configure(fg_color=("gray75", "gray35"))
+            self.toolbar_restore_btn.configure(fg_color=THEME_COLORS["bg_tab_selected"])
         elif self.current_mode == "mods":
-            self.toolbar_mods_btn.configure(fg_color=("gray75", "gray35"))
+            self.toolbar_mods_btn.configure(fg_color=THEME_COLORS["bg_tab_selected"])
         elif self.current_mode == "servers":
-            self.toolbar_servers_btn.configure(fg_color=("gray75", "gray35"))
+            self.toolbar_servers_btn.configure(fg_color=THEME_COLORS["bg_tab_selected"])
         elif self.current_mode == "trade":
-            self.toolbar_trade_btn.configure(fg_color=("gray75", "gray35"))
+            self.toolbar_trade_btn.configure(fg_color=THEME_COLORS["bg_tab_selected"])
         elif self.current_mode == "materials":
-            self.toolbar_materials_btn.configure(fg_color=("gray75", "gray35"))
+            self.toolbar_materials_btn.configure(fg_color=THEME_COLORS["bg_tab_selected"])
 
     def _update_pane_headers_for_mode(self):
         """Update pane headers and buttons based on current mode."""

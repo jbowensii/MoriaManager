@@ -6,7 +6,7 @@ import customtkinter as ctk
 
 from ..core.recipes_data_embedded import get_recipes_data
 from ..logging_config import get_logger
-from .styles import FONTS, PADDING
+from .styles import FONTS, PADDING, THEME_COLORS
 
 logger = get_logger("materials_mixin")
 
@@ -36,7 +36,7 @@ class MaterialsMixin:
 
     def _create_materials_pane(self):
         """Create the materials calculator pane container."""
-        self.materials_pane = ctk.CTkFrame(self.content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
+        self.materials_pane = ctk.CTkFrame(self.content_frame, fg_color=THEME_COLORS["bg_pane_content"])
         # Don't grid initially - only shown in materials mode
 
         # Store data and UI references
@@ -64,7 +64,8 @@ class MaterialsMixin:
         header_frame.pack(fill="x", padx=PADDING["small"], pady=PADDING["small"])
 
         header_label = ctk.CTkLabel(
-            header_frame, text="Materials Calculator", font=FONTS["heading"]
+            header_frame, text="Materials Calculator", font=FONTS["heading"],
+            text_color=THEME_COLORS["text"]
         )
         header_label.pack(side="left")
 
@@ -73,7 +74,10 @@ class MaterialsMixin:
         options_frame.pack(fill="x", padx=PADDING["medium"], pady=(0, PADDING["small"]))
 
         # Dwarves dropdown
-        dwarves_label = ctk.CTkLabel(options_frame, text="Dwarves:", font=FONTS["body"])
+        dwarves_label = ctk.CTkLabel(
+            options_frame, text="Dwarves:", font=FONTS["body_bold"],
+            text_color=THEME_COLORS["text"]
+        )
         dwarves_label.pack(side="left", padx=(0, 5))
 
         self.materials_dwarves_var = ctk.StringVar(value="1")
@@ -88,7 +92,10 @@ class MaterialsMixin:
         dwarves_dropdown.pack(side="left", padx=(0, 20))
 
         # Game Type dropdown
-        game_type_label = ctk.CTkLabel(options_frame, text="Game Type:", font=FONTS["body"])
+        game_type_label = ctk.CTkLabel(
+            options_frame, text="Game Type:", font=FONTS["body_bold"],
+            text_color=THEME_COLORS["text"]
+        )
         game_type_label.pack(side="left", padx=(0, 5))
 
         self.materials_game_type_var = ctk.StringVar(value="Campaign")
@@ -130,10 +137,13 @@ class MaterialsMixin:
         columns_frame.grid_rowconfigure(0, weight=1)
 
         # Left column: Weapons
-        weapons_frame = ctk.CTkFrame(columns_frame, fg_color=("#4a4a4a", "#252525"))
+        weapons_frame = ctk.CTkFrame(columns_frame, fg_color=THEME_COLORS["bg_dropdown"])
         weapons_frame.grid(row=0, column=0, sticky="nsew", padx=(0, PADDING["small"]))
 
-        weapons_header = ctk.CTkLabel(weapons_frame, text="Weapons", font=FONTS["heading"])
+        weapons_header = ctk.CTkLabel(
+            weapons_frame, text="Weapons", font=FONTS["heading"],
+            text_color=THEME_COLORS["text"]
+        )
         weapons_header.pack(pady=PADDING["small"])
 
         # Scrollable frame for weapons
@@ -149,10 +159,13 @@ class MaterialsMixin:
         )
 
         # Middle column: Armor
-        armor_frame = ctk.CTkFrame(columns_frame, fg_color=("#4a4a4a", "#252525"))
+        armor_frame = ctk.CTkFrame(columns_frame, fg_color=THEME_COLORS["bg_dropdown"])
         armor_frame.grid(row=0, column=1, sticky="nsew", padx=PADDING["small"])
 
-        armor_header = ctk.CTkLabel(armor_frame, text="Armor", font=FONTS["heading"])
+        armor_header = ctk.CTkLabel(
+            armor_frame, text="Armor", font=FONTS["heading"],
+            text_color=THEME_COLORS["text"]
+        )
         armor_header.pack(pady=PADDING["small"])
 
         # Scrollable frame for armor
@@ -168,11 +181,12 @@ class MaterialsMixin:
         )
 
         # Right column: Materials
-        materials_frame = ctk.CTkFrame(columns_frame, fg_color=("#4a4a4a", "#252525"))
+        materials_frame = ctk.CTkFrame(columns_frame, fg_color=THEME_COLORS["bg_dropdown"])
         materials_frame.grid(row=0, column=2, sticky="nsew", padx=(PADDING["small"], 0))
 
         materials_header = ctk.CTkLabel(
-            materials_frame, text="Materials Needed", font=FONTS["heading"]
+            materials_frame, text="Materials Needed", font=FONTS["heading"],
+            text_color=THEME_COLORS["text"]
         )
         materials_header.pack(pady=PADDING["small"])
 
@@ -251,15 +265,15 @@ class MaterialsMixin:
                 "variants": variants  # Store all variants
             }
 
-            # Create checkbox with 16pt font
+            # Create checkbox with 16pt bold font
             checkbox = ctk.CTkCheckBox(
                 self.weapons_scroll,
                 text=display_name,
-                font=("Segoe UI", 16),
+                font=("Segoe UI", 16, "bold"),
                 variable=var,
                 hover_color=("gray70", "gray40"),
                 fg_color=("#5dade2", "#3498db"),
-                text_color=("gray10", "gray90")
+                text_color=THEME_COLORS["text"]
             )
             checkbox.pack(anchor="w", pady=2)
             self.materials_weapon_widgets.append(checkbox)
@@ -302,15 +316,15 @@ class MaterialsMixin:
                 "variants": variants  # Store all variants
             }
 
-            # Create checkbox with 16pt font
+            # Create checkbox with 16pt bold font
             checkbox = ctk.CTkCheckBox(
                 self.armor_scroll,
                 text=display_name,
-                font=("Segoe UI", 16),
+                font=("Segoe UI", 16, "bold"),
                 variable=var,
                 hover_color=("gray70", "gray40"),
                 fg_color=("#5dade2", "#3498db"),
-                text_color=("gray10", "gray90")
+                text_color=THEME_COLORS["text"]
             )
             checkbox.pack(anchor="w", pady=2)
             self.materials_armor_widgets.append(checkbox)

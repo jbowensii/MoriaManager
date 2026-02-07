@@ -6,7 +6,7 @@ import customtkinter as ctk
 from PIL import Image
 
 from .. import __version__, __app_name__
-from .styles import DialogIconMixin
+from .styles import DialogIconMixin, THEME_COLORS
 
 # Application info
 APP_DATE = "February 2026"
@@ -222,9 +222,10 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
         content = ctk.CTkLabel(
             self._text_frame,
             text=disclaimer_text,
-            font=ctk.CTkFont(size=13),
+            font=ctk.CTkFont(size=13, weight="bold"),
             justify="left",
-            wraplength=350
+            wraplength=350,
+            text_color=THEME_COLORS["text"]
         )
         content.pack(pady=10, padx=10)
 
@@ -234,7 +235,8 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
         name_label = ctk.CTkLabel(
             self._text_frame,
             text=__app_name__,
-            font=ctk.CTkFont(size=22, weight="bold")
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color=THEME_COLORS["text"]
         )
         name_label.pack(pady=(10, 5))
 
@@ -242,7 +244,8 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
         version_label = ctk.CTkLabel(
             self._text_frame,
             text=f"Version {__version__}  -  {APP_DATE}",
-            font=ctk.CTkFont(size=14)
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=THEME_COLORS["text"]
         )
         version_label.pack(pady=5)
 
@@ -250,7 +253,8 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
         author_label = ctk.CTkLabel(
             self._text_frame,
             text=f"Created by {APP_AUTHOR}",
-            font=ctk.CTkFont(size=13)
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color=THEME_COLORS["text"]
         )
         author_label.pack(pady=10)
 
@@ -265,7 +269,8 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
         github_icon = ctk.CTkLabel(
             github_frame,
             text="GitHub Repository:",
-            font=ctk.CTkFont(size=12)
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color=THEME_COLORS["text"]
         )
         github_icon.pack(side="left")
 
@@ -286,7 +291,8 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
         license_icon = ctk.CTkLabel(
             license_frame,
             text="MIT License:",
-            font=ctk.CTkFont(size=12)
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color=THEME_COLORS["text"]
         )
         license_icon.pack(side="left")
 
@@ -307,8 +313,9 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
                 "\nA save game and mod manager for\n"
                 "Lord of the Rings: Return to Moria"
             ),
-            font=ctk.CTkFont(size=12),
-            justify="center"
+            font=ctk.CTkFont(size=12, weight="bold"),
+            justify="center",
+            text_color=THEME_COLORS["text"]
         )
         desc_label.pack(pady=15)
 
@@ -317,7 +324,8 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
         title = ctk.CTkLabel(
             self._text_frame,
             text="Credits & Acknowledgments",
-            font=ctk.CTkFont(size=18, weight="bold")
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=THEME_COLORS["text"]
         )
         title.pack(pady=(10, 20))
 
@@ -325,7 +333,8 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
         community_label = ctk.CTkLabel(
             self._text_frame,
             text="Community Testers:",
-            font=ctk.CTkFont(size=13, weight="bold")
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color=THEME_COLORS["text"]
         )
         community_label.pack(anchor="w", padx=10, pady=(0, 5))
 
@@ -336,13 +345,14 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
             tester_frame = ctk.CTkFrame(self._text_frame, fg_color="transparent")
             tester_frame.pack(anchor="w", padx=20, pady=1)
 
-            bullet = ctk.CTkLabel(tester_frame, text="*", font=ctk.CTkFont(size=12))
+            bullet = ctk.CTkLabel(tester_frame, text="*", font=ctk.CTkFont(size=12, weight="bold"), text_color=THEME_COLORS["text"])
             bullet.pack(side="left")
 
             name_label = ctk.CTkLabel(
                 tester_frame,
                 text=name,
-                font=ctk.CTkFont(size=12)
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color=THEME_COLORS["text"]
             )
             name_label.pack(side="left", padx=(5, 0))
 
@@ -354,21 +364,26 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
         libs_header = ctk.CTkLabel(
             self._text_frame,
             text="Libraries:",
-            font=ctk.CTkFont(size=13, weight="bold")
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color=THEME_COLORS["text"]
         )
         libs_header.pack(anchor="w", padx=10, pady=(10, 5))
 
         libraries_text = (
             "* CustomTkinter - Modern UI toolkit\n"
+            "* Paramiko - SSH/SFTP connectivity\n"
             "* Pillow - Image processing\n"
+            "* Cryptography - Secure configuration\n"
+            "* tkinterdnd2 - Drag and drop support\n"
             "* Python - Programming language"
         )
 
         libs_label = ctk.CTkLabel(
             self._text_frame,
             text=libraries_text,
-            font=ctk.CTkFont(size=12),
-            justify="left"
+            font=ctk.CTkFont(size=12, weight="bold"),
+            justify="left",
+            text_color=THEME_COLORS["text"]
         )
         libs_label.pack(anchor="w", padx=20, pady=5)
 

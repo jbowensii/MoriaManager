@@ -15,7 +15,7 @@ import customtkinter as ctk
 from ..config.paths import GamePaths
 from ..core.backup_index import BackupIndexManager
 from ..logging_config import get_logger
-from .styles import COLORS, FONTS, PADDING
+from .styles import COLORS, FONTS, PADDING, THEME_COLORS
 
 logger = get_logger("import_mixin")
 
@@ -444,7 +444,7 @@ class ImportMixin:
                 for widget in list_container.winfo_children():
                     widget.destroy()
 
-                list_frame = ctk.CTkScrollableFrame(list_container, fg_color=("#2b2b2b", "#1a1a1a"))
+                list_frame = ctk.CTkScrollableFrame(list_container, fg_color=THEME_COLORS["bg_pane_content"])
                 list_frame.pack(fill="both", expand=True)
 
                 # Column headers (clickable for sorting)

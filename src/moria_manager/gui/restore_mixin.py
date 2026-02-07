@@ -15,7 +15,7 @@ import customtkinter as ctk
 from ..config.paths import GamePaths
 from ..core.backup_index import BackupIndexManager, BackupIndexEntry
 from ..logging_config import get_logger
-from .styles import FONTS, PADDING
+from .styles import FONTS, PADDING, THEME_COLORS
 
 logger = get_logger("restore_mixin")
 
@@ -141,14 +141,14 @@ class RestoreMixin:
         row.bind("<Button-1>", lambda e, ent=entry: self._on_restore_entry_selected(ent))
 
         # Display name
-        name_label = ctk.CTkLabel(row, text=entry.display_name, font=FONTS["body"], anchor="w")
+        name_label = ctk.CTkLabel(row, text=entry.display_name, font=FONTS["body_bold"], anchor="w", text_color=THEME_COLORS["text"])
         name_label.pack(fill="x", padx=PADDING["small"], pady=(PADDING["small"], 0))
         name_label.bind("<Button-1>", lambda e, ent=entry: self._on_restore_entry_selected(ent))
 
-        # Filename (smaller, gray)
+        # Filename (smaller, black in light mode)
         filename_label = ctk.CTkLabel(
             row, text=entry.filename,
-            font=FONTS["small"], text_color="gray", anchor="w"
+            font=FONTS["small"], text_color=THEME_COLORS["text_secondary"], anchor="w"
         )
         filename_label.pack(fill="x", padx=PADDING["small"], pady=(0, PADDING["small"]))
         filename_label.bind("<Button-1>", lambda e, ent=entry: self._on_restore_entry_selected(ent))
@@ -198,8 +198,8 @@ class RestoreMixin:
                 else:
                     is_selected = False
                 # Color tuples are (light_mode, dark_mode) theme values
-                widget.configure(fg_color=("gray85", "gray25") if is_selected
-                               else ("gray95", "gray17"))
+                widget.configure(fg_color=THEME_COLORS["list_row_selected"] if is_selected
+                               else THEME_COLORS["list_row_default"])
 
         # Refresh timestamps pane
         self._refresh_restore_timestamps()
@@ -306,7 +306,8 @@ class RestoreMixin:
         # Timestamp label
         name_label = ctk.CTkLabel(
             row, text=display_text,
-            font=FONTS["body"], anchor="w"
+            font=FONTS["body_bold"], anchor="w",
+            text_color=THEME_COLORS["text"]
         )
         name_label.pack(
             side="left", fill="x", expand=True,
@@ -333,7 +334,7 @@ class RestoreMixin:
                     child.destroy()
 
             is_selected = dirname == timestamp_dir.name
-            row.configure(fg_color=("gray85", "gray25") if is_selected else ("gray95", "gray17"))
+            row.configure(fg_color=THEME_COLORS["list_row_selected"] if is_selected else THEME_COLORS["list_row_default"])
 
             if is_selected:
                 # Add delete button if deletion is enabled

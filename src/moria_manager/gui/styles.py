@@ -29,11 +29,39 @@ COLORS = {
     "muted": "#6c757d",          # Disabled/secondary text (gray)
 }
 
+# Theme-aware colors (light mode, dark mode)
+# Format: ("light_color", "dark_color")
+THEME_COLORS = {
+    "bg_main": ("#f5f5f5", "#1a1a1a"),       # Main window/bars background (off-white/dark)
+    "bg_pane": ("#f5f5f5", "#1a1a1a"),       # Left pane background (off-white/dark)
+    "bg_pane_content": ("#d0d0d0", "#1a1a1a"),  # Content panes (light grey/dark)
+    "bg_tab_selected": ("#a0a0a0", "gray35"),  # Selected tab highlight (medium grey/dark)
+    "bg_tab_hover": ("#b8b8b8", "gray30"),   # Tab hover color
+    "bg_dropdown": ("#b0b0b0", "#2a2a2a"),   # Dropdown/column background (medium grey for light mode)
+    "text": ("#000000", "gray90"),           # Text color (black/white)
+    "text_bold": ("#000000", "gray90"),      # Bold text color (black/white)
+    "text_secondary": ("#000000", "gray60"),  # Secondary text (black in light, grey in dark)
+    "separator": ("gray50", "gray40"),       # Separator lines
+    "checkbox": ("#000000", "gray90"),       # Checkbox color (black/white)
+    "server_disconnected": ("#1a5fb4", "#1a5fb4"),  # Blue for disconnected servers
+    "server_connected": ("#00AA00", "#00AA00"),     # Green for connected servers
+    "server_error": ("#c01c28", "#c01c28"),         # Red for failed servers
+    "folder_yellow": ("#B8860B", "#FFD700"),        # Dark goldenrod / bright gold
+    "folder_green": ("#228B22", "#00FF00"),         # Forest green / lime
+    "button_outline": ("#555555", "#333333"),  # Button outline (visible in light, subtle in dark)
+    "button_import_bg": ("#e6e0f0", "#2a2a2a"),  # Light lavender / dark grey
+    "button_add_server_bg": ("#ffe6cc", "#2a2a2a"),  # Light orange / dark grey
+    "list_row_selected": ("#ffffff", "gray25"),  # Selected row (white in light mode)
+    "list_row_default": ("#dcdcdc", "gray17"),   # Default row background (gainsboro in light mode)
+    "icon_color": ("#000000", "#ffffff"),        # Icon color (black in light, white in dark)
+}
+
 # Font configurations - tuple format: (family, size, weight)
 FONTS = {
     "title": ("Segoe UI", 18, "bold"),   # Window titles, major headings
     "heading": ("Segoe UI", 14, "bold"), # Section headers
     "body": ("Segoe UI", 12),            # Standard body text
+    "body_bold": ("Segoe UI", 12, "bold"),  # Bold body text
     "small": ("Segoe UI", 10),           # Captions, status text
     "small_bold": ("Segoe UI", 10, "bold"),  # Bold captions, column headers
 }
@@ -48,7 +76,7 @@ PADDING = {
 # Window sizes - tuple format: (width, height)
 WINDOW_SIZES = {
     "main": (900, 600),          # Main window default size
-    "config_dialog": (750, 650), # Configuration dialog size
+    "config_dialog": (750, 720), # Configuration dialog size
     "min_main": (700, 500),      # Minimum main window size
 }
 

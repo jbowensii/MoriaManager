@@ -8,7 +8,7 @@ import tkinter as tk
 import customtkinter as ctk
 
 from ..logging_config import get_logger
-from .styles import FONTS, PADDING
+from .styles import FONTS, PADDING, THEME_COLORS
 
 logger = get_logger("trade_mixin")
 
@@ -43,7 +43,7 @@ class TradeMixin:
 
     def _create_trade_pane(self):
         """Create the trade manager pane container (lazy loading - data loaded on first use)."""
-        self.trade_pane = ctk.CTkFrame(self.content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
+        self.trade_pane = ctk.CTkFrame(self.content_frame, fg_color=THEME_COLORS["bg_pane_content"])
         # Don't grid initially - only shown in trade mode
 
         # Store merchant data and UI references (initialized empty)
@@ -67,7 +67,7 @@ class TradeMixin:
         header_frame = ctk.CTkFrame(self.trade_pane, fg_color="transparent")
         header_frame.pack(fill="x", padx=PADDING["small"], pady=PADDING["small"])
 
-        header_label = ctk.CTkLabel(header_frame, text="Trade Manager", font=FONTS["heading"])
+        header_label = ctk.CTkLabel(header_frame, text="Trade Manager", font=FONTS["heading"], text_color=THEME_COLORS["text"])
         header_label.pack(side="left")
 
         # Centered button container for Show All / Hide All
@@ -239,7 +239,7 @@ class TradeMixin:
             parent = self.trade_scroll_frame
 
         # Container for the merchant section
-        section_frame = ctk.CTkFrame(parent, fg_color=("#2d2d2d", "#252525"))
+        section_frame = ctk.CTkFrame(parent, fg_color=THEME_COLORS["bg_dropdown"])
         section_frame.pack(fill="x", pady=(0, PADDING["small"]))
 
         # Header row (clickable to expand/collapse)
@@ -250,7 +250,8 @@ class TradeMixin:
         arrow_label = ctk.CTkLabel(
             header_frame,
             text="\u25bc" if merchant.expanded else "\u25b6",
-            font=FONTS["body"],
+            font=FONTS["body_bold"],
+            text_color=THEME_COLORS["text"],
             width=20
         )
         arrow_label.pack(side="left")
@@ -259,7 +260,8 @@ class TradeMixin:
         name_label = ctk.CTkLabel(
             header_frame,
             text=merchant.display_name,
-            font=FONTS["heading"]
+            font=FONTS["heading"],
+            text_color=THEME_COLORS["text"]
         )
         name_label.pack(side="left", padx=(5, 0))
 
@@ -267,8 +269,8 @@ class TradeMixin:
         count_label = ctk.CTkLabel(
             header_frame,
             text=f"({len(merchant.orders)} orders)",
-            font=FONTS["small"],
-            text_color="gray"
+            font=FONTS["small_bold"],
+            text_color=THEME_COLORS["text_secondary"]
         )
         count_label.pack(side="left", padx=(10, 0))
 
@@ -313,7 +315,8 @@ class TradeMixin:
             row_frame,
             text=order.display_name,
             variable=var,
-            font=FONTS["body"],
+            font=FONTS["body_bold"],
+            text_color=THEME_COLORS["text"],
             command=lambda: self._on_order_toggle(merchant, order, var.get())
         )
         checkbox.pack(side="left", anchor="w")

@@ -15,7 +15,7 @@ from ..config.paths import GamePaths
 from ..core.backup_index import BackupIndexManager
 from ..core.save_parser import WorldWithVersions, CharacterWithVersions, SaveFileVersion
 from ..logging_config import get_logger
-from .styles import COLORS, FONTS, PADDING
+from .styles import COLORS, FONTS, PADDING, THEME_COLORS
 
 logger = get_logger("backup_mixin")
 
@@ -269,14 +269,14 @@ class BackupMixin:
         else:
             display_name = item.display_name
 
-        name_label = ctk.CTkLabel(row, text=display_name, font=FONTS["body"], anchor="w")
+        name_label = ctk.CTkLabel(row, text=display_name, font=FONTS["body_bold"], anchor="w", text_color=THEME_COLORS["text"])
         name_label.pack(fill="x", padx=PADDING["small"], pady=(PADDING["small"], 0))
         name_label.bind("<Button-1>", lambda e, i=item: self._on_item_selected(i))
 
-        # Filename (smaller, gray)
+        # Filename (smaller, black in light mode)
         filename_label = ctk.CTkLabel(
             row, text=item.base_name,
-            font=FONTS["small"], text_color="gray", anchor="w"
+            font=FONTS["small"], text_color=THEME_COLORS["text_secondary"], anchor="w"
         )
         filename_label.pack(fill="x", padx=PADDING["small"], pady=(0, PADDING["small"]))
         filename_label.bind("<Button-1>", lambda e, i=item: self._on_item_selected(i))
@@ -328,8 +328,8 @@ class BackupMixin:
             if isinstance(widget, ctk.CTkFrame):
                 is_selected = (widget.winfo_children() and
                                widget.winfo_children()[0].cget("text") == display_name)
-                widget.configure(fg_color=("gray85", "gray25") if is_selected
-                               else ("gray95", "gray17"))
+                widget.configure(fg_color=THEME_COLORS["list_row_selected"] if is_selected
+                               else THEME_COLORS["list_row_default"])
 
         # Update button states
         self._update_backup_button_states()
@@ -426,7 +426,8 @@ class BackupMixin:
         # Version type/name
         name_label = ctk.CTkLabel(
             row, text=version.display_name,
-            font=FONTS["body"], anchor="w"
+            font=FONTS["body_bold"], anchor="w",
+            text_color=THEME_COLORS["text"]
         )
         name_label.pack(
             side="left", fill="x", expand=True,
@@ -455,7 +456,7 @@ class BackupMixin:
                     child.destroy()
 
             is_selected = filename == version.filename
-            row.configure(fg_color=("gray85", "gray25") if is_selected else ("gray95", "gray17"))
+            row.configure(fg_color=THEME_COLORS["list_row_selected"] if is_selected else THEME_COLORS["list_row_default"])
 
             if is_selected:
                 # Add delete button if deletion is enabled (for any file type)

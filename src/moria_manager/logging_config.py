@@ -14,6 +14,12 @@ from .config.paths import GamePaths
 # Module-level flag to track if logging is enabled (mutable, not a constant)
 _logging_enabled: bool = False  # pylint: disable=invalid-name
 
+# Valid theme values
+THEME_LIGHT = "light"
+THEME_DARK = "dark"
+THEME_SYSTEM = "system"
+VALID_THEMES = (THEME_LIGHT, THEME_DARK, THEME_SYSTEM)
+
 
 def _read_logging_flag() -> bool:
     """Read the logging flag from settings.ini.
@@ -41,11 +47,13 @@ def _read_logging_flag() -> bool:
     # Create default settings.ini if it doesn't exist
     config["General"] = {
         "logging": "false",
+        "theme": "system",
     }
     try:
         with open(ini_path, "w", encoding="utf-8") as f:
             f.write("; Moria Manager Settings\n")
-            f.write("; Set logging = true to enable detailed logging to file\n\n")
+            f.write("; Set logging = true to enable detailed logging to file\n")
+            f.write("; theme = light, dark, or system (match Windows)\n\n")
             config.write(f)
     except OSError:
         pass  # Silently fail if we can't write the file
@@ -131,3 +139,68 @@ def get_logger(name: str) -> logging.Logger:
         A logger instance for the module
     """
     return logging.getLogger(f"moria_manager.{name}")
+
+
+def get_theme_setting() -> str:
+    """Read the theme setting from settings.ini.
+
+    Returns:
+        'light', 'dark', or 'system' (default)
+    """
+    ini_path = GamePaths.SETTINGS_INI_FILE
+
+    if not ini_path.exists():
+        return THEME_SYSTEM
+
+    config = configparser.ConfigParser()
+    try:
+        config.read(ini_path, encoding="utf-8")
+        theme = config.get("General", "theme", fallback=THEME_SYSTEM).lower().strip()
+        if theme in VALID_THEMES:
+            return theme
+    except (configparser.Error, ValueError):
+        pass
+
+    return THEME_SYSTEM
+
+
+def set_theme_setting(theme: str) -> None:
+    """Write the theme setting to settings.ini.
+
+    Args:
+        theme: 'light', 'dark', or 'system'
+    """
+    if theme not in VALID_THEMES:
+        theme = THEME_SYSTEM
+
+    ini_path = GamePaths.SETTINGS_INI_FILE
+    GamePaths.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
+    config = configparser.ConfigParser()
+
+    # Read existing settings
+    if ini_path.exists():
+        try:
+            config.read(ini_path, encoding="utf-8")
+        except configparser.Error:
+            pass
+
+    # Ensure General section exists
+    if "General" not in config:
+        config["General"] = {}
+
+    # Update theme
+    config["General"]["theme"] = theme
+
+    # Preserve logging setting if not present
+    if "logging" not in config["General"]:
+        config["General"]["logging"] = "false"
+
+    try:
+        with open(ini_path, "w", encoding="utf-8") as f:
+            f.write("; Moria Manager Settings\n")
+            f.write("; Set logging = true to enable detailed logging to file\n")
+            f.write("; theme = light, dark, or system (match Windows)\n\n")
+            config.write(f)
+    except OSError:
+        pass

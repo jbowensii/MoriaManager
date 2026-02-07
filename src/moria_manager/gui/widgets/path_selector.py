@@ -6,6 +6,8 @@ from typing import Callable, Optional
 
 import customtkinter as ctk
 
+from moria_manager.gui.styles import FONTS, THEME_COLORS
+
 
 class PathSelector(ctk.CTkFrame):  # pylint: disable=too-many-ancestors
     """A widget for selecting file or directory paths.
@@ -33,6 +35,9 @@ class PathSelector(ctk.CTkFrame):  # pylint: disable=too-many-ancestors
             on_change: Callback function when path changes
             **kwargs: Additional arguments for CTkFrame
         """
+        # Ensure transparent background
+        if "fg_color" not in kwargs:
+            kwargs["fg_color"] = "transparent"
         super().__init__(master, **kwargs)
 
         self.directory = directory
@@ -42,7 +47,12 @@ class PathSelector(ctk.CTkFrame):  # pylint: disable=too-many-ancestors
         self.grid_columnconfigure(1, weight=1)
 
         # Label
-        self.label = ctk.CTkLabel(self, text=label)
+        self.label = ctk.CTkLabel(
+            self,
+            text=label,
+            font=FONTS["body_bold"],
+            text_color=THEME_COLORS["text"]
+        )
         self.label.grid(row=0, column=0, padx=(0, 10), sticky="w")
 
         # Path entry
@@ -67,7 +77,12 @@ class PathSelector(ctk.CTkFrame):  # pylint: disable=too-many-ancestors
         self.browse_btn.grid(row=0, column=2, sticky="e")
 
         # Status indicator
-        self.status_label = ctk.CTkLabel(self, text="", width=20)
+        self.status_label = ctk.CTkLabel(
+            self,
+            text="",
+            width=20,
+            font=FONTS["body_bold"]
+        )
         self.status_label.grid(row=0, column=3, padx=(5, 0))
 
         # Update status for initial path

@@ -14,7 +14,7 @@ import customtkinter as ctk
 from ..config.paths import GamePaths
 from ..config.security import decrypt_password, encrypt_password
 from ..logging_config import get_logger
-from .styles import COLORS, FONTS, PADDING
+from .styles import COLORS, FONTS, PADDING, THEME_COLORS
 
 logger = get_logger("servers_mixin")
 
@@ -55,7 +55,7 @@ class ServersMixin:
         """Create the server list pane (hidden by default,
         uses left tabs for installation selection)."""
         # Server pane spans both columns
-        self.server_pane = ctk.CTkFrame(self.content_frame, fg_color=("#3d3d3d", "#1a1a1a"))
+        self.server_pane = ctk.CTkFrame(self.content_frame, fg_color=THEME_COLORS["bg_pane_content"])
         # Don't grid initially - only shown in servers mode
 
         # Data storage for server entries per installation
@@ -84,7 +84,7 @@ class ServersMixin:
         # Header row with column titles
         self.server_header_frame = ctk.CTkFrame(
             self.server_content_frame,
-            fg_color=("#2d2d2d", "#252525")
+            fg_color=THEME_COLORS["bg_main"]
         )
         self.server_header_frame.pack(fill="x", pady=(0, 0))
 
@@ -101,25 +101,29 @@ class ServersMixin:
         # Column headers
         name_header = ctk.CTkLabel(
             self.server_header_frame, text="Name",
-            font=FONTS["heading"], anchor="w"
+            font=FONTS["heading"], anchor="w",
+            text_color=THEME_COLORS["text"]
         )
         name_header.grid(row=0, column=0, sticky="w", padx=(PADDING["small"], 5), pady=5)
 
         address_header = ctk.CTkLabel(
             self.server_header_frame, text="Address",
-            font=FONTS["heading"], anchor="w"
+            font=FONTS["heading"], anchor="w",
+            text_color=THEME_COLORS["text"]
         )
         address_header.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
         password_header = ctk.CTkLabel(
             self.server_header_frame, text="Password",
-            font=FONTS["heading"], anchor="w"
+            font=FONTS["heading"], anchor="w",
+            text_color=THEME_COLORS["text"]
         )
         password_header.grid(row=0, column=2, sticky="w", padx=5, pady=5)
 
         notes_header = ctk.CTkLabel(
             self.server_header_frame, text="Notes",
-            font=FONTS["heading"], anchor="w"
+            font=FONTS["heading"], anchor="w",
+            text_color=THEME_COLORS["text"]
         )
         notes_header.grid(row=0, column=3, sticky="w", padx=5, pady=5)
 
@@ -132,7 +136,7 @@ class ServersMixin:
         # Scrollable frame for server rows
         self.server_list_frame = ctk.CTkScrollableFrame(
             self.server_content_frame,
-            fg_color=("#3d3d3d", "#1a1a1a")
+            fg_color=THEME_COLORS["bg_pane_content"]
         )
         self.server_list_frame.pack(fill="both", expand=True, pady=(0, PADDING["small"]))
 
@@ -223,6 +227,7 @@ class ServersMixin:
             address_frame, text="\U0001F4CB", width=24, height=24,
             font=("Segoe UI", 10),
             fg_color="transparent", hover_color=("gray80", "gray30"),
+            text_color=THEME_COLORS["icon_color"],
             command=lambda: self._copy_to_clipboard(address_entry.get(), "Address")
         )
         address_copy_btn.grid(row=0, column=1, padx=(2, 0))
@@ -262,6 +267,7 @@ class ServersMixin:
             password_frame, text="\U0001F441", width=24, height=24,
             font=("Segoe UI", 10),
             fg_color="transparent", hover_color=("gray80", "gray30"),
+            text_color=THEME_COLORS["icon_color"],
             command=toggle_password
         )
         eye_btn.grid(row=0, column=1, padx=(2, 0))
@@ -270,6 +276,7 @@ class ServersMixin:
             password_frame, text="\U0001F4CB", width=24, height=24,
             font=("Segoe UI", 10),
             fg_color="transparent", hover_color=("gray80", "gray30"),
+            text_color=THEME_COLORS["icon_color"],
             command=lambda: self._copy_to_clipboard(password_entry.get(), "Password")
         )
         password_copy_btn.grid(row=0, column=2, padx=(2, 0))

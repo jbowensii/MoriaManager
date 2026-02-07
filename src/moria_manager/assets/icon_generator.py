@@ -228,6 +228,66 @@ def create_materials_icon(size: int = 32) -> Image.Image:
     return img
 
 
+def create_help_icon(size: int = 32) -> Image.Image:
+    """Create a greyscale book icon for the Help button."""
+    img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    margin = size // 8
+    book_left = margin
+    book_right = size - margin
+    book_top = margin + 2
+    book_bottom = size - margin
+
+    # Book cover (dark grey)
+    cover_color = (100, 100, 100, 255)
+    outline_color = (60, 60, 60, 255)
+
+    # Draw book cover/spine
+    draw.rounded_rectangle(
+        [book_left, book_top, book_right, book_bottom],
+        radius=2,
+        fill=cover_color,
+        outline=outline_color,
+        width=1
+    )
+
+    # Draw spine on left side
+    spine_width = size // 8
+    draw.rectangle(
+        [book_left, book_top, book_left + spine_width, book_bottom],
+        fill=(80, 80, 80, 255),
+        outline=outline_color,
+        width=1
+    )
+
+    # Draw pages (lighter grey area)
+    pages_color = (180, 180, 180, 255)
+    pages_left = book_left + spine_width + 2
+    pages_right = book_right - 3
+    pages_top = book_top + 3
+    pages_bottom = book_bottom - 3
+
+    draw.rectangle(
+        [pages_left, pages_top, pages_right, pages_bottom],
+        fill=pages_color
+    )
+
+    # Draw page lines
+    line_color = (140, 140, 140, 255)
+    num_lines = 4
+    line_spacing = (pages_bottom - pages_top) // (num_lines + 1)
+    for i in range(1, num_lines + 1):
+        y = pages_top + i * line_spacing
+        draw.line(
+            [(pages_left + 2, y), (pages_right - 2, y)],
+            fill=line_color,
+            width=1
+        )
+
+    return img
+
+
 # --- Batch Generation ---
 
 def generate_all_icons(output_dir: Path | None = None):
@@ -252,23 +312,31 @@ def generate_all_icons(output_dir: Path | None = None):
     restore.save(output_dir / "restore.png")
     print(f"Created: {output_dir / 'restore.png'}")
 
+    # Generate toolbar backup icon (same as backup)
+    toolbar_backup = create_backup_icon(32)
+    toolbar_backup.save(output_dir / "toolbar_backup.png")
+    print(f"Created: {output_dir / 'toolbar_backup.png'}")
+
+    # Generate toolbar restore icon (same as restore)
+    toolbar_restore = create_restore_icon(32)
+    toolbar_restore.save(output_dir / "toolbar_restore.png")
+    print(f"Created: {output_dir / 'toolbar_restore.png'}")
+
     # Generate materials icon
     materials = create_materials_icon(32)
     materials.save(output_dir / "toolbar_materials.png")
     print(f"Created: {output_dir / 'toolbar_materials.png'}")
 
-    # Generate app icon (multiple sizes for ICO)
-    app_256 = create_app_icon(256)
-    app_256.save(output_dir / "app_icon.png")
-    print(f"Created: {output_dir / 'app_icon.png'}")
+    # Generate help icon (greyscale book)
+    help_icon = create_help_icon(32)
+    help_icon.save(output_dir / "help.png")
+    print(f"Created: {output_dir / 'help.png'}")
 
-    # Create ICO file with multiple sizes
-    app_256.save(
-        output_dir / "app_icon.ico",
-        format='ICO',
-        sizes=[(16, 16), (32, 32), (48, 48), (256, 256)]
-    )
-    print(f"Created: {output_dir / 'app_icon.ico'}")
+    # Note: app_icon.png and app_icon.ico are based on logo.png, not generated
+    # To recreate them, use:
+    #   logo = Image.open(output_dir / "logo.png")
+    #   logo.save(output_dir / "app_icon.png")
+    #   logo.save(output_dir / "app_icon.ico", format='ICO', sizes=[(16,16),(32,32),(48,48),(256,256)])
 
 
 if __name__ == "__main__":

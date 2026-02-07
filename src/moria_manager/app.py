@@ -24,7 +24,7 @@ from .config.manager import ConfigurationManager
 from .core.game_detector import GameDetector
 from .gui.config_dialog import ConfigDialog
 from .gui.main_window import MainWindow
-from .logging_config import setup_logging
+from .logging_config import setup_logging, get_theme_setting
 from . import __version__
 
 
@@ -40,8 +40,9 @@ class MoriaManagerApp:
 
     def run(self):
         """Run the application."""
-        # Set appearance mode to follow system
-        ctk.set_appearance_mode("system")
+        # Set appearance mode based on settings.ini
+        theme = get_theme_setting()
+        ctk.set_appearance_mode(theme)
         ctk.set_default_color_theme("blue")
 
         # Handle first run or load existing config

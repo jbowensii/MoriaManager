@@ -17,7 +17,7 @@ import customtkinter as ctk
 
 from ..config.paths import GamePaths
 from ..logging_config import get_logger
-from .styles import FONTS, PADDING
+from .styles import FONTS, PADDING, THEME_COLORS
 
 logger = get_logger("mods_mixin")
 
@@ -82,18 +82,18 @@ class ModsMixin:
     def _on_available_mods_drag_enter(self, event):
         """Handle drag enter on Available Mods pane."""
         if self.current_mode == "mods":
-            self.versions_pane.configure(fg_color=("#4a4a4a", "#2a2a2a"))
+            self.versions_pane.configure(fg_color=("#b8b8b8", "#2a2a2a"))
         return event.action
 
     def _on_available_mods_drag_leave(self, event):
         """Handle drag leave on Available Mods pane."""
-        self.versions_pane.configure(fg_color=("#3d3d3d", "#1a1a1a"))
+        self.versions_pane.configure(fg_color=THEME_COLORS["bg_pane_content"])
         return event.action
 
     def _on_available_mods_drop(self, event):
         """Handle file drop on Available Mods pane."""
         # Reset pane color
-        self.versions_pane.configure(fg_color=("#3d3d3d", "#1a1a1a"))
+        self.versions_pane.configure(fg_color=THEME_COLORS["bg_pane_content"])
 
         # Only handle drops in mods mode
         if self.current_mode != "mods":
@@ -624,7 +624,7 @@ class ModsMixin:
         # Icon indicator - different for files and directories
         if is_dir:
             icon_text = "\U0001F4C1"  # Folder icon
-            icon_color = ("#FFD700", "#FFD700")  # Yellow/gold
+            icon_color = THEME_COLORS["folder_yellow"]
             tooltip_text = "Server mod directory"
         else:
             icon_text = "\U0001F4C4"  # File icon
@@ -643,7 +643,7 @@ class ModsMixin:
 
         # Display name (show .pak name without extension for files, full name for directories)
         display_name = item_path.name if is_dir else item_path.stem
-        name_label = ctk.CTkLabel(row, text=display_name, font=FONTS["body"], anchor="w")
+        name_label = ctk.CTkLabel(row, text=display_name, font=FONTS["body_bold"], anchor="w", text_color=THEME_COLORS["text"])
         name_label.pack(
             side="left", fill="x", expand=True,
             padx=PADDING["small"], pady=PADDING["small"])
@@ -790,7 +790,7 @@ class ModsMixin:
         # Icon indicator - use unicode symbols with colors
         if item_path.is_dir():
             icon_text = "\U0001F4C1"  # Folder icon
-            icon_color = ("#FFD700", "#FFD700")  # Yellow/gold
+            icon_color = THEME_COLORS["folder_yellow"]
             tooltip_text = "Directory"
         else:
             icon_text = "\U0001F4C4"  # File icon
@@ -841,7 +841,7 @@ class ModsMixin:
                     child.destroy()
 
             is_selected = name == item_path.name
-            row.configure(fg_color=("gray85", "gray25") if is_selected else ("gray95", "gray17"))
+            row.configure(fg_color=THEME_COLORS["list_row_selected"] if is_selected else THEME_COLORS["list_row_default"])
 
             # Add action buttons for selected item
             if is_selected:
@@ -856,24 +856,38 @@ class ModsMixin:
 
                     if mods_backup_path.exists():
                         # Mod already in backup - show remove from Installed option
-                        action_btn = ctk.CTkButton(
-                            row, text="\u2717", width=28, height=24,  # X mark
-                            font=("Segoe UI", 14, "bold"),
-                            text_color="red",
-                            fg_color="transparent", hover_color=("gray80", "gray30"),
-                            command=lambda p=item_path: self._prompt_remove_installed_mod_dir(p)
-                        )
+                        trash_image = self._load_icon("icons/trash.png", size=(16, 16))
+                        if trash_image:
+                            action_btn = ctk.CTkButton(
+                                row, image=trash_image, text="", width=28, height=24,
+                                fg_color="transparent", hover_color=("gray80", "gray30"),
+                                command=lambda p=item_path: self._prompt_remove_installed_mod_dir(p)
+                            )
+                        else:
+                            action_btn = ctk.CTkButton(
+                                row, text="\u2717", width=28, height=24,
+                                font=("Segoe UI", 14, "bold"), text_color="red",
+                                fg_color="transparent", hover_color=("gray80", "gray30"),
+                                command=lambda p=item_path: self._prompt_remove_installed_mod_dir(p)
+                            )
                         action_btn.pack(side="right", padx=PADDING["small"])
                         self._create_tooltip(action_btn, "Remove from Installed Mods")
                     else:
                         # Mod not in backup - show move option
-                        action_btn = ctk.CTkButton(
-                            row, text="\u27A4", width=28, height=24,  # Bold right arrow
-                            font=("Segoe UI", 14, "bold"),
-                            text_color=("gray10", "gray90"),
-                            fg_color="transparent", hover_color=("gray80", "gray30"),
-                            command=lambda p=item_path: self._move_mod_to_available(p)
-                        )
+                        move_image = self._load_icon("icons/move_to_available.png", size=(16, 16))
+                        if move_image:
+                            action_btn = ctk.CTkButton(
+                                row, image=move_image, text="", width=28, height=24,
+                                fg_color="transparent", hover_color=("gray80", "gray30"),
+                                command=lambda p=item_path: self._move_mod_to_available(p)
+                            )
+                        else:
+                            action_btn = ctk.CTkButton(
+                                row, text="\u27A4", width=28, height=24,
+                                font=("Segoe UI", 14, "bold"), text_color=("gray10", "gray90"),
+                                fg_color="transparent", hover_color=("gray80", "gray30"),
+                                command=lambda p=item_path: self._move_mod_to_available(p)
+                            )
                         action_btn.pack(side="right", padx=PADDING["small"])
                         self._create_tooltip(action_btn, "Move to Available Mods")
                 else:
@@ -889,24 +903,38 @@ class ModsMixin:
 
                     if files_exist_in_backup:
                         # Files already exist in backup - show remove from Installed option
-                        action_btn = ctk.CTkButton(
-                            row, text="\u2717", width=28, height=24,  # X mark
-                            font=("Segoe UI", 14, "bold"),
-                            text_color="red",
-                            fg_color="transparent", hover_color=("gray80", "gray30"),
-                            command=lambda p=item_path: self._prompt_remove_installed_mod_files(p)
-                        )
+                        trash_image = self._load_icon("icons/trash.png", size=(16, 16))
+                        if trash_image:
+                            action_btn = ctk.CTkButton(
+                                row, image=trash_image, text="", width=28, height=24,
+                                fg_color="transparent", hover_color=("gray80", "gray30"),
+                                command=lambda p=item_path: self._prompt_remove_installed_mod_files(p)
+                            )
+                        else:
+                            action_btn = ctk.CTkButton(
+                                row, text="\u2717", width=28, height=24,
+                                font=("Segoe UI", 14, "bold"), text_color="red",
+                                fg_color="transparent", hover_color=("gray80", "gray30"),
+                                command=lambda p=item_path: self._prompt_remove_installed_mod_files(p)
+                            )
                         action_btn.pack(side="right", padx=2)
                         self._create_tooltip(action_btn, "Remove from Installed Mods")
                     else:
                         # Arrow button - move files to Available Mods
-                        arrow_btn = ctk.CTkButton(
-                            row, text="\u27A4", width=28, height=24,  # Bold right arrow
-                            font=("Segoe UI", 14, "bold"),
-                            text_color=("gray10", "gray90"),
-                            fg_color="transparent", hover_color=("gray80", "gray30"),
-                            command=lambda p=item_path: self._move_mod_files_to_available(p)
-                        )
+                        move_image = self._load_icon("icons/move_to_available.png", size=(16, 16))
+                        if move_image:
+                            arrow_btn = ctk.CTkButton(
+                                row, image=move_image, text="", width=28, height=24,
+                                fg_color="transparent", hover_color=("gray80", "gray30"),
+                                command=lambda p=item_path: self._move_mod_files_to_available(p)
+                            )
+                        else:
+                            arrow_btn = ctk.CTkButton(
+                                row, text="\u27A4", width=28, height=24,
+                                font=("Segoe UI", 14, "bold"), text_color=("gray10", "gray90"),
+                                fg_color="transparent", hover_color=("gray80", "gray30"),
+                                command=lambda p=item_path: self._move_mod_files_to_available(p)
+                            )
                         arrow_btn.pack(side="right", padx=2)
                         self._create_tooltip(arrow_btn, "Move files to Available Mods")
 
@@ -914,8 +942,8 @@ class ModsMixin:
                     folder_btn = ctk.CTkButton(
                         row, text="\U0001F4C1", width=28, height=24,  # Folder icon
                         font=("Segoe UI Emoji", 12),
-                        text_color=("#FFD700", "#FFD700"),
-                        fg_color="transparent", hover_color=("gray80", "gray30"),
+                        text_color=THEME_COLORS["folder_yellow"],
+                        fg_color="transparent", hover_color=THEME_COLORS["bg_tab_hover"],
                         command=lambda p=item_path: self._create_folder_for_mod_files(p)
                     )
                     folder_btn.pack(side="right", padx=2)
@@ -1390,10 +1418,10 @@ class ModsMixin:
         if item_path.is_dir():
             icon_text = "\U0001F4C1"  # Folder icon
             if is_set_dir:
-                icon_color = ("#00CC00", "#00CC00")  # Green for Set directories
+                icon_color = THEME_COLORS["folder_green"]  # Green for Set directories
                 tooltip_text = "Mod Set (right-click for options)"
             else:
-                icon_color = ("#FFD700", "#FFD700")  # Yellow/gold for regular directories
+                icon_color = THEME_COLORS["folder_yellow"]  # Yellow/gold for regular directories
                 tooltip_text = "Directory"
         else:
             icon_text = "\U0001F4C4"  # File icon
@@ -1414,7 +1442,8 @@ class ModsMixin:
         display_name = item_path.stem if item_path.is_file() else item_path.name
         name_label = ctk.CTkLabel(
             row, text=display_name,
-            font=FONTS["body"], anchor="w"
+            font=FONTS["body_bold"], anchor="w",
+            text_color=THEME_COLORS["text"]
         )
         name_label.pack(
             side="left", fill="x", expand=True,
@@ -1442,7 +1471,7 @@ class ModsMixin:
                     child.destroy()
 
             is_selected = name == item_path.name
-            row.configure(fg_color=("gray85", "gray25") if is_selected else ("gray95", "gray17"))
+            row.configure(fg_color=THEME_COLORS["list_row_selected"] if is_selected else THEME_COLORS["list_row_default"])
 
             # Add action buttons for selected item
             if is_selected:
@@ -1469,13 +1498,20 @@ class ModsMixin:
 
                 # Left arrow button to install (not for Sets)
                 if not is_set_dir:
-                    action_btn = ctk.CTkButton(
-                        row, text="\u276E", width=28, height=24,  # Bold left arrow
-                        font=("Segoe UI", 14, "bold"),
-                        text_color=("gray10", "gray90"),
-                        fg_color="transparent", hover_color=("gray80", "gray30"),
-                        command=lambda p=item_path: self._install_mod_from_available(p)
-                    )
+                    install_image = self._load_icon("icons/install_to_game.png", size=(16, 16))
+                    if install_image:
+                        action_btn = ctk.CTkButton(
+                            row, image=install_image, text="", width=28, height=24,
+                            fg_color="transparent", hover_color=("gray80", "gray30"),
+                            command=lambda p=item_path: self._install_mod_from_available(p)
+                        )
+                    else:
+                        action_btn = ctk.CTkButton(
+                            row, text="\u276E", width=28, height=24,
+                            font=("Segoe UI", 14, "bold"), text_color=("gray10", "gray90"),
+                            fg_color="transparent", hover_color=("gray80", "gray30"),
+                            command=lambda p=item_path: self._install_mod_from_available(p)
+                        )
                     action_btn.pack(side="right", padx=PADDING["small"])
                     self._create_tooltip(action_btn, "Install to Game")
 
@@ -1492,13 +1528,20 @@ class ModsMixin:
                 else:
                     # Set-specific buttons: Install All, Open, and Rename
                     # Left arrow - install all mods from Set to game
-                    install_all_btn = ctk.CTkButton(
-                        row, text="\u276E", width=28, height=24,  # Bold left arrow
-                        font=("Segoe UI", 14, "bold"),
-                        text_color=("gray10", "gray90"),
-                        fg_color="transparent", hover_color=("gray80", "gray30"),
-                        command=lambda p=item_path: self._install_all_from_set(p)
-                    )
+                    install_image = self._load_icon("icons/install_to_game.png", size=(16, 16))
+                    if install_image:
+                        install_all_btn = ctk.CTkButton(
+                            row, image=install_image, text="", width=28, height=24,
+                            fg_color="transparent", hover_color=("gray80", "gray30"),
+                            command=lambda p=item_path: self._install_all_from_set(p)
+                        )
+                    else:
+                        install_all_btn = ctk.CTkButton(
+                            row, text="\u276E", width=28, height=24,
+                            font=("Segoe UI", 14, "bold"), text_color=("gray10", "gray90"),
+                            fg_color="transparent", hover_color=("gray80", "gray30"),
+                            command=lambda p=item_path: self._install_all_from_set(p)
+                        )
                     install_all_btn.pack(side="right", padx=PADDING["small"])
                     self._create_tooltip(install_all_btn, "Install All to Game")
 
@@ -1514,13 +1557,13 @@ class ModsMixin:
                     self._create_tooltip(open_btn, "Open Set")
 
                     # Rename button - rename the Set
+                    pencil_icon = self._load_icon("pencil.png", (16, 16))
                     rename_btn = ctk.CTkButton(
-                        row, text="\u270E", width=28, height=24,  # Pencil icon
-                        font=("Segoe UI", 14, "bold"),
-                        text_color=("gray10", "gray90"),
+                        row, text="", image=pencil_icon, width=28, height=24,
                         fg_color="transparent", hover_color=("gray80", "gray30"),
                         command=lambda p=item_path: self._rename_mod_set(p)
                     )
+                    rename_btn.image = pencil_icon  # Keep reference
                     rename_btn.pack(side="right", padx=2)
                     self._create_tooltip(rename_btn, "Rename Set")
 
@@ -1529,8 +1572,8 @@ class ModsMixin:
                     folder_btn = ctk.CTkButton(
                         row, text="\U0001F4C1", width=28, height=24,  # Folder icon
                         font=("Segoe UI", 12),
-                        text_color=("#D4A017", "#FFD700"),  # Yellow/gold color
-                        fg_color="transparent", hover_color=("gray80", "gray30"),
+                        text_color=THEME_COLORS["folder_yellow"],
+                        fg_color="transparent", hover_color=THEME_COLORS["bg_tab_hover"],
                         command=lambda p=item_path: self._organize_available_mod_files(p)
                     )
                     folder_btn.pack(side="right", padx=2)
@@ -1905,7 +1948,7 @@ class ModsMixin:
         header.pack(side="left")
 
         # Scrollable content list
-        list_frame = ctk.CTkScrollableFrame(popup, fg_color=("#3d3d3d", "#1a1a1a"))
+        list_frame = ctk.CTkScrollableFrame(popup, fg_color=THEME_COLORS["bg_pane"])
         list_frame.pack(
             fill="both", expand=True,
             padx=PADDING["medium"],
@@ -1950,7 +1993,7 @@ class ModsMixin:
             # Icon
             if item_path.is_dir():
                 icon_text = "\U0001F4C1"
-                icon_color = ("#FFD700", "#FFD700")
+                icon_color = THEME_COLORS["folder_yellow"]
             else:
                 icon_text = "\U0001F4C4"
                 icon_color = ("white", "white")
