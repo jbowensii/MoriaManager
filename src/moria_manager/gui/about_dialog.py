@@ -1,11 +1,10 @@
 """Help About dialog for Moria Manager."""
 
-from pathlib import Path
-
 import customtkinter as ctk
 from PIL import Image
 
 from .. import __version__, __app_name__
+from ..assets.loader import get_asset_path
 from .styles import DialogIconMixin, THEME_COLORS
 
 # Application info
@@ -60,10 +59,8 @@ class AboutDialog(DialogIconMixin, ctk.CTkToplevel):  # pylint: disable=too-many
 
     def _load_images(self):
         """Load overlay image (Mereak Firmaxe with transparency)."""
-        assets_path = Path(__file__).parent.parent / "assets"
-
         # Load overlay image (Mereak Firmaxe) - preserving transparency
-        overlay_path = assets_path / "Mereak Firmaxe.png"
+        overlay_path = get_asset_path("Mereak Firmaxe.png")
         if overlay_path.exists():
             img = Image.open(overlay_path).convert("RGBA")
             # Flip horizontally so character faces toward the text (right)
