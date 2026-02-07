@@ -20,6 +20,7 @@ from .config_dialog import ConfigDialog
 from .styles import COLORS, FONTS, PADDING, WINDOW_SIZES
 from .backup_mixin import BackupMixin
 from .import_mixin import ImportMixin
+from .materials_mixin import MaterialsMixin
 from .mods_mixin import ModsMixin
 from .restore_mixin import RestoreMixin
 from .servers_mixin import ServersMixin
@@ -38,7 +39,7 @@ except ImportError:
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class MainWindow(
     ServersMixin, ModsMixin, BackupMixin, RestoreMixin,
-    ImportMixin, TradeMixin, ctk.CTk
+    ImportMixin, TradeMixin, MaterialsMixin, ctk.CTk
 ):
     """Main application window — the central hub of MoriaManager.
 
@@ -136,6 +137,7 @@ class MainWindow(
         self.toolbar_mods_btn = None
         self.toolbar_servers_btn = None
         self.toolbar_trade_btn = None
+        self.toolbar_materials_btn = None
         self.help_btn = None
         self.settings_btn = None
         self.tabs_frame = None
@@ -513,6 +515,26 @@ class MainWindow(
         self.toolbar_trade_btn.pack(side="left", padx=2)
         self._create_tooltip(self.toolbar_trade_btn, "Trade Manager")
 
+        # Materials Calculator button (shopping bag)
+        materials_image = self._load_icon("icons/toolbar_materials.png", size=(24, 24))
+        if materials_image:
+            self.toolbar_materials_btn = ctk.CTkButton(
+                toolbar_buttons_frame, image=materials_image, text="", width=40, height=40,
+                fg_color="transparent", hover_color=("gray80", "gray30"),
+                command=self._on_toolbar_materials,
+            )
+        else:
+            # Fallback: shopping bag symbol
+            self.toolbar_materials_btn = ctk.CTkButton(
+                toolbar_buttons_frame, text="🛒", width=40, height=40,
+                font=("Segoe UI Emoji", 16),
+                fg_color="transparent",
+                hover_color=("gray80", "gray30"),
+                command=self._on_toolbar_materials,
+            )
+        self.toolbar_materials_btn.pack(side="left", padx=2)
+        self._create_tooltip(self.toolbar_materials_btn, "Materials Calculator")
+
         # Help icon button (about - on the right)
         help_image = self._load_icon("icons/help.png", size=(24, 24))
         if help_image:
@@ -687,6 +709,9 @@ class MainWindow(
 
         # Trade pane (hidden by default, shown in trade mode)
         self._create_trade_pane()
+
+        # Materials pane (hidden by default, shown in materials mode)
+        self._create_materials_pane()
 
     def _create_world_list_pane(self):
         """Create the left pane showing world/character names and filenames."""
@@ -1055,10 +1080,11 @@ class MainWindow(
         self.status_label.configure(text=message)
 
     def _show_two_pane_view(self):
-        """Show the standard two-pane view and hide server/trade panes."""
+        """Show the standard two-pane view and hide server/trade/materials panes."""
         # Hide special panes
         self.server_pane.grid_forget()
         self.trade_pane.grid_forget()
+        self.materials_pane.grid_forget()
 
         # Restore left tabs if hidden
         self.tabs_frame.grid(row=0, column=0, sticky="ns", padx=(0, PADDING["medium"]))
@@ -1116,6 +1142,7 @@ class MainWindow(
         self.toolbar_mods_btn.configure(fg_color="transparent")
         self.toolbar_servers_btn.configure(fg_color="transparent")
         self.toolbar_trade_btn.configure(fg_color="transparent")
+        self.toolbar_materials_btn.configure(fg_color="transparent")
 
         # Highlight active mode button
         if self.current_mode == "backup":
@@ -1128,6 +1155,8 @@ class MainWindow(
             self.toolbar_servers_btn.configure(fg_color=("gray75", "gray35"))
         elif self.current_mode == "trade":
             self.toolbar_trade_btn.configure(fg_color=("gray75", "gray35"))
+        elif self.current_mode == "materials":
+            self.toolbar_materials_btn.configure(fg_color=("gray75", "gray35"))
 
     def _update_pane_headers_for_mode(self):
         """Update pane headers and buttons based on current mode."""
@@ -1380,10 +1409,11 @@ class MainWindow(
         self._update_toolbar_button_states()
         self._update_pane_headers_for_mode()
 
-        # Hide the two-pane view and trade pane, show server pane
+        # Hide the two-pane view and trade/materials pane, show server pane
         self.world_pane.grid_forget()
         self.versions_pane.grid_forget()
         self.trade_pane.grid_forget()
+        self.materials_pane.grid_forget()
 
         # Restore left tabs if hidden (from trade mode)
         self.tabs_frame.grid(row=0, column=0, sticky="ns", padx=(0, PADDING["medium"]))
@@ -1428,6 +1458,7 @@ class MainWindow(
         self.world_pane.grid_forget()
         self.versions_pane.grid_forget()
         self.server_pane.grid_forget()
+        self.materials_pane.grid_forget()
 
         # Reconfigure content frame to span full width (no tabs column)
         self.content_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
@@ -1436,6 +1467,39 @@ class MainWindow(
         self.trade_pane.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=PADDING["medium"])
 
         self._set_status("Switched to Trade Manager")
+
+    def _on_toolbar_materials(self):
+        """Handle toolbar Materials Calculator button click.
+
+        Opens the materials calculator interface.
+        """
+        if self.current_mode == "materials":
+            # Already in materials mode
+            return
+
+        self.current_mode = "materials"
+        self._update_toolbar_button_states()
+
+        # Lazy initialize materials UI on first use
+        if not self.materials_initialized:
+            self._initialize_materials_ui()
+
+        # Hide the left tabs
+        self.tabs_frame.grid_forget()
+
+        # Hide all other panes
+        self.world_pane.grid_forget()
+        self.versions_pane.grid_forget()
+        self.server_pane.grid_forget()
+        self.trade_pane.grid_forget()
+
+        # Reconfigure content frame to span full width (no tabs column)
+        self.content_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
+
+        # Show materials pane spanning both columns
+        self.materials_pane.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=PADDING["medium"])
+
+        self._set_status("Switched to Materials Calculator")
 
     def _show_confirm_dialog(self, title: str, message: str) -> bool:
         """Show a themed confirmation dialog.

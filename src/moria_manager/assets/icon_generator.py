@@ -162,6 +162,72 @@ def create_app_icon(size: int = 256) -> Image.Image:
     return img
 
 
+def create_materials_icon(size: int = 32) -> Image.Image:
+    """Create a materials calculator icon (black and white sack/bag)."""
+    img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    margin = size // 8
+    
+    # Sack body (rounded bottom rectangle shape)
+    sack_top = margin + size // 6
+    sack_bottom = size - margin
+    sack_left = margin + 2
+    sack_right = size - margin - 2
+    sack_width = sack_right - sack_left
+    
+    # Draw main sack body - light gray fill with dark outline
+    body_color = (200, 200, 200, 255)  # Light gray
+    outline_color = (60, 60, 60, 255)  # Dark gray
+    
+    # Draw sack body as rounded rectangle
+    draw.rounded_rectangle(
+        [sack_left, sack_top, sack_right, sack_bottom],
+        radius=size // 6,
+        fill=body_color,
+        outline=outline_color,
+        width=2
+    )
+    
+    # Draw tied top/neck of sack
+    neck_width = sack_width // 2
+    neck_left = sack_left + sack_width // 4
+    neck_top = margin
+    
+    # Neck/tied part (narrower rectangle)
+    draw.rectangle(
+        [neck_left + 2, neck_top, neck_left + neck_width - 2, sack_top + 2],
+        fill=body_color,
+        outline=outline_color,
+        width=1
+    )
+    
+    # Draw tie/knot (horizontal line with bulge)
+    tie_y = sack_top - 1
+    draw.line(
+        [(neck_left, tie_y), (neck_left + neck_width, tie_y)],
+        fill=outline_color,
+        width=2
+    )
+    
+    # Draw small decorative lines on sack (texture)
+    line_color = (120, 120, 120, 255)
+    center_x = (sack_left + sack_right) // 2
+    center_y = (sack_top + sack_bottom) // 2
+    
+    # Three horizontal lines for texture
+    line_length = sack_width // 3
+    for offset in [-size // 8, 0, size // 8]:
+        y = center_y + offset
+        draw.line(
+            [(center_x - line_length // 2, y), (center_x + line_length // 2, y)],
+            fill=line_color,
+            width=1
+        )
+
+    return img
+
+
 # --- Batch Generation ---
 
 def generate_all_icons(output_dir: Path | None = None):
@@ -185,6 +251,11 @@ def generate_all_icons(output_dir: Path | None = None):
     restore = create_restore_icon(32)
     restore.save(output_dir / "restore.png")
     print(f"Created: {output_dir / 'restore.png'}")
+
+    # Generate materials icon
+    materials = create_materials_icon(32)
+    materials.save(output_dir / "toolbar_materials.png")
+    print(f"Created: {output_dir / 'toolbar_materials.png'}")
 
     # Generate app icon (multiple sizes for ICO)
     app_256 = create_app_icon(256)

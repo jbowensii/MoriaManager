@@ -4,14 +4,165 @@ Helper script to extract weapons/armor recipes with display names and materials.
 
 Loads:
 - Items.json: String table (internal name → display name)
-- DT_Weapons.json / DT_Armor.json: Weapon/armor definitions
 - DT_ItemRecipes.json: Crafting recipes with materials
+
+Uses direct mapping from display name to recipe internal name.
 """
 
 import json
 from pathlib import Path
 
 GAMESOURCE_DIR = Path(__file__).parent.parent / "gamesource"
+
+# Direct mapping from display name to recipe internal name
+# This is more reliable than pattern matching given inconsistent game data
+# Note: Some items from user's original list don't have crafting recipes
+WEAPON_RECIPES = {
+    # Basic tier weapons (t0-t5)
+    "Improvised Axe": "WarAxe_1h_t0",
+    "Iron Sword": "Sword_1h_t1",
+    "Iron War Axe": "WarAxe_1h_t1",
+    "Steel Sword": "Sword_1h_t2",
+    "Steel War Axe": "WarAxe_1h_t2",
+    "Steel Battleaxe": "Battleaxe_2h_t2",
+    "Iron Spear": "Spear_1h_t1_TU2",  # Named _TU2 in recipes
+    "First Age Sword": "Sword_1h_t4",
+    "First Age Greatsword": "Sword_2h_t3",
+    "First Age Battleaxe": "Battleaxe_2h_t4",
+    
+    # Khazâd tier weapons (t3)
+    "Last Alliance Maul": "Mattock_1h_t3",
+    "Khazâd War Mattock": "Restoration_Hammer_Starmetal",  # Special item
+    "Khazâd War Axe": "WarAxe_1h_t3",
+    "Khazâd Maul": "Mattock_1h_t2",
+    "Khazâd Army Halberd": "Halberd_2h_t3",
+    "Khazâd Army Greatsword": "Sword_2h_t3",
+    
+    # Belegost weapons
+    "Belegost Halberd": "Halberd_2h_t2",
+    "Belegost War Axe": "Durins_Axe",
+    
+    # Spears
+    "Eregion Spear": "Spear_1h_t2",
+    "Rohirrim Spear": "RohanPack_Spear_1h",
+    "Dimrill Spear": "Spear_1h_t3",
+    
+    # Shields
+    "Iron Hills Shield": "IronHills_APSet_Shield",
+    "Heirloom Shield": "Amazing_TBDSet_Shield",
+    "Ram's Head Shield": "Awesome_TBDSet_Shield",
+    "Rohirrim Shield": "RohanPack_Shield",
+    "Eregion Shield": "EregionElf_Set_Shield",
+    "Belegost Shield": "Belegost_Set_Shield",
+    "Shieldwall": "OakenShield_TBDSet_Shield",
+    "Mithril Shield": "Mithril_TBDSet_Shield",
+    "Ornamental Shield": "Grand_TBDSet_Shield",
+    "Gondorian Shield": "Durin_TBDSet_Shield",
+    "Last Alliance Shield": "Stunning_TBDSet_Shield",
+    "Durin's Guard Shield": "Taunting_TBDSet_Shield",
+    "Nogrod Shield": "NogrodShield",
+    "Ent-craft Shield": "EntPack_Shield",
+    
+    # Named/Legendary Mithril weapons (t5-t6)
+    # Based on Items.json: Shaz'akhnaman=WarAxe.Mithril, Rukhnaman=Sword.Mithril
+    "Shaz'akhnaman": "Mithril_WarAxe_1h_t6",  # Mithril War Axe
+    "Sagrûrisâbun": "Mithril_Battlehammer",  # Battlehammer.Mithril - no recipe exists
+    "Barôkamlut": "Mithril_Battleaxe_2h",  # Battleaxe.Mithril - no recipe exists
+    "Muasgadnûr": "Mithril_Mattock_1h_t6",  # Mattock.Mithril
+    "Khushnabrak": "Spear_1h_t4",
+    "Lafarnîzîn": "Mithril_Halberd_2h_t6",  # Halberd.Mithril
+    "Rukhnaman": "Mithril_Sword_1h_t6",  # Sword.Mithril
+    "Thanazbad": "Mithril_GreatSword_2h_t6",  # Greatsword.Mithril
+    "Drakhbarzin": "Weapon_Starlight",
+    
+    # Ranged weapons
+    "Hunting Bow": "Shortbow_Bow",  # Named Shortbow_Bow in recipes
+    "Arrows": "Arrow_Basic_t1",
+    "Elven Arrows": "Arrow_Elven_t2",
+    "Khazâd Arrows": "Arrow_Khazad_t3",
+    "First Age Crossbow": "Crossbow",
+    "First Age Bolts": "CrossbowBolt_Basic_t1",
+    "Khazâd Bolts": "CrossbowBolt_Khazad_t2",
+    "Nogrod Bolts": "CrossbowBolt_Nogrod_t3",
+    
+    # Special named weapons
+    "Dagamarth": "FamousElvenSword",
+    "Red Sword of Nogrod": "Nogrod_Sword_1h",  # May not have recipe
+    "Red Axe of Nogrod": "Nogrod_Axe_1h",  # May not have recipe
+    "Ironbough Greatsword": "Greenbeard_Sword_2h",
+    "Frightener's Battleaxe": "OrcHunter_GreatAxe_2h",
+    "Gimli's Axe": "Battleaxe_2h_Gimli",
+}
+
+ARMOR_RECIPES = {
+    # Iron Hills set
+    "Iron Hills Armor": "IronHills_APSet_TorsoArmor",
+    "Iron Hills Gloves": "IronHills_APSet_GlovesArmor",
+    
+    # Erebor set
+    "Erebor Ringmail": "EreborSteel_APSet_TorsoArmor",
+    "Erebor Planked Gauntlets": "EreborSteel_APSet_GlovesArmor",
+    "Erebor Boots": "EreborSteel_APSet_BootsArmor",
+    "Erebor City Watch Helmet": "EreborSteel_APSet_HelmetArmor",
+    
+    # Belegost set
+    "Belegost Boots": "Belegost_APSet_BootsArmor",
+    "Belegost Helmet": "Belegost_APSet_HelmetArmor",
+    "Belegost Gauntlets": "Belegost_APSet_GlovesArmor",
+    "Belegost Ringmail": "Belegost_APSet_TorsoArmor",
+    
+    # Khazâd Army set
+    "Khazâd Army Armor": "Khazad_Set_TorsoArmor",
+    "Khazâd Army Gauntlets": "Khazad_Set_GlovesArmor",
+    "Khazâd Army Boots": "Khazad_Set_BootsArmor",
+    "Khazâd Army Helmet": "Khazad_Set_HelmArmor",
+    
+    # Mithril set
+    "Mithril Helmet": "Mithril_Set_HelmetArmor",
+    "Mithril Armor": "Mithril_Set_TorsoArmor",
+    "Mithril Gloves": "Mithril_Set_GlovesArmor",
+    "Mithril Slippers": "Mithril_Set_BootsArmor",
+    
+    # Hats
+    "Trapper Hat": "Stunning_Set_HelmetArmor",
+    "Longbottom Hat": "Grand_Set_HelmetArmor",
+    "Miner's Helmet": "RedMountains_MinerSet_HelmetArmor",
+    "Gatherer's Hat": "NPC_Outfit_Gatherer_Hat",  # Special NPC outfit name
+    "Wolf Skin Hat": "Wonderful_Set_HelmetArmor",
+    
+    # Blue Mountains Hunter set
+    "Blue Mountains Hunter's Armor": "BlueMountainsHunter_Set_TorsoArmor",
+    "Blue Mountains Hunter's Boots": "BlueMountainsHunter_Set_BootsArmor",
+    "Blue Mountains Hunter's Gloves": "RangeBonus_Set_GlovesArmor",  # Different internal name
+    
+    # Grey Mountain set (uses AntiCold prefix in recipe keys)
+    "Grey Mountain Overcoat": "AntiColdTorso",
+    "Grey Mountains Boots": "AntiColdBoots",
+    "Grey Mountain Gloves": "AntiColdGloves",
+    "Grey Mountain Hat": "AntiColdHelm",
+    
+    # Eregion set (no "Armor" suffix in recipe name)
+    "Eregion Armor": "EregionElf_Set_Torso",
+    
+    # Durin's Guard set
+    "Durin's Guard Helmet": "Durin_Set_HelmetArmor",
+    "Durin's Guard Armor": "Durin_Set_TorsoArmor",
+    "Durin's Gloves": "Durin_Set_GlovesArmor",
+    "Durin's Guard Boots": "Durin_Set_BootsArmor",
+    
+    # Nogrod set
+    "Nogrod Armor": "Nogrod_Set_TorsoArmor",
+    "Nogrod Gauntlets": "Nogrod_Set_GlovesArmor",
+    
+    # Special helmets
+    "Last Alliance Helmet": "Classic_Set_HelmetArmor",
+    "Crested Helmet": "Taunting_TBDSet_Helm",  # Internal name is Taunting
+    "Spiked Helmet": "SouthernmostFireProof_Set_HelmetArmor",
+    "Dimrill Helmet": "Awesome_Set_HelmetArmor",
+    
+    # Special armor
+    "Expeditioner's Armor": "Orcbane_Set_TorsoArmor",
+}
 
 
 def load_json(filename: str):
@@ -35,6 +186,37 @@ def build_string_table(items_data: list) -> dict[str, str]:
     
     print(f"  Loaded {len(string_table)} string table entries")
     return string_table
+
+
+def build_reverse_lookup(string_table: dict[str, str]) -> dict[str, list[str]]:
+    """Build display name → list of internal key patterns.
+    
+    This allows us to find all string table keys that have a specific display name.
+    """
+    reverse = {}
+    for key, value in string_table.items():
+        if value not in reverse:
+            reverse[value] = []
+        reverse[value].append(key)
+    return reverse
+
+
+def find_recipe_name_from_string_key(string_key: str) -> str | None:
+    """Extract likely recipe name from a string table key.
+    
+    e.g., "Weapons.Spear.Khazad.Name" → "Spear_Khazad" or similar patterns
+    e.g., "Armor.Belegost.Boots.Name" → "Belegost_APSet_BootsArmor" or similar
+    """
+    # Remove common suffixes
+    key = string_key.replace(".Name", "").replace(".DisplayName", "")
+    parts = key.split(".")
+    
+    # Skip prefix like "Weapons" or "Armor"
+    if parts and parts[0] in ("Weapons", "Armor", "Items"):
+        parts = parts[1:]
+    
+    # Return joined parts
+    return "_".join(parts) if parts else None
 
 
 def extract_weapon_names(weapons_data: dict) -> list[str]:
@@ -189,15 +371,43 @@ def find_display_name(internal_name: str, string_table: dict, item_type: str = "
                 best_match = value
                 best_match_count = matches
         
+        # Require at least 2 matching parts for a valid match
+        # This prevents generic items from matching incorrectly
+        if best_match_count < 2:
+            return None
+        
         if best_match:
             return best_match
     
     # For weapons: Parse the name pattern
     if item_type == "weapon":
         parts = internal_name.split("_")
+        
+        # Extract tier info to help with matching
+        tier = None
+        for p in parts:
+            p_lower = p.lower()
+            if p_lower.startswith("t") and len(p_lower) >= 2 and p_lower[1:].isdigit():
+                tier = int(p_lower[1:])
+                break
+        
+        # Map tiers to material types for string table matching
+        tier_materials = {
+            1: ["iron"],
+            2: ["steel"],
+            3: ["khazad", "khazâd", "bronze"],
+            4: ["firstage", "darkalloy"],
+            5: ["mithril"],
+            6: ["mithril"]  # Highest tier also uses mithril
+        }
+        
         # Filter out tier indicators like "1h", "2h", "t1", "t2", etc.
         meaningful_parts = [p for p in parts if not p.lower().startswith("t") 
                           and p.lower() not in ("1h", "2h")]
+        
+        # For tier-based weapons, add the expected material to meaningful parts
+        if tier and tier in tier_materials:
+            meaningful_parts.extend(tier_materials[tier])
         
         # Find the best match (most parts matching)
         best_match = None
@@ -225,6 +435,11 @@ def find_display_name(internal_name: str, string_table: dict, item_type: str = "
                     if matches > best_match_count:
                         best_match = value
                         best_match_count = matches
+        
+        # Require at least 2 matching parts for tier-based weapons
+        # This prevents generic tier weapons from matching to wrong named weapons
+        if tier and best_match_count < 2:
+            return None
         
         if best_match:
             return best_match
@@ -288,196 +503,132 @@ def find_material_display_name(material_internal: str, string_table: dict) -> st
 
 def main():
     print("=" * 60)
-    print("Recipe Extractor - Loading game data...")
+    print("Recipe Extractor - Direct Mapping Approach")
     print("=" * 60)
     
     # Load all data files
     items_data = load_json("Items.json")
-    weapons_data = load_json("DT_Weapons.json")
-    armor_data = load_json("DT_Armor.json")
     recipes_data = load_json("DT_ItemRecipes.json")
     
     print()
     
     # Build lookups
     string_table = build_string_table(items_data)
-    weapon_names = set(extract_weapon_names(weapons_data))
-    armor_names = set(extract_armor_names(armor_data))
     recipes = build_recipe_map(recipes_data)
     
-    # Also include recipes that look like weapons/armor even if not in the data tables
-    weapon_keywords = ["sword", "mattock", "spear", "battleaxe", "halberd", "hammer", 
-                       "shield", "axe", "weapon", "crossbow", "bow", "dagger"]
-    armor_keywords = ["armor", "boots", "gloves", "helmet", "torso", "gauntlet", "helm"]
-    
-    # Find all recipe names that might be weapons or armor
-    for recipe_name in recipes.keys():
-        name_lower = recipe_name.lower()
-        if any(kw in name_lower for kw in weapon_keywords) and recipe_name not in weapon_names:
-            weapon_names.add(recipe_name)
-        if any(kw in name_lower for kw in armor_keywords) and recipe_name not in armor_names:
-            armor_names.add(recipe_name)
-    
-    print(f"  Total weapon candidates (including recipes): {len(weapon_names)}")
-    print(f"  Total armor candidates (including recipes): {len(armor_names)}")
+    print(f"  Total recipes available: {len(recipes)}")
     
     print()
     print("=" * 60)
-    print("Processing weapons...")
+    print("Finding weapons using direct mapping...")
     print("=" * 60)
     
-    # Process weapons
-    weapons_with_recipes = []
-    weapons_no_display = []
-    weapons_no_recipe = []
+    weapons_result = []
+    weapons_not_found = []
     
-    for name in weapon_names:
-        display_name = find_display_name(name, string_table, "weapon")
-        
-        if not display_name:
-            weapons_no_display.append(name)
-            continue
-        
-        # Look for recipe
-        recipe = recipes.get(name)
-        if not recipe:
-            weapons_no_recipe.append((name, display_name))
-            continue
-        
-        # Convert default material internal names to display names
-        default_materials_with_display = []
-        for mat in recipe.get("default", []):
-            mat_display = find_material_display_name(mat["item"], string_table)
-            default_materials_with_display.append({
-                "internal": mat["item"],
-                "display": mat_display,
-                "quantity": mat["quantity"]
+    for display_name, recipe_name in sorted(WEAPON_RECIPES.items()):
+        if recipe_name in recipes:
+            recipe = recipes[recipe_name]
+            
+            # Convert materials
+            default_mats = []
+            for mat in recipe.get("default", []):
+                mat_display = find_material_display_name(mat["item"], string_table)
+                default_mats.append({
+                    "internal": mat["item"],
+                    "display": mat_display,
+                    "quantity": mat["quantity"]
+                })
+            
+            sandbox_mats = []
+            for mat in recipe.get("sandbox", []):
+                mat_display = find_material_display_name(mat["item"], string_table)
+                sandbox_mats.append({
+                    "internal": mat["item"],
+                    "display": mat_display,
+                    "quantity": mat["quantity"]
+                })
+            
+            weapons_result.append({
+                "internal_name": recipe_name,
+                "display_name": display_name,
+                "default_materials": default_mats,
+                "sandbox_materials": sandbox_mats
             })
-        
-        # Convert sandbox material internal names to display names
-        sandbox_materials_with_display = []
-        for mat in recipe.get("sandbox", []):
-            mat_display = find_material_display_name(mat["item"], string_table)
-            sandbox_materials_with_display.append({
-                "internal": mat["item"],
-                "display": mat_display,
-                "quantity": mat["quantity"]
-            })
-        
-        weapons_with_recipes.append({
-            "internal_name": name,
-            "display_name": display_name,
-            "default_materials": default_materials_with_display,
-            "sandbox_materials": sandbox_materials_with_display
-        })
-    
-    print(f"\nWeapons with display names and recipes: {len(weapons_with_recipes)}")
-    print(f"Weapons without display names (removed): {len(weapons_no_display)}")
-    print(f"Weapons without recipes (removed): {len(weapons_no_recipe)}")
+            print(f"  Found: {display_name} -> {recipe_name}")
+        else:
+            weapons_not_found.append((display_name, recipe_name))
+            print(f"  NOT FOUND: {display_name} -> {recipe_name}")
     
     print()
     print("=" * 60)
-    print("Processing armor...")
+    print("Finding armor using direct mapping...")
     print("=" * 60)
     
-    # Process armor
-    armor_with_recipes = []
-    armor_no_display = []
-    armor_no_recipe = []
+    armor_result = []
+    armor_not_found = []
     
-    for name in armor_names:
-        display_name = find_display_name(name, string_table, "armor")
-        
-        if not display_name:
-            armor_no_display.append(name)
-            continue
-        
-        # Look for recipe
-        recipe = recipes.get(name)
-        if not recipe:
-            armor_no_recipe.append((name, display_name))
-            continue
-        
-        # Convert default material internal names to display names
-        default_materials_with_display = []
-        for mat in recipe.get("default", []):
-            mat_display = find_material_display_name(mat["item"], string_table)
-            default_materials_with_display.append({
-                "internal": mat["item"],
-                "display": mat_display,
-                "quantity": mat["quantity"]
+    for display_name, recipe_name in sorted(ARMOR_RECIPES.items()):
+        if recipe_name in recipes:
+            recipe = recipes[recipe_name]
+            
+            # Convert materials
+            default_mats = []
+            for mat in recipe.get("default", []):
+                mat_display = find_material_display_name(mat["item"], string_table)
+                default_mats.append({
+                    "internal": mat["item"],
+                    "display": mat_display,
+                    "quantity": mat["quantity"]
+                })
+            
+            sandbox_mats = []
+            for mat in recipe.get("sandbox", []):
+                mat_display = find_material_display_name(mat["item"], string_table)
+                sandbox_mats.append({
+                    "internal": mat["item"],
+                    "display": mat_display,
+                    "quantity": mat["quantity"]
+                })
+            
+            armor_result.append({
+                "internal_name": recipe_name,
+                "display_name": display_name,
+                "default_materials": default_mats,
+                "sandbox_materials": sandbox_mats
             })
-        
-        # Convert sandbox material internal names to display names
-        sandbox_materials_with_display = []
-        for mat in recipe.get("sandbox", []):
-            mat_display = find_material_display_name(mat["item"], string_table)
-            sandbox_materials_with_display.append({
-                "internal": mat["item"],
-                "display": mat_display,
-                "quantity": mat["quantity"]
-            })
-        
-        armor_with_recipes.append({
-            "internal_name": name,
-            "display_name": display_name,
-            "default_materials": default_materials_with_display,
-            "sandbox_materials": sandbox_materials_with_display
-        })
-    
-    print(f"\nArmor with display names and recipes: {len(armor_with_recipes)}")
-    print(f"Armor without display names (removed): {len(armor_no_display)}")
-    print(f"Armor without recipes (removed): {len(armor_no_recipe)}")
+            print(f"  Found: {display_name} -> {recipe_name}")
+        else:
+            armor_not_found.append((display_name, recipe_name))
+            print(f"  NOT FOUND: {display_name} -> {recipe_name}")
     
     # Output results
     print()
     print("=" * 60)
-    print("FINAL RESULTS")
+    print("SUMMARY")
     print("=" * 60)
     
-    print("\n--- WEAPONS ---")
-    for item in weapons_with_recipes[:10]:  # First 10
-        print(f"\n{item['display_name']} ({item['internal_name']})")
-        if item['default_materials']:
-            print("  Default Materials:")
-            for mat in item['default_materials']:
-                print(f"    - {mat['quantity']}x {mat['display']} ({mat['internal']})")
-        if item['sandbox_materials']:
-            print("  Sandbox Materials:")
-            for mat in item['sandbox_materials']:
-                print(f"    - {mat['quantity']}x {mat['display']} ({mat['internal']})")
+    print(f"\nWeapons found: {len(weapons_result)}/{len(WEAPON_RECIPES)}")
+    if weapons_not_found:
+        print(f"  Missing recipe names: {[x[1] for x in weapons_not_found]}")
     
-    if len(weapons_with_recipes) > 10:
-        print(f"\n... and {len(weapons_with_recipes) - 10} more weapons")
-    
-    print("\n--- ARMOR ---")
-    for item in armor_with_recipes[:10]:  # First 10
-        print(f"\n{item['display_name']} ({item['internal_name']})")
-        if item['default_materials']:
-            print("  Default Materials:")
-            for mat in item['default_materials']:
-                print(f"    - {mat['quantity']}x {mat['display']} ({mat['internal']})")
-        if item['sandbox_materials']:
-            print("  Sandbox Materials:")
-            for mat in item['sandbox_materials']:
-                print(f"    - {mat['quantity']}x {mat['display']} ({mat['internal']})")
-    
-    if len(armor_with_recipes) > 10:
-        print(f"\n... and {len(armor_with_recipes) - 10} more armor pieces")
+    print(f"\nArmor found: {len(armor_result)}/{len(ARMOR_RECIPES)}")
+    if armor_not_found:
+        print(f"  Missing recipe names: {[x[1] for x in armor_not_found]}")
     
     # Save to output file
     output = {
-        "weapons": weapons_with_recipes,
-        "armor": armor_with_recipes,
+        "weapons": weapons_result,
+        "armor": armor_result,
         "stats": {
-            "total_weapons": len(weapon_names),
-            "weapons_with_recipes": len(weapons_with_recipes),
-            "weapons_no_display": len(weapons_no_display),
-            "weapons_no_recipe": len(weapons_no_recipe),
-            "total_armor": len(armor_names),
-            "armor_with_recipes": len(armor_with_recipes),
-            "armor_no_display": len(armor_no_display),
-            "armor_no_recipe": len(armor_no_recipe)
+            "weapons_found": len(weapons_result),
+            "weapons_missing": len(weapons_not_found),
+            "armor_found": len(armor_result),
+            "armor_missing": len(armor_not_found)
+        },
+        "missing": {
+            "weapons": [{"display": d, "recipe": r} for d, r in weapons_not_found],
+            "armor": [{"display": d, "recipe": r} for d, r in armor_not_found]
         }
     }
     
