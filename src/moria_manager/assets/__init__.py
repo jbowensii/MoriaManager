@@ -14,7 +14,6 @@ Asset Directory Structure:
             restore.png   - Restore action icon
             app_icon.png  - Application icon (256x256)
             app_icon.ico  - Windows application icon (multi-size)
-        background.png    - Main window background image
 """
 
 from .loader import get_asset_path
