@@ -231,6 +231,7 @@ class ServersMixin:
             command=lambda: self._copy_to_clipboard(address_entry.get(), "Address")
         )
         address_copy_btn.grid(row=0, column=1, padx=(2, 0))
+        self._create_tooltip(address_copy_btn, "Copy address")
 
         # Password entry with eye and copy buttons
         password_frame = ctk.CTkFrame(row_frame, fg_color="transparent")
@@ -271,6 +272,7 @@ class ServersMixin:
             command=toggle_password
         )
         eye_btn.grid(row=0, column=1, padx=(2, 0))
+        self._create_tooltip(eye_btn, "Show/hide password")
 
         password_copy_btn = ctk.CTkButton(
             password_frame, text="\U0001F4CB", width=24, height=24,
@@ -280,6 +282,7 @@ class ServersMixin:
             command=lambda: self._copy_to_clipboard(password_entry.get(), "Password")
         )
         password_copy_btn.grid(row=0, column=2, padx=(2, 0))
+        self._create_tooltip(password_copy_btn, "Copy password")
 
         # Notes entry
         notes_entry = ctk.CTkEntry(row_frame, font=FONTS["body"], height=28)
@@ -610,6 +613,7 @@ class ServersMixin:
             command=toggle_password
         )
         eye_btn.pack(side="right", padx=(5, 0))
+        self._create_tooltip(eye_btn, "Show/hide password")
 
         # Vertical separator
         separator = ctk.CTkFrame(columns_frame, width=2, fg_color="gray50")
@@ -2451,6 +2455,7 @@ class ServersMixin:
             command=on_delete
         )
         delete_btn.pack(side="right")
+        self._create_tooltip(delete_btn, "Delete Server")
 
         # Separator after action bar
         sep1 = ctk.CTkFrame(container, height=2, fg_color="gray50")
@@ -2546,6 +2551,7 @@ class ServersMixin:
             command=toggle_password
         )
         eye_btn.pack(side="right", padx=(5, 0))
+        self._create_tooltip(eye_btn, "Show/hide password")
 
         # Vertical separator
         separator = ctk.CTkFrame(columns_frame, width=2, fg_color="gray50")

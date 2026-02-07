@@ -337,6 +337,7 @@ class TradeMixin:
             command=lambda: self._on_quantity_change(merchant, order, qty_var, -1)
         )
         down_btn.pack(side="left")
+        self._create_tooltip(down_btn, "Decrease quantity")
 
         # Quantity entry (4 digits, 0-9999)
         qty_var = ctk.StringVar(value=str(order.quantity))
@@ -364,6 +365,7 @@ class TradeMixin:
             command=lambda: self._on_quantity_change(merchant, order, qty_var, 1)
         )
         up_btn.pack(side="left")
+        self._create_tooltip(up_btn, "Increase quantity")
 
         self.trade_order_checkboxes[merchant.raw_name][order.raw_name] = {
             "checkbox": checkbox,
