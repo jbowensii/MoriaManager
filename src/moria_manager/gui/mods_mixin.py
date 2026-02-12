@@ -197,6 +197,26 @@ class ModsMixin:
                                 if top_item:
                                     top_level_items.add(top_item)
 
+                            # Detect single wrapper directory (e.g. "LogicMods/").
+                            # The contents will be flattened after extraction, so
+                            # the overwrite check must use the second-level names.
+                            _single_wrapper = None
+                            if len(top_level_items) == 1:
+                                _wrapper_candidate = next(iter(top_level_items))
+                                # Every entry must live under the wrapper dir
+                                if all(
+                                    item == _wrapper_candidate
+                                    or item.startswith(_wrapper_candidate + "/")
+                                    for item in zip_contents if item
+                                ):
+                                    _single_wrapper = _wrapper_candidate
+                                    # Re-derive effective items (second level)
+                                    top_level_items = set()
+                                    for item in zip_contents:
+                                        parts = item.split("/")
+                                        if len(parts) > 1 and parts[1]:
+                                            top_level_items.add(parts[1])
+
                             # Check for existing files/folders
                             existing_items = []
                             for item in top_level_items:
@@ -228,6 +248,46 @@ class ModsMixin:
 
                             # Extract zip contents
                             zip_ref.extractall(str(mods_backup_path))
+
+                            # Flatten single wrapper directories.
+                            # Some mod zips wrap everything inside a
+                            # directory like "LogicMods/" which has no
+                            # meaning in backup/mods.  Move the contents
+                            # up one level and remove the empty wrapper.
+                            if _single_wrapper:
+                                wrapper_path = mods_backup_path / _single_wrapper
+                                if wrapper_path.is_dir() and any(wrapper_path.iterdir()):
+                                    for child in list(wrapper_path.iterdir()):
+                                        dest_child = mods_backup_path / child.name
+                                        if dest_child.exists():
+                                            if dest_child.is_dir():
+                                                shutil.rmtree(str(dest_child))
+                                            else:
+                                                dest_child.unlink()
+                                        shutil.move(str(child), str(dest_child))
+                                    # Remove the now-empty wrapper
+                                    try:
+                                        wrapper_path.rmdir()
+                                    except OSError:
+                                        pass
+
+                            # Remove any empty directories left by extraction
+                            # (includes the wrapper dir if it was empty)
+                            dirs_to_check = set(top_level_items)
+                            if _single_wrapper:
+                                dirs_to_check.add(_single_wrapper)
+                            for tl_item in dirs_to_check:
+                                tl_path = mods_backup_path / tl_item
+                                if (tl_path.is_dir()
+                                        and not any(tl_path.iterdir())):
+                                    try:
+                                        tl_path.rmdir()
+                                        logger.debug(
+                                            "Removed empty directory from "
+                                            "zip extraction: %s", tl_item)
+                                    except OSError:
+                                        pass
+
                             imported_count += 1
                             self._set_status(f"Extracted '{source_path.name}' to Available Mods")
 
