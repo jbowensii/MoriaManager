@@ -880,6 +880,7 @@ class ServersMixin:
                 ftp = FTP()
                 ftp.connect(host, port, timeout=15)
                 ftp.login(username, password)
+                ftp.encoding = "utf-8"
 
                 self.ftp_connections[server_name] = ftp
                 self.server_connection_states[server_name] = "connected"
@@ -1695,6 +1696,7 @@ class ServersMixin:
                     ftp = FTP()
                     ftp.connect(host, port, timeout=10)
                     ftp.login(username, password)
+                    ftp.encoding = "utf-8"
 
                     current_dir = ftp.pwd()
 

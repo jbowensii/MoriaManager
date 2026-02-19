@@ -545,11 +545,7 @@ class ModsMixin:
         # constructed for remote entries.  Uses %APPDATA% on Windows with a
         # fallback to ~/.moria_manager on other platforms.
         try:
-            appdata = os.environ.get("APPDATA", "")
-            if appdata:
-                cache_base = Path(appdata) / "MoriaManager" / "server_mods_cache" / server_name
-            else:
-                cache_base = Path.home() / ".moria_manager" / "server_mods_cache" / server_name
+            cache_base = GamePaths.SERVER_MODS_CACHE_DIR / server_name
             cache_base.mkdir(parents=True, exist_ok=True)
             self._server_temp_mods_path = cache_base
         except Exception as e:

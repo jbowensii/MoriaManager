@@ -14,16 +14,21 @@ from ..logging_config import get_logger
 
 logger = get_logger("path_validator")
 
-# Protected Windows system directories that should never be modified
+# Derive the system drive from environment (e.g. "C:") so protection works
+# when Windows is installed on D:, E:, etc.
+_SYSTEM_DRIVE = os.environ.get("SYSTEMDRIVE", "C:")
+
+# Protected Windows system directories that should never be modified.
+# Uses the actual system drive rather than assuming C:.
 PROTECTED_DIRECTORIES = [
-    "C:\\Windows",
-    "C:\\Program Files",
-    "C:\\Program Files (x86)",
-    "C:\\ProgramData",
-    "C:\\Users\\Default",
-    "C:\\Users\\Public",
-    "C:\\$Recycle.Bin",
-    "C:\\System Volume Information",
+    f"{_SYSTEM_DRIVE}\\Windows",
+    f"{_SYSTEM_DRIVE}\\Program Files",
+    f"{_SYSTEM_DRIVE}\\Program Files (x86)",
+    f"{_SYSTEM_DRIVE}\\ProgramData",
+    f"{_SYSTEM_DRIVE}\\Users\\Default",
+    f"{_SYSTEM_DRIVE}\\Users\\Public",
+    f"{_SYSTEM_DRIVE}\\$Recycle.Bin",
+    f"{_SYSTEM_DRIVE}\\System Volume Information",
 ]
 
 # Additional protected paths based on environment variables

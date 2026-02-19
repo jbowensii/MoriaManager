@@ -116,7 +116,9 @@ def setup_logging(debug: bool = False) -> logging.Logger:
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
 
-    # Console handler - only in debug mode
+    # Console handler - only in debug mode.
+    # UTF-8 encoding is enforced at startup via _enforce_utf8() in app.py,
+    # so sys.stdout is already reconfigured for UTF-8 on non-Latin consoles.
     if debug:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.DEBUG)

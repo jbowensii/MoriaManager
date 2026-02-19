@@ -13,17 +13,25 @@ class GamePaths:
     """Default paths for game installations and saves.
 
     All paths use environment variable expansion for portability.
+    Game installation defaults use %PROGRAMFILES% env vars so they resolve
+    correctly regardless of system drive letter or locale.
     """
 
+    # Derive base Program Files directories from the environment so we don't
+    # assume C: drive or English folder names.
+    _PF = Path(os.environ.get("PROGRAMFILES", r"C:\Program Files"))
+    _PF86 = Path(os.environ.get("PROGRAMFILES(X86)",
+                                r"C:\Program Files (x86)"))
+
     # Steam paths
-    STEAM_GAME_DEFAULT = Path(
-        r"C:\Program Files (x86)\Steam\steamapps\common"
-        r"\The Lord of the Rings Return to Moria™"
+    STEAM_GAME_DEFAULT = (
+        _PF86 / "Steam" / "steamapps" / "common"
+        / "The Lord of the Rings Return to Moria™"
     )
     STEAM_SAVE_DEFAULT = Path(os.path.expandvars(r"%LOCALAPPDATA%\Moria\Saved\SaveGamesSteam"))
 
     # Epic paths
-    EPIC_GAME_DEFAULT = Path(r"C:\Program Files\Epic Games\ReturnToMoria")
+    EPIC_GAME_DEFAULT = _PF / "Epic Games" / "ReturnToMoria"
     EPIC_SAVE_DEFAULT = Path(os.path.expandvars(r"%LOCALAPPDATA%\Moria\Saved\SaveGamesEpic"))
 
     # Default backup location
@@ -43,6 +51,10 @@ class GamePaths:
 
     # Trade manager configuration
     TRADE_CONFIG_FILE = CONFIG_DIR / "trade_config.xml"
+
+    # Cache directories for server operations
+    SERVER_CACHE_DIR = CONFIG_DIR / "server_cache"
+    SERVER_MODS_CACHE_DIR = CONFIG_DIR / "server_mods_cache"
 
     @classmethod
     def expand_path(cls, path_str: str) -> Path:

@@ -7,9 +7,9 @@ from pathlib import Path
 GAMESOURCE = Path(__file__).parent.parent / "gamesource"
 
 # Load data
-weapons = json.load(open(GAMESOURCE / "DT_Weapons.json"))
-recipes = json.load(open(GAMESOURCE / "DT_ItemRecipes.json"))
-items = json.load(open(GAMESOURCE / "Items.json"))
+weapons = json.load(open(GAMESOURCE / "DT_Weapons.json", encoding="utf-8"))
+recipes = json.load(open(GAMESOURCE / "DT_ItemRecipes.json", encoding="utf-8"))
+items = json.load(open(GAMESOURCE / "Items.json", encoding="utf-8"))
 
 # Get string table
 st = items[0]["StringTable"]["KeysToEntries"]

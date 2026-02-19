@@ -145,8 +145,7 @@ class BackupMixin:
             return
 
         # Create/use temp directory in APPDATA for server saves
-        appdata = os.environ.get("APPDATA", os.path.expanduser("~"))
-        temp_dir = Path(appdata) / "MoriaManager" / "server_cache" / server_name
+        temp_dir = GamePaths.SERVER_CACHE_DIR / server_name
         temp_dir.mkdir(parents=True, exist_ok=True)
 
         # Clear old files in temp dir

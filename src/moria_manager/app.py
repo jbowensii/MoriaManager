@@ -6,6 +6,7 @@ This module contains the MoriaManagerApp class which coordinates:
     - Main window creation and event loop management
 
 The main() function serves as the entry point, handling:
+    - UTF-8 encoding enforcement for all platforms
     - Logging setup (file-based, with optional console output via --debug)
     - Error handling with user-friendly error dialogs
     - Clean shutdown with logging
@@ -16,6 +17,7 @@ Usage:
     --debug: Enable console logging for troubleshooting
 """
 
+import os
 import sys
 
 import customtkinter as ctk
@@ -95,8 +97,25 @@ class MoriaManagerApp:
         self.config_manager.create_default(installations)
 
 
+def _enforce_utf8():
+    """Force UTF-8 encoding on Windows regardless of system codepage.
+
+    This ensures correct behavior on non-Latin Windows installations
+    (e.g., Russian CP866, Chinese GBK, Japanese Shift-JIS).
+    Must be called before any file I/O or logging.
+    """
+    if sys.platform == "win32":
+        os.environ["PYTHONUTF8"] = "1"
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main():
     """Application entry point."""
+    _enforce_utf8()
+
     # Initialize logging first
     logger = setup_logging(debug="--debug" in sys.argv)
     logger.info("Starting Moria Manager v%s", __version__)
