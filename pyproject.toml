@@ -1,6 +1,6 @@
 [project]
 name = "moria-manager"
-version = "1.7.0"
+version = "1.8.0"
 description = "Manager utility for Lord of the Rings: Return to Moria"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -3,6 +3,7 @@
     {
       "internal_name": "Arrow_Basic_t1",
       "display_name": "Arrows",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.Wood",
@@ -11,20 +12,39 @@
         },
         {
           "internal": "Item.Scrap",
-          "display": "Item.Scrap",
+          "display": "Metal Fragments",
           "quantity": 3
         }
       ],
       "sandbox_materials": []
     },
     {
-      "internal_name": "Halberd_2h_t2",
-      "display_name": "Belegost Halberd",
+      "internal_name": "Balin_AltarSet_Shield",
+      "display_name": "Balin’s Company Shield",
+      "tier": 4,
       "default_materials": [
         {
-          "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
-          "quantity": 3
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 6
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 6
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Battleaxe_2h_t4",
+      "display_name": "Barôkamlut",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 4
         },
         {
           "internal": "Item.Ironwood",
@@ -34,6 +54,39 @@
         {
           "internal": "Item.FineLeather",
           "display": "Fine Leather",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.Topaz",
+          "display": "Ore.Topaz",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Halberd_2h_t1",
+      "display_name": "Belegost Halberd",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.Amethyst",
+          "display": "Ore.Amethyst",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.AncientWood",
+          "display": "Ubâsam Wood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
           "quantity": 1
         }
       ],
@@ -42,43 +95,68 @@
     {
       "internal_name": "Belegost_Set_Shield",
       "display_name": "Belegost Shield",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.GunMetalIngot",
-          "display": "Shan\u00f4r Ingot",
+          "display": "Shanôr Ingot",
           "quantity": 3
         },
         {
           "internal": "Item.AncientWood",
-          "display": "Ub\u00e2sam Wood",
+          "display": "Ubâsam Wood",
           "quantity": 6
         }
       ],
       "sandbox_materials": []
     },
     {
-      "internal_name": "Durins_Axe",
+      "internal_name": "WarAxe_1h_t3",
       "display_name": "Belegost War Axe",
+      "tier": 3,
       "default_materials": [
         {
-          "internal": "Item.PurifiedDarkIngot",
-          "display": "Durinul Iron Ingot ",
-          "quantity": 3
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 2
         },
         {
-          "internal": "Ore.SunStone",
-          "display": "Sun-stone",
-          "quantity": 3
+          "internal": "Ore.Amethyst",
+          "display": "Ore.Amethyst",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.AncientWood",
+          "display": "Ubâsam Wood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "MoriaCompany_Shield",
+      "display_name": "Company of Moria Shield",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 20
+        },
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 10
         },
         {
           "internal": "Item.Ironwood",
           "display": "Ironwood",
-          "quantity": 4
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 1
+          "quantity": 10
         }
       ],
       "sandbox_materials": []
@@ -86,6 +164,7 @@
     {
       "internal_name": "FamousElvenSword",
       "display_name": "Dagamarth",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.BronzeIngot",
@@ -94,7 +173,7 @@
         },
         {
           "internal": "Ore.Topaz",
-          "display": "Topaz",
+          "display": "Ore.Topaz",
           "quantity": 3
         },
         {
@@ -106,12 +185,36 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Spear_1h_t3",
-      "display_name": "Dimrill Spear",
+      "internal_name": "Awesome_TBDSet_Shield",
+      "display_name": "Dimrill Shield",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 6
+        },
+        {
+          "internal": "Item.Scales",
+          "display": "Scales",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Spear_1h_t3",
+      "display_name": "Dimrill Spear",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
           "quantity": 1
         },
         {
@@ -130,6 +233,7 @@
     {
       "internal_name": "Weapon_Starlight",
       "display_name": "Drakhbarzin",
+      "tier": 6,
       "default_materials": [
         {
           "internal": "Item.MithrilIngot",
@@ -155,23 +259,57 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Taunting_TBDSet_Shield",
-      "display_name": "Durin's Guard Shield",
+      "internal_name": "Durins_Axe",
+      "display_name": "Durin’s Axe",
+      "tier": 0,
       "default_materials": [
         {
-          "internal": "Item.SteelIngot",
-          "display": "Steel Ingot",
-          "quantity": 5
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 3
         },
         {
-          "internal": "Item.QualityWood",
-          "display": "Elven Wood",
-          "quantity": 8
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
         },
         {
-          "internal": "Item.Hide",
-          "display": "Hide",
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
           "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_TBDSet_Shield",
+      "display_name": "Durin’s Guard Shield",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 6
         }
       ],
       "sandbox_materials": []
@@ -179,6 +317,7 @@
     {
       "internal_name": "Arrow_Elven_t2",
       "display_name": "Elven Arrows",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.BronzeIngot",
@@ -201,15 +340,16 @@
     {
       "internal_name": "EntPack_Shield",
       "display_name": "Ent-craft Shield",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.GunMetalIngot",
-          "display": "Shan\u00f4r Ingot",
+          "display": "Shanôr Ingot",
           "quantity": 4
         },
         {
           "internal": "Item.EntPack_EntMoss",
-          "display": "Item.EntPack_EntMoss",
+          "display": "Entwood",
           "quantity": 2
         },
         {
@@ -219,7 +359,7 @@
         },
         {
           "internal": "Ore.Topaz",
-          "display": "Topaz",
+          "display": "Ore.Topaz",
           "quantity": 2
         }
       ],
@@ -228,6 +368,7 @@
     {
       "internal_name": "EregionElf_Set_Shield",
       "display_name": "Eregion Shield",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.BronzeIngot",
@@ -236,7 +377,7 @@
         },
         {
           "internal": "Ore.MoonStone",
-          "display": "True-quartz",
+          "display": "Ore.MoonStone",
           "quantity": 9
         },
         {
@@ -255,6 +396,7 @@
     {
       "internal_name": "Spear_1h_t2",
       "display_name": "Eregion Spear",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.BronzeIngot",
@@ -270,28 +412,29 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Battleaxe_2h_t4",
+      "internal_name": "Battleaxe_2h_t2",
       "display_name": "First Age Battleaxe",
+      "tier": 3,
       "default_materials": [
         {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 4
+          "internal": "Item.SilverIngot",
+          "display": "Silver Ingot",
+          "quantity": 3
         },
         {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 4
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 2
-        },
-        {
-          "internal": "Ore.Topaz",
-          "display": "Topaz",
+          "internal": "Ore.Ruby",
+          "display": "Ore.Ruby",
           "quantity": 1
+        },
+        {
+          "internal": "Item.AncientWood",
+          "display": "Ubâsam Wood",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 2
         }
       ],
       "sandbox_materials": []
@@ -299,6 +442,7 @@
     {
       "internal_name": "CrossbowBolt_Basic_t1",
       "display_name": "First Age Bolts",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.SilverIngot",
@@ -307,7 +451,7 @@
         },
         {
           "internal": "Item.AncientWood",
-          "display": "Ub\u00e2sam Wood",
+          "display": "Ubâsam Wood",
           "quantity": 10
         }
       ],
@@ -316,6 +460,7 @@
     {
       "internal_name": "Crossbow",
       "display_name": "First Age Crossbow",
+      "tier": 0,
       "default_materials": [
         {
           "internal": "Item.SilverIngot",
@@ -324,12 +469,12 @@
         },
         {
           "internal": "Ore.Ruby",
-          "display": "Ruby",
+          "display": "Ore.Ruby",
           "quantity": 1
         },
         {
           "internal": "Item.AncientWood",
-          "display": "Ub\u00e2sam Wood",
+          "display": "Ubâsam Wood",
           "quantity": 8
         },
         {
@@ -341,62 +486,65 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Sword_2h_t3",
+      "internal_name": "Sword_2h_t1",
       "display_name": "First Age Greatsword",
+      "tier": 3,
       "default_materials": [
         {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 4
+          "internal": "Item.SilverIngot",
+          "display": "Silver Ingot",
+          "quantity": 5
         },
         {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 10
+          "internal": "Ore.Ruby",
+          "display": "Ore.Ruby",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.AncientWood",
+          "display": "Ubâsam Wood",
+          "quantity": 4
         },
         {
           "internal": "Item.Leather",
           "display": "Leather",
-          "quantity": 5
-        },
-        {
-          "internal": "Item.GoldIngot",
-          "display": "Gold Ingot",
-          "quantity": 3
+          "quantity": 1
         }
       ],
       "sandbox_materials": []
     },
     {
-      "internal_name": "Sword_1h_t4",
+      "internal_name": "Sword_1h_t3",
       "display_name": "First Age Sword",
+      "tier": 3,
       "default_materials": [
         {
-          "internal": "Item.NogrodSteelIngot",
-          "display": "Nogrod Steel Ingot",
+          "internal": "Item.SilverIngot",
+          "display": "Silver Ingot",
           "quantity": 3
-        },
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 4
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 1
         },
         {
           "internal": "Ore.Ruby",
-          "display": "Ruby",
-          "quantity": 3
+          "display": "Ore.Ruby",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.AncientWood",
+          "display": "Ubâsam Wood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 1
         }
       ],
       "sandbox_materials": []
     },
     {
       "internal_name": "OrcHunter_GreatAxe_2h",
-      "display_name": "Frightener's Battleaxe",
+      "display_name": "Frightener’s Battleaxe",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.SteelIngot",
@@ -415,7 +563,7 @@
         },
         {
           "internal": "Ore.Sapphire",
-          "display": "Sapphire",
+          "display": "Ore.Sapphire",
           "quantity": 3
         }
       ],
@@ -423,7 +571,8 @@
     },
     {
       "internal_name": "Battleaxe_2h_Gimli",
-      "display_name": "Gimli's Axe",
+      "display_name": "Gimli's Fourth Age Axe",
+      "tier": 6,
       "default_materials": [
         {
           "internal": "Item.MithrilIngot",
@@ -437,7 +586,7 @@
         },
         {
           "internal": "Ore.Amber",
-          "display": "Amber",
+          "display": "Ore.Amber",
           "quantity": 3
         },
         {
@@ -449,8 +598,9 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Durin_TBDSet_Shield",
+      "internal_name": "Grand_TBDSet_Shield",
       "display_name": "Gondorian Shield",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.StarAlloyIngot",
@@ -460,44 +610,35 @@
         {
           "internal": "Item.PurifiedDarkIngot",
           "display": "Durinul Iron Ingot ",
-          "quantity": 2
-        },
-        {
-          "internal": "Ore.SunStone",
-          "display": "Sun-stone",
           "quantity": 3
         },
         {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 6
+          "internal": "Ore.Quartz",
+          "display": "Ore.Quartz",
+          "quantity": 3
+        },
+        {
+          "internal": "Ore.LapisLazuli",
+          "display": "Ore.LapisLazuli",
+          "quantity": 3
         }
       ],
       "sandbox_materials": []
     },
     {
-      "internal_name": "Amazing_TBDSet_Shield",
+      "internal_name": "Wonderful_TBDSet_Shield",
       "display_name": "Heirloom Shield",
+      "tier": 1,
       "default_materials": [
         {
-          "internal": "Item.SteelIngot",
-          "display": "Steel Ingot",
-          "quantity": 3
+          "internal": "Item.IronIngot",
+          "display": "Iron Ingot",
+          "quantity": 4
         },
         {
-          "internal": "Item.BronzeIngot",
-          "display": "Bronze Ingot",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.QualityWood",
-          "display": "Elven Wood",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.Hide",
-          "display": "Hide",
-          "quantity": 1
+          "internal": "Item.Wood",
+          "display": "Wood Scraps",
+          "quantity": 6
         }
       ],
       "sandbox_materials": []
@@ -505,6 +646,7 @@
     {
       "internal_name": "Shortbow_Bow",
       "display_name": "Hunting Bow",
+      "tier": 0,
       "default_materials": [
         {
           "internal": "Item.QualityWood",
@@ -522,10 +664,11 @@
     {
       "internal_name": "WarAxe_1h_t0",
       "display_name": "Improvised Axe",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.Scrap",
-          "display": "Item.Scrap",
+          "display": "Metal Fragments",
           "quantity": 3
         },
         {
@@ -544,6 +687,7 @@
     {
       "internal_name": "IronHills_APSet_Shield",
       "display_name": "Iron Hills Shield",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.IronIngot",
@@ -561,6 +705,7 @@
     {
       "internal_name": "Spear_1h_t1_TU2",
       "display_name": "Iron Spear",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.IronIngot",
@@ -583,6 +728,7 @@
     {
       "internal_name": "Sword_1h_t1",
       "display_name": "Iron Sword",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.IronIngot",
@@ -605,6 +751,7 @@
     {
       "internal_name": "WarAxe_1h_t1",
       "display_name": "Iron War Axe",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.IronIngot",
@@ -627,15 +774,16 @@
     {
       "internal_name": "Greenbeard_Sword_2h",
       "display_name": "Ironbough Greatsword",
+      "tier": 5,
       "default_materials": [
         {
           "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
+          "display": "Khazâd Steel Ingot",
           "quantity": 6
         },
         {
           "internal": "Item.EntPack_EntMoss",
-          "display": "Item.EntPack_EntMoss",
+          "display": "Entwood",
           "quantity": 2
         },
         {
@@ -647,8 +795,818 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "Sword_2h_t2",
+      "display_name": "Khazâd Army Greatsword",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Halberd_2h_t2",
+      "display_name": "Khazâd Army Halberd",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Arrow_Khazad_t3",
+      "display_name": "Khazâd Arrows",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 5
+        },
+        {
+          "internal": "Item.Feathers",
+          "display": "Feathers",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "CrossbowBolt_Khazad_t2",
+      "display_name": "Khazâd Bolts",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 10
+        },
+        {
+          "internal": "Item.Feathers",
+          "display": "Feathers",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Mattock_1h_t2",
+      "display_name": "Khazâd Maul",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "WarAxe_1h_t4",
+      "display_name": "Khazâd War Axe",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Hammer_2h_t1",
+      "display_name": "Khazâd War Mattock",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "WarAxe_1h_t5",
+      "display_name": "Khushnabrak",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Anorin",
+          "display": "Ore.Anorin",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Mithril_WarAxe_1h_t6",
+      "display_name": "Khushnabrak",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Anorin",
+          "display": "Ore.Anorin",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Halberd_2h_t3",
+      "display_name": "Lafarnîzîn",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 6
+        },
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Mithril_Halberd_2h_t6",
+      "display_name": "Lafarnîzîn",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 6
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.Emerald",
+          "display": "Ore.Emerald",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Mattock_1h_t1",
+      "display_name": "Last Alliance Maul",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.BronzeIngot",
+          "display": "Bronze Ingot",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.QualityWood",
+          "display": "Elven Wood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Amazing_TBDSet_Shield",
+      "display_name": "Last Alliance Shield",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.BronzeIngot",
+          "display": "Bronze Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.QualityWood",
+          "display": "Elven Wood",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Mithril_TBDSet_Shield",
+      "display_name": "Mithril Shield",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Ore.Emerald",
+          "display": "Ore.Emerald",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Mattock_1h_t3",
+      "display_name": "Muasgadnûr",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Mithril_Mattock_1h_t6",
+      "display_name": "Muasgadnûr",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "CrossbowBolt_Nogrod_t3",
+      "display_name": "Nogrod Bolts",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 10
+        },
+        {
+          "internal": "Item.Feathers",
+          "display": "Feathers",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NogrodShield",
+      "display_name": "Nogrod Shield",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 5
+        },
+        {
+          "internal": "Item.BronzeIngot",
+          "display": "Bronze Ingot",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Quartz",
+          "display": "Ore.Quartz",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "OakenShield_TBDSet_Shield",
+      "display_name": "Oakenshield",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Wood",
+          "display": "Wood Scraps",
+          "quantity": 8
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Stunning_TBDSet_Shield",
+      "display_name": "Ornamental Shield",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Taunting_TBDSet_Shield",
+      "display_name": "Ram’s Head Shield",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 5
+        },
+        {
+          "internal": "Item.QualityWood",
+          "display": "Elven Wood",
+          "quantity": 8
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Battleaxe_2h_t3",
+      "display_name": "Red Axe of Nogrod",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.Ruby",
+          "display": "Ore.Ruby",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Sword_1h_t4",
+      "display_name": "Red Sword of Nogrod",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Ruby",
+          "display": "Ore.Ruby",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "RohanPack_Shield",
+      "display_name": "Rohirrim Shield",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.BronzeIngot",
+          "display": "Bronze Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.QualityWood",
+          "display": "Elven Wood",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "RohanPack_Spear_1h",
+      "display_name": "Rohirrim Spear",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.BronzeIngot",
+          "display": "Bronze Ingot",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.QualityWood",
+          "display": "Elven Wood",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Sword_1h_t5",
+      "display_name": "Rukhnaman",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 6
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Mithril_Sword_1h_t6",
+      "display_name": "Rukhnaman",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Amethyst",
+          "display": "Ore.Amethyst",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Hammer_2h_t2",
+      "display_name": "Sagrûrisâbun",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 4
+        },
+        {
+          "internal": "Ore.Anorin",
+          "display": "Ore.Anorin",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Spear_1h_t4",
+      "display_name": "Shaz’akhnaman",
+      "tier": 6,
+      "default_materials": [
+        {
+          "internal": "Item.MithrilIngot",
+          "display": "Mithril Ingot",
+          "quantity": 5
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 9
+        },
+        {
+          "internal": "Item.Ironwood",
+          "display": "Ironwood",
+          "quantity": 6
+        },
+        {
+          "internal": "Item.Scales",
+          "display": "Scales",
+          "quantity": 6
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "TowerShield_EpicItem",
+      "display_name": "Shieldwall",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.BronzeIngot",
+          "display": "Bronze Ingot",
+          "quantity": 6
+        },
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 6
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.QualityWood",
+          "display": "Elven Wood",
+          "quantity": 8
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Battleaxe_2h_t1",
+      "display_name": "Steel Battleaxe",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.QualityWood",
+          "display": "Elven Wood",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Sword_1h_t2",
+      "display_name": "Steel Sword",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.QualityWood",
+          "display": "Elven Wood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "WarAxe_1h_t2",
+      "display_name": "Steel War Axe",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.QualityWood",
+          "display": "Elven Wood",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "Sword_2h_t3",
-      "display_name": "Khaz\u00e2d Army Greatsword",
+      "display_name": "Thanazbad",
+      "tier": 6,
       "default_materials": [
         {
           "internal": "Item.Ironwood",
@@ -674,571 +1632,9 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Halberd_2h_t3",
-      "display_name": "Khaz\u00e2d Army Halberd",
-      "default_materials": [
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 6
-        },
-        {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 2
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Arrow_Khazad_t3",
-      "display_name": "Khaz\u00e2d Arrows",
-      "default_materials": [
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 5
-        },
-        {
-          "internal": "Item.Feathers",
-          "display": "Feathers",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "CrossbowBolt_Khazad_t2",
-      "display_name": "Khaz\u00e2d Bolts",
-      "default_materials": [
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 10
-        },
-        {
-          "internal": "Item.Feathers",
-          "display": "Feathers",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Mattock_1h_t2",
-      "display_name": "Khaz\u00e2d Maul",
-      "default_materials": [
-        {
-          "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 4
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "WarAxe_1h_t3",
-      "display_name": "Khaz\u00e2d War Axe",
-      "default_materials": [
-        {
-          "internal": "Item.GunMetalIngot",
-          "display": "Shan\u00f4r Ingot",
-          "quantity": 2
-        },
-        {
-          "internal": "Ore.Amethyst",
-          "display": "Amethyst",
-          "quantity": 1
-        },
-        {
-          "internal": "Item.AncientWood",
-          "display": "Ub\u00e2sam Wood",
-          "quantity": 4
-        },
-        {
-          "internal": "Item.Leather",
-          "display": "Leather",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Restoration_Hammer_Starmetal",
-      "display_name": "Khaz\u00e2d War Mattock",
-      "default_materials": [
-        {
-          "internal": "Item.StarAlloyIngot",
-          "display": "Star-metal Ingot",
-          "quantity": 4
-        },
-        {
-          "internal": "Ore.BlackDiamond",
-          "display": "Black Diamond",
-          "quantity": 1
-        },
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 4
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Spear_1h_t4",
-      "display_name": "Khushnabrak",
-      "default_materials": [
-        {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 5
-        },
-        {
-          "internal": "Ore.Diamond",
-          "display": "Diamond",
-          "quantity": 9
-        },
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 6
-        },
-        {
-          "internal": "Item.Scales",
-          "display": "Scales",
-          "quantity": 6
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Mithril_Halberd_2h_t6",
-      "display_name": "Lafarn\u00eez\u00een",
-      "default_materials": [
-        {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 6
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 2
-        },
-        {
-          "internal": "Ore.Emerald",
-          "display": "Ore.Emerald",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Mattock_1h_t3",
-      "display_name": "Last Alliance Maul",
-      "default_materials": [
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Ore.Diamond",
-          "display": "Diamond",
-          "quantity": 1
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Stunning_TBDSet_Shield",
-      "display_name": "Last Alliance Shield",
-      "default_materials": [
-        {
-          "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.StarAlloyIngot",
-          "display": "Star-metal Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Mithril_TBDSet_Shield",
-      "display_name": "Mithril Shield",
-      "default_materials": [
-        {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Ore.Emerald",
-          "display": "Ore.Emerald",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 3
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Mithril_Mattock_1h_t6",
-      "display_name": "Muasgadn\u00fbr",
-      "default_materials": [
-        {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 1
-        },
-        {
-          "internal": "Ore.Diamond",
-          "display": "Diamond",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "CrossbowBolt_Nogrod_t3",
-      "display_name": "Nogrod Bolts",
-      "default_materials": [
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 10
-        },
-        {
-          "internal": "Item.Feathers",
-          "display": "Feathers",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.NogrodSteelIngot",
-          "display": "Nogrod Steel Ingot",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "NogrodShield",
-      "display_name": "Nogrod Shield",
-      "default_materials": [
-        {
-          "internal": "Item.NogrodSteelIngot",
-          "display": "Nogrod Steel Ingot",
-          "quantity": 5
-        },
-        {
-          "internal": "Item.BronzeIngot",
-          "display": "Bronze Ingot",
-          "quantity": 1
-        },
-        {
-          "internal": "Ore.Quartz",
-          "display": "Quartz",
-          "quantity": 3
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Grand_TBDSet_Shield",
-      "display_name": "Ornamental Shield",
-      "default_materials": [
-        {
-          "internal": "Item.StarAlloyIngot",
-          "display": "Star-metal Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.PurifiedDarkIngot",
-          "display": "Durinul Iron Ingot ",
-          "quantity": 3
-        },
-        {
-          "internal": "Ore.Quartz",
-          "display": "Quartz",
-          "quantity": 3
-        },
-        {
-          "internal": "Ore.LapisLazuli",
-          "display": "Zel\u00eab",
-          "quantity": 3
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Awesome_TBDSet_Shield",
-      "display_name": "Ram's Head Shield",
-      "default_materials": [
-        {
-          "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 6
-        },
-        {
-          "internal": "Item.Scales",
-          "display": "Scales",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "RohanPack_Shield",
-      "display_name": "Rohirrim Shield",
-      "default_materials": [
-        {
-          "internal": "Item.BronzeIngot",
-          "display": "Bronze Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.QualityWood",
-          "display": "Elven Wood",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.Hide",
-          "display": "Hide",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "RohanPack_Spear_1h",
-      "display_name": "Rohirrim Spear",
-      "default_materials": [
-        {
-          "internal": "Item.BronzeIngot",
-          "display": "Bronze Ingot",
-          "quantity": 1
-        },
-        {
-          "internal": "Item.QualityWood",
-          "display": "Elven Wood",
-          "quantity": 3
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Mithril_Sword_1h_t6",
-      "display_name": "Rukhnaman",
-      "default_materials": [
-        {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 1
-        },
-        {
-          "internal": "Ore.Amethyst",
-          "display": "Amethyst",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Mithril_WarAxe_1h_t6",
-      "display_name": "Shaz'akhnaman",
-      "default_materials": [
-        {
-          "internal": "Item.MithrilIngot",
-          "display": "Mithril Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.Ironwood",
-          "display": "Ironwood",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.FineLeather",
-          "display": "Fine Leather",
-          "quantity": 1
-        },
-        {
-          "internal": "Ore.Anorin",
-          "display": "Anorin ",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "OakenShield_TBDSet_Shield",
-      "display_name": "Shieldwall",
-      "default_materials": [
-        {
-          "internal": "Item.Wood",
-          "display": "Wood Scraps",
-          "quantity": 8
-        },
-        {
-          "internal": "Item.ClothScraps",
-          "display": "Cloth Scraps",
-          "quantity": 2
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Battleaxe_2h_t2",
-      "display_name": "Steel Battleaxe",
-      "default_materials": [
-        {
-          "internal": "Item.SilverIngot",
-          "display": "Silver Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Ore.Ruby",
-          "display": "Ruby",
-          "quantity": 1
-        },
-        {
-          "internal": "Item.AncientWood",
-          "display": "Ub\u00e2sam Wood",
-          "quantity": 1
-        },
-        {
-          "internal": "Item.Leather",
-          "display": "Leather",
-          "quantity": 2
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "Sword_1h_t2",
-      "display_name": "Steel Sword",
-      "default_materials": [
-        {
-          "internal": "Item.SteelIngot",
-          "display": "Steel Ingot",
-          "quantity": 3
-        },
-        {
-          "internal": "Item.QualityWood",
-          "display": "Elven Wood",
-          "quantity": 4
-        },
-        {
-          "internal": "Item.Hide",
-          "display": "Hide",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
-      "internal_name": "WarAxe_1h_t2",
-      "display_name": "Steel War Axe",
-      "default_materials": [
-        {
-          "internal": "Item.SteelIngot",
-          "display": "Steel Ingot",
-          "quantity": 2
-        },
-        {
-          "internal": "Item.QualityWood",
-          "display": "Elven Wood",
-          "quantity": 4
-        },
-        {
-          "internal": "Item.Hide",
-          "display": "Hide",
-          "quantity": 1
-        }
-      ],
-      "sandbox_materials": []
-    },
-    {
       "internal_name": "Mithril_GreatSword_2h_t6",
       "display_name": "Thanazbad",
+      "tier": 6,
       "default_materials": [
         {
           "internal": "Item.MithrilIngot",
@@ -1257,7 +1653,7 @@
         },
         {
           "internal": "Ore.Topaz",
-          "display": "Topaz",
+          "display": "Ore.Topaz",
           "quantity": 1
         }
       ],
@@ -1266,12 +1662,72 @@
   ],
   "armor": [
     {
+      "internal_name": "NPC_Outfit_Tailor_Hat",
+      "display_name": "[cut] Tailor's Hat",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 20
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Miner_Hat",
+      "display_name": "Advanced Miner's Helm",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 10
+        },
+        {
+          "internal": "Item.Wool",
+          "display": "Northern Wool",
+          "quantity": 30
+        },
+        {
+          "internal": "Ore.MoonStone",
+          "display": "Ore.MoonStone",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Artisan_Hat",
+      "display_name": "Artisan's Topper",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.BronzeIngot",
+          "display": "Bronze Ingot",
+          "quantity": 10
+        },
+        {
+          "internal": "Item.Wool",
+          "display": "Northern Wool",
+          "quantity": 30
+        },
+        {
+          "internal": "Ore.Garnet",
+          "display": "Ore.Garnet",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "Belegost_APSet_BootsArmor",
       "display_name": "Belegost Boots",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.GunMetalIngot",
-          "display": "Shan\u00f4r Ingot",
+          "display": "Shanôr Ingot",
           "quantity": 2
         },
         {
@@ -1288,12 +1744,97 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Belegost_APSet_GlovesArmor",
-      "display_name": "Belegost Gauntlets",
+      "internal_name": "Belegost_APSet_Gold_BootsArmor",
+      "display_name": "Belegost Boots Amzul",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.GunMetalIngot",
-          "display": "Shan\u00f4r Ingot",
+          "display": "Shanôr Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.BoltsOfCloth",
+          "display": "Numenorean Cloth",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_Black_BootsArmor",
+      "display_name": "Belegost Boots Masharuz ",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.BoltsOfCloth",
+          "display": "Numenorean Cloth",
+          "quantity": 4
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_White_BootsArmor",
+      "display_name": "Belegost Boots Shayar",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.BoltsOfCloth",
+          "display": "Numenorean Cloth",
+          "quantity": 4
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_GlovesArmor",
+      "display_name": "Belegost Gauntlets",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
           "quantity": 3
         },
         {
@@ -1304,6 +1845,90 @@
         {
           "internal": "Item.BoltsOfCloth",
           "display": "Numenorean Cloth",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_Gold_GlovesArmor",
+      "display_name": "Belegost Gauntlets Amzul",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.BoltsOfCloth",
+          "display": "Numenorean Cloth",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_Black_GlovesArmor",
+      "display_name": "Belegost Gauntlets Masharuz ",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.BoltsOfCloth",
+          "display": "Numenorean Cloth",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_White_GlovesArmor",
+      "display_name": "Belegost Gauntlets Shayar",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.BoltsOfCloth",
+          "display": "Numenorean Cloth",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
           "quantity": 2
         }
       ],
@@ -1312,10 +1937,11 @@
     {
       "internal_name": "Belegost_APSet_HelmetArmor",
       "display_name": "Belegost Helmet",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.GunMetalIngot",
-          "display": "Shan\u00f4r Ingot",
+          "display": "Shanôr Ingot",
           "quantity": 2
         },
         {
@@ -1327,12 +1953,82 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Belegost_APSet_TorsoArmor",
-      "display_name": "Belegost Ringmail",
+      "internal_name": "Belegost_APSet_Gold_HelmetArmor",
+      "display_name": "Belegost Helmet Amzul",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.GunMetalIngot",
-          "display": "Shan\u00f4r Ingot",
+          "display": "Shanôr Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_Black_HelmetArmor",
+      "display_name": "Belegost Helmet Masharuz ",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_White_HelmetArmor",
+      "display_name": "Belegost Helmet Shayar",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_TorsoArmor",
+      "display_name": "Belegost Ringmail",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
           "quantity": 4
         },
         {
@@ -1349,8 +2045,116 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "Belegost_APSet_Gold_TorsoArmor",
+      "display_name": "Belegost Ringmail Amzul",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.BoltsOfCloth",
+          "display": "Numenorean Cloth",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_Black_TorsoArmor",
+      "display_name": "Belegost Ringmail Masharuz ",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.BoltsOfCloth",
+          "display": "Numenorean Cloth",
+          "quantity": 3
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Belegost_APSet_White_TorsoArmor",
+      "display_name": "Belegost Ringmail Shayar",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.BoltsOfCloth",
+          "display": "Numenorean Cloth",
+          "quantity": 3
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Blacksmith_Hat",
+      "display_name": "Blacksmith's Caul",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 10
+        },
+        {
+          "internal": "Item.Wool",
+          "display": "Northern Wool",
+          "quantity": 30
+        },
+        {
+          "internal": "Ore.Amber",
+          "display": "Ore.Amber",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "BlueMountainsHunter_Set_TorsoArmor",
-      "display_name": "Blue Mountains Hunter's Armor",
+      "display_name": "Blue Mountains Hunter’s Armor",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.ClothScraps",
@@ -1367,7 +2171,8 @@
     },
     {
       "internal_name": "BlueMountainsHunter_Set_BootsArmor",
-      "display_name": "Blue Mountains Hunter's Boots",
+      "display_name": "Blue Mountains Hunter’s Boots",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.ClothScraps",
@@ -1384,7 +2189,8 @@
     },
     {
       "internal_name": "RangeBonus_Set_GlovesArmor",
-      "display_name": "Blue Mountains Hunter's Gloves",
+      "display_name": "Blue Mountains Hunter’s Gloves",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.BoltsOfCloth",
@@ -1400,8 +2206,96 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "BowmansGloves",
+      "display_name": "Blue Mountains Hunter’s Gloves",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.IronIngot",
+          "display": "Iron Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Brewer_Hat",
+      "display_name": "Brewmaster's Casque",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 10
+        },
+        {
+          "internal": "Item.Wool",
+          "display": "Northern Wool",
+          "quantity": 30
+        },
+        {
+          "internal": "Ore.Onyx",
+          "display": "Ore.Onyx",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Builder_Hat",
+      "display_name": "Builder's Kettle",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 10
+        },
+        {
+          "internal": "Item.Wool",
+          "display": "Northern Wool",
+          "quantity": 30
+        },
+        {
+          "internal": "Ore.Iolite",
+          "display": "Ore.Iolite",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Cook_Hat",
+      "display_name": "Cook's Toque",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 20
+        },
+        {
+          "internal": "Item.Wool",
+          "display": "Northern Wool",
+          "quantity": 30
+        },
+        {
+          "internal": "Ore.Jade",
+          "display": "Ore.Jade",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "Taunting_TBDSet_Helm",
       "display_name": "Crested Helmet",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.SteelIngot",
@@ -1419,10 +2313,11 @@
     {
       "internal_name": "Awesome_Set_HelmetArmor",
       "display_name": "Dimrill Helmet",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
+          "display": "Khazâd Steel Ingot",
           "quantity": 1
         },
         {
@@ -1440,7 +2335,8 @@
     },
     {
       "internal_name": "Durin_Set_GlovesArmor",
-      "display_name": "Durin's Gloves",
+      "display_name": "Durin’s Gloves",
+      "tier": 5,
       "default_materials": [
         {
           "internal": "Item.StarAlloyIngot",
@@ -1454,7 +2350,7 @@
         },
         {
           "internal": "Ore.SunStone",
-          "display": "Sun-stone",
+          "display": "Ore.SunStone",
           "quantity": 3
         },
         {
@@ -1466,8 +2362,9 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Durin_Set_TorsoArmor",
-      "display_name": "Durin's Guard Armor",
+      "internal_name": "Durin_Set_Gold_GlovesArmor",
+      "display_name": "Durin’s Gloves Amzul",
+      "tier": 5,
       "default_materials": [
         {
           "internal": "Item.StarAlloyIngot",
@@ -1481,7 +2378,73 @@
         },
         {
           "internal": "Ore.SunStone",
-          "display": "Sun-stone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_White_GlovesArmor",
+      "display_name": "Durin’s Gloves Shayar",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_TorsoArmor",
+      "display_name": "Durin’s Guard Armor",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
           "quantity": 3
         },
         {
@@ -1498,8 +2461,9 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Durin_Set_BootsArmor",
-      "display_name": "Durin's Guard Boots",
+      "internal_name": "Durin_Set_Gold_TorsoArmor",
+      "display_name": "Durin’s Guard Armor Amzul",
+      "tier": 5,
       "default_materials": [
         {
           "internal": "Item.StarAlloyIngot",
@@ -1513,7 +2477,121 @@
         },
         {
           "internal": "Ore.SunStone",
-          "display": "Sun-stone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_Black_TorsoArmor",
+      "display_name": "Durin’s Guard Armor Masharuz ",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 4
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_White_TorsoArmor",
+      "display_name": "Durin’s Guard Armor Shayar",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 4
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_BootsArmor",
+      "display_name": "Durin’s Guard Boots",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
           "quantity": 3
         },
         {
@@ -1530,8 +2608,156 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "Durin_Set_Gold_BootsArmor",
+      "display_name": "Durin’s Guard Boots Amzul",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_Black_BootsArmor",
+      "display_name": "Durin’s Guard Boots Masharuz ",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 3
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_White_BootsArmor",
+      "display_name": "Durin’s Guard Boots Shayar",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 3
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_Black_GlovesArmor",
+      "display_name": "Durin’s Guard Gloves Masharuz ",
+      "tier": 5,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "Durin_Set_HelmetArmor",
-      "display_name": "Durin's Guard Helmet",
+      "display_name": "Durin’s Guard Helmet",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.StarAlloyIngot",
@@ -1545,7 +2771,7 @@
         },
         {
           "internal": "Ore.SunStone",
-          "display": "Sun-stone",
+          "display": "Ore.SunStone",
           "quantity": 3
         },
         {
@@ -1557,8 +2783,108 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "Durin_Set_Gold_HelmetArmor",
+      "display_name": "Durin’s Guard Helmet Amzul",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_Black_HelmetArmor",
+      "display_name": "Durin’s Guard Helmet Masharuz ",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Durin_Set_White_HelmetArmor",
+      "display_name": "Durin’s Guard Helmet Shayar",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.StarAlloyIngot",
+          "display": "Star-metal Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.PurifiedDarkIngot",
+          "display": "Durinul Iron Ingot ",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.SunStone",
+          "display": "Ore.SunStone",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "EreborSteel_APSet_BootsArmor",
       "display_name": "Erebor Boots",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.SteelIngot",
@@ -1579,8 +2905,93 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "EreborSteel_APSet_Gold_BootsArmor",
+      "display_name": "Erebor Boots Amzul",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 8
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_Black_BootsArmor",
+      "display_name": "Erebor Boots Masharuz ",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 8
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_White_BootsArmor",
+      "display_name": "Erebor Boots Shayar",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 8
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "EreborSteel_APSet_HelmetArmor",
       "display_name": "Erebor City Watch Helmet",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.SteelIngot",
@@ -1591,6 +3002,75 @@
           "internal": "Item.ClothScraps",
           "display": "Cloth Scraps",
           "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_Gold_HelmetArmor",
+      "display_name": "Erebor City Watch Helmet Amzul",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_Black_HelmetArmor",
+      "display_name": "Erebor City Watch Helmet Masharuz ",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_White_HelmetArmor",
+      "display_name": "Erebor City Watch Helmet Shayar",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 1
         }
       ],
       "sandbox_materials": []
@@ -1598,6 +3078,7 @@
     {
       "internal_name": "EreborSteel_APSet_GlovesArmor",
       "display_name": "Erebor Planked Gauntlets",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.SteelIngot",
@@ -1613,6 +3094,90 @@
           "internal": "Item.ClothScraps",
           "display": "Cloth Scraps",
           "quantity": 2
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_Gold_GlovesArmor",
+      "display_name": "Erebor Planked Gauntlets Amzul",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_Black_GlovesArmor",
+      "display_name": "Erebor Planked Gauntlets Masharuz ",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_White_GlovesArmor",
+      "display_name": "Erebor Planked Gauntlets Shayar",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 2
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 1
         }
       ],
       "sandbox_materials": []
@@ -1620,6 +3185,7 @@
     {
       "internal_name": "EreborSteel_APSet_TorsoArmor",
       "display_name": "Erebor Ringmail",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.SteelIngot",
@@ -1640,8 +3206,93 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "EreborSteel_APSet_Gold_TorsoArmor",
+      "display_name": "Erebor Ringmail Amzul",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_Black_TorsoArmor",
+      "display_name": "Erebor Ringmail Masharuz ",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 4
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "EreborSteel_APSet_White_TorsoArmor",
+      "display_name": "Erebor Ringmail Shayar",
+      "tier": 2,
+      "default_materials": [
+        {
+          "internal": "Item.SteelIngot",
+          "display": "Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.ClothScraps",
+          "display": "Cloth Scraps",
+          "quantity": 4
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "EregionElf_Set_Torso",
       "display_name": "Eregion Armor",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.BronzeIngot",
@@ -1660,7 +3311,7 @@
         },
         {
           "internal": "Ore.MoonStone",
-          "display": "True-quartz",
+          "display": "Ore.MoonStone",
           "quantity": 9
         }
       ],
@@ -1669,6 +3320,7 @@
     {
       "internal_name": "Orcbane_Set_TorsoArmor",
       "display_name": "Expeditioner's Armor",
+      "tier": 6,
       "default_materials": [
         {
           "internal": "Item.SeaWax",
@@ -1694,13 +3346,29 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "NPC_Outfit_Gatherer_Hat",
-      "display_name": "Gatherer's Hat",
+      "internal_name": "Amazing_Set_HelmetArmor",
+      "display_name": "Gatherer’s Hat",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.Hide",
           "display": "Hide",
-          "quantity": 20
+          "quantity": 2
+        },
+        {
+          "internal": "Consumable.TeaFlower",
+          "display": "Consumable.TeaFlower",
+          "quantity": 3
+        },
+        {
+          "internal": "Consumable.Sunion",
+          "display": "Consumable.Sunion",
+          "quantity": 2
+        },
+        {
+          "internal": "Consumable.IceCabbage",
+          "display": "Consumable.IceCabbage",
+          "quantity": 2
         }
       ],
       "sandbox_materials": []
@@ -1708,6 +3376,7 @@
     {
       "internal_name": "AntiColdGloves",
       "display_name": "Grey Mountain Gloves",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.BronzeIngot",
@@ -1725,6 +3394,7 @@
     {
       "internal_name": "AntiColdHelm",
       "display_name": "Grey Mountain Hat",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.Leather",
@@ -1737,10 +3407,11 @@
     {
       "internal_name": "AntiColdTorso",
       "display_name": "Grey Mountain Overcoat",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.GunMetalIngot",
-          "display": "Shan\u00f4r Ingot",
+          "display": "Shanôr Ingot",
           "quantity": 2
         },
         {
@@ -1759,6 +3430,7 @@
     {
       "internal_name": "AntiColdBoots",
       "display_name": "Grey Mountains Boots",
+      "tier": 3,
       "default_materials": [
         {
           "internal": "Item.BoltsOfCloth",
@@ -1774,8 +3446,68 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "NPC_Outfit_Grocer_Hat",
+      "display_name": "Grocer's Hood",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 20
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Guard_Hat",
+      "display_name": "Guard's Helm",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.GunMetalIngot",
+          "display": "Shanôr Ingot",
+          "quantity": 10
+        },
+        {
+          "internal": "Item.Wool",
+          "display": "Northern Wool",
+          "quantity": 30
+        },
+        {
+          "internal": "Ore.RedBeryl",
+          "display": "Ore.RedBeryl",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Tavern_Torso",
+      "display_name": "Innkeeper's Garb",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 20
+        },
+        {
+          "internal": "Item.Silk",
+          "display": "Elven Silk",
+          "quantity": 50
+        },
+        {
+          "internal": "Ore.Garnet",
+          "display": "Ore.Garnet",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "IronHills_APSet_TorsoArmor",
       "display_name": "Iron Hills Armor",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.IronIngot",
@@ -1798,6 +3530,7 @@
     {
       "internal_name": "IronHills_APSet_GlovesArmor",
       "display_name": "Iron Hills Gloves",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.IronIngot",
@@ -1818,12 +3551,36 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "NPC_Outfit_Shopkeeper_Torso",
+      "display_name": "Keeper's Vest",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 20
+        },
+        {
+          "internal": "Item.Silk",
+          "display": "Elven Silk",
+          "quantity": 50
+        },
+        {
+          "internal": "Ore.LapisLazuli",
+          "display": "Ore.LapisLazuli",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "Khazad_Set_TorsoArmor",
-      "display_name": "Khaz\u00e2d Army Armor",
+      "display_name": "Khazâd Army Armor",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
+          "display": "Khazâd Steel Ingot",
           "quantity": 4
         },
         {
@@ -1840,12 +3597,97 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Khazad_Set_BootsArmor",
-      "display_name": "Khaz\u00e2d Army Boots",
+      "internal_name": "Khazad_Set_Gold_TorsoArmor",
+      "display_name": "Khazâd Army Armor Amzul",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_Black_TorsoArmor",
+      "display_name": "Khazâd Army Armor Masharuz ",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_White_TorsoArmor",
+      "display_name": "Khazâd Army Armor Shayar",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_BootsArmor",
+      "display_name": "Khazâd Army Boots ",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
           "quantity": 4
         },
         {
@@ -1862,12 +3704,97 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Khazad_Set_GlovesArmor",
-      "display_name": "Khaz\u00e2d Army Gauntlets",
+      "internal_name": "Khazad_Set_Gold_BootsArmor",
+      "display_name": "Khazâd Army Boots Amzul",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_Black_BootsArmor",
+      "display_name": "Khazâd Army Boots Masharuz ",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_White_BootsArmor",
+      "display_name": "Khazâd Army Boots Shayar",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_GlovesArmor",
+      "display_name": "Khazâd Army Gauntlets",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
           "quantity": 2
         },
         {
@@ -1884,12 +3811,97 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Khazad_Set_HelmArmor",
-      "display_name": "Khaz\u00e2d Army Helmet",
+      "internal_name": "Khazad_Set_Gold_GlovesArmor",
+      "display_name": "Khazâd Army Gauntlets Amzul",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_Black_GlovesArmor",
+      "display_name": "Khazâd Army Gauntlets Masharuz ",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_White_GlovesArmor",
+      "display_name": "Khazâd Army Gauntlets Shayar",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_HelmArmor",
+      "display_name": "Khazâd Army Helmet",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
           "quantity": 2
         },
         {
@@ -1901,12 +3913,105 @@
       "sandbox_materials": []
     },
     {
-      "internal_name": "Classic_Set_HelmetArmor",
-      "display_name": "Last Alliance Helmet",
+      "internal_name": "Khazad_Set_Gold_HelmArmor",
+      "display_name": "Khazâd Army Helmet Amzul",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.KhazadSteelIngot",
-          "display": "Khaz\u00e2d Steel Ingot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_Black_HelmArmor",
+      "display_name": "Khazâd Army Helmet Masharuz ",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Khazad_Set_White_HelmArmor",
+      "display_name": "Khazâd Army Helmet Shayar",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 3
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Cook_Torso",
+      "display_name": "Kitchen Apron",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 40
+        },
+        {
+          "internal": "Item.Silk",
+          "display": "Elven Silk",
+          "quantity": 50
+        },
+        {
+          "internal": "Ore.Jade",
+          "display": "Ore.Jade",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Classic_Set_HelmetArmor",
+      "display_name": "Last Alliance Helmet",
+      "tier": 3,
+      "default_materials": [
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
           "quantity": 2
         },
         {
@@ -1920,6 +4025,7 @@
     {
       "internal_name": "Grand_Set_HelmetArmor",
       "display_name": "Longbottom Hat",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.SteelIngot",
@@ -1935,8 +4041,101 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "NPC_Outfit_Mason_Hat",
+      "display_name": "Mason's Hat",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 15
+        },
+        {
+          "internal": "Item.Wool",
+          "display": "Northern Wool",
+          "quantity": 30
+        },
+        {
+          "internal": "Ore.Citrine",
+          "display": "Ore.Citrine",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "MeatHat",
+      "display_name": "Meat Hat",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Consumable.Meat",
+          "display": "Consumable.Meat",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.KhazadSteelIngot",
+          "display": "Khazâd Steel Ingot",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.TrackingDevice",
+          "display": "Raven's Glimmer",
+          "quantity": 1
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Trader_Torso",
+      "display_name": "Merchant's Attire",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 20
+        },
+        {
+          "internal": "Item.Silk",
+          "display": "Elven Silk",
+          "quantity": 50
+        },
+        {
+          "internal": "Ore.Quartz",
+          "display": "Ore.Quartz",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Metalworker_Hat",
+      "display_name": "Metalworker's Slouch",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 10
+        },
+        {
+          "internal": "Item.Wool",
+          "display": "Northern Wool",
+          "quantity": 30
+        },
+        {
+          "internal": "Ore.LapisLazuli",
+          "display": "Ore.LapisLazuli",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "RedMountains_MinerSet_HelmetArmor",
-      "display_name": "Miner's Helmet",
+      "display_name": "Miner’s Helmet",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.IronIngot",
@@ -1950,7 +4149,7 @@
         },
         {
           "internal": "Consumable.CaveHoney",
-          "display": "Cave Honey",
+          "display": "Consumable.CaveHoney",
           "quantity": 5
         }
       ],
@@ -1959,6 +4158,7 @@
     {
       "internal_name": "Mithril_Set_TorsoArmor",
       "display_name": "Mithril Armor",
+      "tier": 6,
       "default_materials": [
         {
           "internal": "Item.MithrilIngot",
@@ -1967,7 +4167,7 @@
         },
         {
           "internal": "Ore.Sapphire",
-          "display": "Sapphire",
+          "display": "Ore.Sapphire",
           "quantity": 3
         },
         {
@@ -1986,6 +4186,7 @@
     {
       "internal_name": "Mithril_Set_GlovesArmor",
       "display_name": "Mithril Gloves",
+      "tier": 6,
       "default_materials": [
         {
           "internal": "Item.MithrilIngot",
@@ -1994,7 +4195,7 @@
         },
         {
           "internal": "Ore.Amethyst",
-          "display": "Amethyst",
+          "display": "Ore.Amethyst",
           "quantity": 3
         },
         {
@@ -2008,6 +4209,7 @@
     {
       "internal_name": "Mithril_Set_HelmetArmor",
       "display_name": "Mithril Helmet",
+      "tier": 5,
       "default_materials": [
         {
           "internal": "Item.MithrilIngot",
@@ -2016,7 +4218,7 @@
         },
         {
           "internal": "Ore.Ruby",
-          "display": "Ruby",
+          "display": "Ore.Ruby",
           "quantity": 3
         },
         {
@@ -2030,6 +4232,7 @@
     {
       "internal_name": "Mithril_Set_BootsArmor",
       "display_name": "Mithril Slippers",
+      "tier": 6,
       "default_materials": [
         {
           "internal": "Item.MithrilIngot",
@@ -2038,7 +4241,7 @@
         },
         {
           "internal": "Ore.Diamond",
-          "display": "Diamond",
+          "display": "Ore.Diamond",
           "quantity": 3
         },
         {
@@ -2057,6 +4260,7 @@
     {
       "internal_name": "Nogrod_Set_TorsoArmor",
       "display_name": "Nogrod Armor",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.NogrodSteelIngot",
@@ -2077,8 +4281,93 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "Nogrod_Set_Gold_TorsoArmor",
+      "display_name": "Nogrod Armor Amzul",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Nogrod_Set_Black_TorsoArmor",
+      "display_name": "Nogrod Armor Masharuz",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Nogrod_Set_White_TorsoArmor",
+      "display_name": "Nogrod Armor Shayar",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 4
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 3
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "Nogrod_Set_GlovesArmor",
       "display_name": "Nogrod Gauntlets",
+      "tier": 4,
       "default_materials": [
         {
           "internal": "Item.NogrodSteelIngot",
@@ -2099,8 +4388,142 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "Nogrod_Set_Gold_GlovesArmor",
+      "display_name": "Nogrod Gauntlets Amzul",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.GoldIngot",
+          "display": "Gold Ingot",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Nogrod_Set_Black_GlovesArmor",
+      "display_name": "Nogrod Gauntlets Masharuz",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.BlackDiamond",
+          "display": "Ore.BlackDiamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "Nogrod_Set_White_GlovesArmor",
+      "display_name": "Nogrod Gauntlets Shayar",
+      "tier": 4,
+      "default_materials": [
+        {
+          "internal": "Item.NogrodSteelIngot",
+          "display": "Nogrod Steel Ingot",
+          "quantity": 2
+        },
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 1
+        },
+        {
+          "internal": "Item.FineCloth",
+          "display": "Fine Cloth",
+          "quantity": 1
+        },
+        {
+          "internal": "Ore.Diamond",
+          "display": "Ore.Diamond",
+          "quantity": 4
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Gatherer_Hat",
+      "display_name": "Salvager's Ghillie",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 20
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Researcher_Hat",
+      "display_name": "Scholar's Cap",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 20
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Blacksmith_Torso",
+      "display_name": "Smith's Apron",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Leather",
+          "display": "Leather",
+          "quantity": 25
+        },
+        {
+          "internal": "Item.Silk",
+          "display": "Elven Silk",
+          "quantity": 50
+        },
+        {
+          "internal": "Ore.Jade",
+          "display": "Ore.Jade",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "SouthernmostFireProof_Set_HelmetArmor",
       "display_name": "Spiked Helmet",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.SteelIngot",
@@ -2116,8 +4539,45 @@
       "sandbox_materials": []
     },
     {
+      "internal_name": "NPC_Outfit_Mason_Torso",
+      "display_name": "Stonemason's Garb",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.FineLeather",
+          "display": "Fine Leather",
+          "quantity": 20
+        },
+        {
+          "internal": "Item.Silk",
+          "display": "Elven Silk",
+          "quantity": 50
+        },
+        {
+          "internal": "Ore.Onyx",
+          "display": "Ore.Onyx",
+          "quantity": 5
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
+      "internal_name": "NPC_Outfit_Tinker_Hat",
+      "display_name": "Tinker's Topper",
+      "tier": 0,
+      "default_materials": [
+        {
+          "internal": "Item.Hide",
+          "display": "Hide",
+          "quantity": 20
+        }
+      ],
+      "sandbox_materials": []
+    },
+    {
       "internal_name": "Stunning_Set_HelmetArmor",
       "display_name": "Trapper Hat",
+      "tier": 1,
       "default_materials": [
         {
           "internal": "Item.IronIngot",
@@ -2135,6 +4595,7 @@
     {
       "internal_name": "Wonderful_Set_HelmetArmor",
       "display_name": "Wolf Skin Hat",
+      "tier": 2,
       "default_materials": [
         {
           "internal": "Item.Hide",
@@ -2151,30 +4612,7 @@
     }
   ],
   "stats": {
-    "weapons_found": 54,
-    "weapons_missing": 4,
-    "armor_found": 42,
-    "armor_missing": 0
-  },
-  "missing": {
-    "weapons": [
-      {
-        "display": "Bar\u00f4kamlut",
-        "recipe": "Mithril_Battleaxe_2h"
-      },
-      {
-        "display": "Red Axe of Nogrod",
-        "recipe": "Nogrod_Axe_1h"
-      },
-      {
-        "display": "Red Sword of Nogrod",
-        "recipe": "Nogrod_Sword_1h"
-      },
-      {
-        "display": "Sagr\u00fbris\u00e2bun",
-        "recipe": "Mithril_Battlehammer"
-      }
-    ],
-    "armor": []
+    "weapons_found": 68,
+    "armor_found": 118
   }
 }

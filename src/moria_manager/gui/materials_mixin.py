@@ -47,6 +47,9 @@ class MaterialsMixin:
         self.materials_weapon_widgets: list = []  # Store checkbox widgets for clearing
         self.materials_armor_widgets: list = []  # Store checkbox widgets for clearing
         self.materials_initialized: bool = False
+        # Sort state: ("name" | "tier", ascending bool)
+        self._weapons_sort: tuple[str, bool] = ("name", True)
+        self._armor_sort: tuple[str, bool] = ("name", True)
 
     # pylint: disable=too-many-locals,too-many-statements
     def _initialize_materials_ui(self):
@@ -140,11 +143,33 @@ class MaterialsMixin:
         weapons_frame = ctk.CTkFrame(columns_frame, fg_color=THEME_COLORS["bg_dropdown"])
         weapons_frame.grid(row=0, column=0, sticky="nsew", padx=(0, PADDING["small"]))
 
-        weapons_header = ctk.CTkLabel(
+        weapons_title = ctk.CTkLabel(
             weapons_frame, text="Weapons", font=FONTS["heading"],
             text_color=THEME_COLORS["text"]
         )
-        weapons_header.pack(pady=PADDING["small"])
+        weapons_title.pack(pady=PADDING["small"])
+
+        # Column headers (Name | Tier) — clickable to sort
+        weapons_header_row = ctk.CTkFrame(weapons_frame, fg_color="transparent")
+        weapons_header_row.pack(fill="x", padx=(PADDING["small"], 30))
+
+        self._weapons_name_hdr = ctk.CTkButton(
+            weapons_header_row, text="Name \u25b2", width=0, height=22,
+            font=FONTS["body_bold"], anchor="w",
+            fg_color="transparent", hover_color=("gray70", "gray40"),
+            text_color=THEME_COLORS["text"],
+            command=lambda: self._sort_weapons("name"),
+        )
+        self._weapons_name_hdr.pack(side="left", fill="x", expand=True)
+
+        self._weapons_tier_hdr = ctk.CTkButton(
+            weapons_header_row, text="Tier", width=40, height=22,
+            font=FONTS["body_bold"],
+            fg_color="transparent", hover_color=("gray70", "gray40"),
+            text_color=THEME_COLORS["text"],
+            command=lambda: self._sort_weapons("tier"),
+        )
+        self._weapons_tier_hdr.pack(side="right")
 
         # Scrollable frame for weapons
         self.weapons_scroll = ctk.CTkScrollableFrame(
@@ -162,11 +187,33 @@ class MaterialsMixin:
         armor_frame = ctk.CTkFrame(columns_frame, fg_color=THEME_COLORS["bg_dropdown"])
         armor_frame.grid(row=0, column=1, sticky="nsew", padx=PADDING["small"])
 
-        armor_header = ctk.CTkLabel(
+        armor_title = ctk.CTkLabel(
             armor_frame, text="Armor", font=FONTS["heading"],
             text_color=THEME_COLORS["text"]
         )
-        armor_header.pack(pady=PADDING["small"])
+        armor_title.pack(pady=PADDING["small"])
+
+        # Column headers (Name | Tier) — clickable to sort
+        armor_header_row = ctk.CTkFrame(armor_frame, fg_color="transparent")
+        armor_header_row.pack(fill="x", padx=(PADDING["small"], 30))
+
+        self._armor_name_hdr = ctk.CTkButton(
+            armor_header_row, text="Name \u25b2", width=0, height=22,
+            font=FONTS["body_bold"], anchor="w",
+            fg_color="transparent", hover_color=("gray70", "gray40"),
+            text_color=THEME_COLORS["text"],
+            command=lambda: self._sort_armor("name"),
+        )
+        self._armor_name_hdr.pack(side="left", fill="x", expand=True)
+
+        self._armor_tier_hdr = ctk.CTkButton(
+            armor_header_row, text="Tier", width=40, height=22,
+            font=FONTS["body_bold"],
+            fg_color="transparent", hover_color=("gray70", "gray40"),
+            text_color=THEME_COLORS["text"],
+            command=lambda: self._sort_armor("tier"),
+        )
+        self._armor_tier_hdr.pack(side="right")
 
         # Scrollable frame for armor
         self.armor_scroll = ctk.CTkScrollableFrame(
@@ -228,8 +275,13 @@ class MaterialsMixin:
         )
 
     def _populate_weapons_list(self):
-        """Populate the weapons list with checkboxes based on game type."""
-        # Clear existing widgets
+        """Populate the weapons list with checkbox + tier rows."""
+        # Preserve checked state across repopulations
+        prev_checked = {
+            name for name, data in self.materials_weapon_checkboxes.items()
+            if data["var"].get()
+        }
+
         for widget in self.materials_weapon_widgets:
             widget.destroy()
         self.materials_weapon_widgets.clear()
@@ -239,48 +291,69 @@ class MaterialsMixin:
         materials_key = "default_materials" if game_type == "campaign" else "sandbox_materials"
 
         # Filter weapons - only show items with recipes for this game type
-        filtered_weapons = [
+        filtered = [
             w for w in self.materials_weapons
             if w.get(materials_key) and len(w.get(materials_key, [])) > 0
         ]
 
         # Deduplicate by display_name - group all variants together
         weapons_by_name: dict[str, list] = {}
-        for weapon in filtered_weapons:
+        for weapon in filtered:
             display_name = weapon.get("display_name", "Unknown")
-            if display_name not in weapons_by_name:
-                weapons_by_name[display_name] = []
-            weapons_by_name[display_name].append(weapon)
+            weapons_by_name.setdefault(display_name, []).append(weapon)
 
-        # Sort by display name
-        sorted_names = sorted(weapons_by_name.keys(), key=str.lower)
+        # Sort according to current sort state
+        sort_col, ascending = self._weapons_sort
+        if sort_col == "tier":
+            sorted_names = sorted(
+                weapons_by_name.keys(),
+                key=lambda n: (weapons_by_name[n][0].get("tier") or 0, n.lower()),
+                reverse=not ascending,
+            )
+        else:
+            sorted_names = sorted(weapons_by_name.keys(),
+                                  key=str.lower, reverse=not ascending)
 
         for display_name in sorted_names:
             variants = weapons_by_name[display_name]
+            tier = variants[0].get("tier")
 
-            # Create checkbox variable
-            var = ctk.BooleanVar(value=False)
+            var = ctk.BooleanVar(value=display_name in prev_checked)
             self.materials_weapon_checkboxes[display_name] = {
                 "var": var,
-                "variants": variants  # Store all variants
+                "variants": variants,
             }
 
-            # Create checkbox with 16pt bold font
+            row = ctk.CTkFrame(self.weapons_scroll, fg_color="transparent")
+            row.pack(fill="x", pady=1)
+
             checkbox = ctk.CTkCheckBox(
-                self.weapons_scroll,
-                text=display_name,
+                row, text=display_name,
                 font=("Segoe UI", 16, "bold"),
                 variable=var,
                 hover_color=("gray70", "gray40"),
                 fg_color=("#5dade2", "#3498db"),
-                text_color=THEME_COLORS["text"]
+                text_color=THEME_COLORS["text"],
             )
-            checkbox.pack(anchor="w", pady=2)
-            self.materials_weapon_widgets.append(checkbox)
+            checkbox.pack(side="left", fill="x", expand=True)
+
+            tier_label = ctk.CTkLabel(
+                row, text=str(tier) if tier is not None else "-",
+                width=40, font=FONTS["body_bold"],
+                text_color=THEME_COLORS["text"],
+            )
+            tier_label.pack(side="right", padx=(0, PADDING["small"]))
+
+            self.materials_weapon_widgets.append(row)
 
     def _populate_armor_list(self):
-        """Populate the armor list with checkboxes based on game type."""
-        # Clear existing widgets
+        """Populate the armor list with checkbox + tier rows."""
+        # Preserve checked state across repopulations
+        prev_checked = {
+            name for name, data in self.materials_armor_checkboxes.items()
+            if data["var"].get()
+        }
+
         for widget in self.materials_armor_widgets:
             widget.destroy()
         self.materials_armor_widgets.clear()
@@ -290,44 +363,60 @@ class MaterialsMixin:
         materials_key = "default_materials" if game_type == "campaign" else "sandbox_materials"
 
         # Filter armor - only show items with recipes for this game type
-        filtered_armor = [
+        filtered = [
             a for a in self.materials_armor
             if a.get(materials_key) and len(a.get(materials_key, [])) > 0
         ]
 
         # Deduplicate by display_name - group all variants together
         armor_by_name: dict[str, list] = {}
-        for armor in filtered_armor:
-            display_name = armor.get("display_name", "Unknown")
-            if display_name not in armor_by_name:
-                armor_by_name[display_name] = []
-            armor_by_name[display_name].append(armor)
+        for armor_item in filtered:
+            display_name = armor_item.get("display_name", "Unknown")
+            armor_by_name.setdefault(display_name, []).append(armor_item)
 
-        # Sort by display name
-        sorted_names = sorted(armor_by_name.keys(), key=str.lower)
+        # Sort according to current sort state
+        sort_col, ascending = self._armor_sort
+        if sort_col == "tier":
+            sorted_names = sorted(
+                armor_by_name.keys(),
+                key=lambda n: (armor_by_name[n][0].get("tier") or 0, n.lower()),
+                reverse=not ascending,
+            )
+        else:
+            sorted_names = sorted(armor_by_name.keys(),
+                                  key=str.lower, reverse=not ascending)
 
         for display_name in sorted_names:
             variants = armor_by_name[display_name]
+            tier = variants[0].get("tier")
 
-            # Create checkbox variable
-            var = ctk.BooleanVar(value=False)
+            var = ctk.BooleanVar(value=display_name in prev_checked)
             self.materials_armor_checkboxes[display_name] = {
                 "var": var,
-                "variants": variants  # Store all variants
+                "variants": variants,
             }
 
-            # Create checkbox with 16pt bold font
+            row = ctk.CTkFrame(self.armor_scroll, fg_color="transparent")
+            row.pack(fill="x", pady=1)
+
             checkbox = ctk.CTkCheckBox(
-                self.armor_scroll,
-                text=display_name,
+                row, text=display_name,
                 font=("Segoe UI", 16, "bold"),
                 variable=var,
                 hover_color=("gray70", "gray40"),
                 fg_color=("#5dade2", "#3498db"),
-                text_color=THEME_COLORS["text"]
+                text_color=THEME_COLORS["text"],
             )
-            checkbox.pack(anchor="w", pady=2)
-            self.materials_armor_widgets.append(checkbox)
+            checkbox.pack(side="left", fill="x", expand=True)
+
+            tier_label = ctk.CTkLabel(
+                row, text=str(tier) if tier is not None else "-",
+                width=40, font=FONTS["body_bold"],
+                text_color=THEME_COLORS["text"],
+            )
+            tier_label.pack(side="right", padx=(0, PADDING["small"]))
+
+            self.materials_armor_widgets.append(row)
 
     def _on_game_type_changed(self, _value=None):
         """Handle changes to game type - repopulate lists with filtered items."""
@@ -335,6 +424,50 @@ class MaterialsMixin:
         self._populate_armor_list()
         # Clear results when game type changes
         self._clear_results()
+
+    # --- Column sorting ---
+
+    @staticmethod
+    def _header_text(label: str, col: str, current: tuple[str, bool]) -> str:
+        """Return header label with sort arrow if this column is active."""
+        if current[0] == col:
+            arrow = " \u25b2" if current[1] else " \u25bc"
+            return label + arrow
+        return label
+
+    def _update_weapons_headers(self):
+        """Refresh weapons column header labels after sort change."""
+        self._weapons_name_hdr.configure(
+            text=self._header_text("Name", "name", self._weapons_sort))
+        self._weapons_tier_hdr.configure(
+            text=self._header_text("Tier", "tier", self._weapons_sort))
+
+    def _update_armor_headers(self):
+        """Refresh armor column header labels after sort change."""
+        self._armor_name_hdr.configure(
+            text=self._header_text("Name", "name", self._armor_sort))
+        self._armor_tier_hdr.configure(
+            text=self._header_text("Tier", "tier", self._armor_sort))
+
+    def _sort_weapons(self, column: str):
+        """Toggle sort on the weapons list by *column*."""
+        col, asc = self._weapons_sort
+        if col == column:
+            self._weapons_sort = (column, not asc)
+        else:
+            self._weapons_sort = (column, True)
+        self._update_weapons_headers()
+        self._populate_weapons_list()
+
+    def _sort_armor(self, column: str):
+        """Toggle sort on the armor list by *column*."""
+        col, asc = self._armor_sort
+        if col == column:
+            self._armor_sort = (column, not asc)
+        else:
+            self._armor_sort = (column, True)
+        self._update_armor_headers()
+        self._populate_armor_list()
 
     def _on_gather_materials(self):
         """Handle Gather button click - calculate and display total materials."""

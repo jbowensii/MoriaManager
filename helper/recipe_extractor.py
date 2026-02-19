@@ -2,641 +2,516 @@
 """
 Helper script to extract weapons/armor recipes with display names and materials.
 
-Loads:
-- Items.json: String table (internal name → display name)
-- DT_ItemRecipes.json: Crafting recipes with materials
+Uses a 3-phase algorithm:
+  Phase 1 — Load string table from Items.json (with underscore aliasing)
+  Phase 2 — Resolve DisplayName from definition tables (DT_Weapons, DT_Armor,
+            DT_Items) by following each row's DisplayName property into the
+            string table, then mapping the row name to the resolved text.
+  Phase 3 — Build recipe data by intersecting DT_ItemRecipes with weapon/armor
+            definitions, looking up display names for both items and materials.
 
-Uses direct mapping from display name to recipe internal name.
+Outputs:
+  - helper/recipes_output.json       (for inspection)
+  - src/.../core/recipes_data_embedded.py  (consumed at runtime)
 """
 
 import json
+import textwrap
 from pathlib import Path
 
 GAMESOURCE_DIR = Path(__file__).parent.parent / "gamesource"
+EMBEDDED_PY = (
+    Path(__file__).parent.parent
+    / "src" / "moria_manager" / "core" / "recipes_data_embedded.py"
+)
 
-# Direct mapping from display name to recipe internal name
-# This is more reliable than pattern matching given inconsistent game data
-# Note: Some items from user's original list don't have crafting recipes
-WEAPON_RECIPES = {
-    # Basic tier weapons (t0-t5)
-    "Improvised Axe": "WarAxe_1h_t0",
-    "Iron Sword": "Sword_1h_t1",
-    "Iron War Axe": "WarAxe_1h_t1",
-    "Steel Sword": "Sword_1h_t2",
-    "Steel War Axe": "WarAxe_1h_t2",
-    "Steel Battleaxe": "Battleaxe_2h_t2",
-    "Iron Spear": "Spear_1h_t1_TU2",  # Named _TU2 in recipes
-    "First Age Sword": "Sword_1h_t4",
-    "First Age Greatsword": "Sword_2h_t3",
-    "First Age Battleaxe": "Battleaxe_2h_t4",
-    
-    # Khazâd tier weapons (t3)
-    "Last Alliance Maul": "Mattock_1h_t3",
-    "Khazâd War Mattock": "Restoration_Hammer_Starmetal",  # Special item
-    "Khazâd War Axe": "WarAxe_1h_t3",
-    "Khazâd Maul": "Mattock_1h_t2",
-    "Khazâd Army Halberd": "Halberd_2h_t3",
-    "Khazâd Army Greatsword": "Sword_2h_t3",
-    
-    # Belegost weapons
-    "Belegost Halberd": "Halberd_2h_t2",
-    "Belegost War Axe": "Durins_Axe",
-    
-    # Spears
-    "Eregion Spear": "Spear_1h_t2",
-    "Rohirrim Spear": "RohanPack_Spear_1h",
-    "Dimrill Spear": "Spear_1h_t3",
-    
-    # Shields
-    "Iron Hills Shield": "IronHills_APSet_Shield",
-    "Heirloom Shield": "Amazing_TBDSet_Shield",
-    "Ram's Head Shield": "Awesome_TBDSet_Shield",
-    "Rohirrim Shield": "RohanPack_Shield",
-    "Eregion Shield": "EregionElf_Set_Shield",
-    "Belegost Shield": "Belegost_Set_Shield",
-    "Shieldwall": "OakenShield_TBDSet_Shield",
-    "Mithril Shield": "Mithril_TBDSet_Shield",
-    "Ornamental Shield": "Grand_TBDSet_Shield",
-    "Gondorian Shield": "Durin_TBDSet_Shield",
-    "Last Alliance Shield": "Stunning_TBDSet_Shield",
-    "Durin's Guard Shield": "Taunting_TBDSet_Shield",
-    "Nogrod Shield": "NogrodShield",
-    "Ent-craft Shield": "EntPack_Shield",
-    
-    # Named/Legendary Mithril weapons (t5-t6)
-    # Based on Items.json: Shaz'akhnaman=WarAxe.Mithril, Rukhnaman=Sword.Mithril
-    "Shaz'akhnaman": "Mithril_WarAxe_1h_t6",  # Mithril War Axe
-    "Sagrûrisâbun": "Mithril_Battlehammer",  # Battlehammer.Mithril - no recipe exists
-    "Barôkamlut": "Mithril_Battleaxe_2h",  # Battleaxe.Mithril - no recipe exists
-    "Muasgadnûr": "Mithril_Mattock_1h_t6",  # Mattock.Mithril
-    "Khushnabrak": "Spear_1h_t4",
-    "Lafarnîzîn": "Mithril_Halberd_2h_t6",  # Halberd.Mithril
-    "Rukhnaman": "Mithril_Sword_1h_t6",  # Sword.Mithril
-    "Thanazbad": "Mithril_GreatSword_2h_t6",  # Greatsword.Mithril
-    "Drakhbarzin": "Weapon_Starlight",
-    
-    # Ranged weapons
-    "Hunting Bow": "Shortbow_Bow",  # Named Shortbow_Bow in recipes
-    "Arrows": "Arrow_Basic_t1",
-    "Elven Arrows": "Arrow_Elven_t2",
-    "Khazâd Arrows": "Arrow_Khazad_t3",
-    "First Age Crossbow": "Crossbow",
-    "First Age Bolts": "CrossbowBolt_Basic_t1",
-    "Khazâd Bolts": "CrossbowBolt_Khazad_t2",
-    "Nogrod Bolts": "CrossbowBolt_Nogrod_t3",
-    
-    # Special named weapons
-    "Dagamarth": "FamousElvenSword",
-    "Red Sword of Nogrod": "Nogrod_Sword_1h",  # May not have recipe
-    "Red Axe of Nogrod": "Nogrod_Axe_1h",  # May not have recipe
-    "Ironbough Greatsword": "Greenbeard_Sword_2h",
-    "Frightener's Battleaxe": "OrcHunter_GreatAxe_2h",
-    "Gimli's Axe": "Battleaxe_2h_Gimli",
-}
-
-ARMOR_RECIPES = {
-    # Iron Hills set
-    "Iron Hills Armor": "IronHills_APSet_TorsoArmor",
-    "Iron Hills Gloves": "IronHills_APSet_GlovesArmor",
-    
-    # Erebor set
-    "Erebor Ringmail": "EreborSteel_APSet_TorsoArmor",
-    "Erebor Planked Gauntlets": "EreborSteel_APSet_GlovesArmor",
-    "Erebor Boots": "EreborSteel_APSet_BootsArmor",
-    "Erebor City Watch Helmet": "EreborSteel_APSet_HelmetArmor",
-    
-    # Belegost set
-    "Belegost Boots": "Belegost_APSet_BootsArmor",
-    "Belegost Helmet": "Belegost_APSet_HelmetArmor",
-    "Belegost Gauntlets": "Belegost_APSet_GlovesArmor",
-    "Belegost Ringmail": "Belegost_APSet_TorsoArmor",
-    
-    # Khazâd Army set
-    "Khazâd Army Armor": "Khazad_Set_TorsoArmor",
-    "Khazâd Army Gauntlets": "Khazad_Set_GlovesArmor",
-    "Khazâd Army Boots": "Khazad_Set_BootsArmor",
-    "Khazâd Army Helmet": "Khazad_Set_HelmArmor",
-    
-    # Mithril set
-    "Mithril Helmet": "Mithril_Set_HelmetArmor",
-    "Mithril Armor": "Mithril_Set_TorsoArmor",
-    "Mithril Gloves": "Mithril_Set_GlovesArmor",
-    "Mithril Slippers": "Mithril_Set_BootsArmor",
-    
-    # Hats
-    "Trapper Hat": "Stunning_Set_HelmetArmor",
-    "Longbottom Hat": "Grand_Set_HelmetArmor",
-    "Miner's Helmet": "RedMountains_MinerSet_HelmetArmor",
-    "Gatherer's Hat": "NPC_Outfit_Gatherer_Hat",  # Special NPC outfit name
-    "Wolf Skin Hat": "Wonderful_Set_HelmetArmor",
-    
-    # Blue Mountains Hunter set
-    "Blue Mountains Hunter's Armor": "BlueMountainsHunter_Set_TorsoArmor",
-    "Blue Mountains Hunter's Boots": "BlueMountainsHunter_Set_BootsArmor",
-    "Blue Mountains Hunter's Gloves": "RangeBonus_Set_GlovesArmor",  # Different internal name
-    
-    # Grey Mountain set (uses AntiCold prefix in recipe keys)
-    "Grey Mountain Overcoat": "AntiColdTorso",
-    "Grey Mountains Boots": "AntiColdBoots",
-    "Grey Mountain Gloves": "AntiColdGloves",
-    "Grey Mountain Hat": "AntiColdHelm",
-    
-    # Eregion set (no "Armor" suffix in recipe name)
-    "Eregion Armor": "EregionElf_Set_Torso",
-    
-    # Durin's Guard set
-    "Durin's Guard Helmet": "Durin_Set_HelmetArmor",
-    "Durin's Guard Armor": "Durin_Set_TorsoArmor",
-    "Durin's Gloves": "Durin_Set_GlovesArmor",
-    "Durin's Guard Boots": "Durin_Set_BootsArmor",
-    
-    # Nogrod set
-    "Nogrod Armor": "Nogrod_Set_TorsoArmor",
-    "Nogrod Gauntlets": "Nogrod_Set_GlovesArmor",
-    
-    # Special helmets
-    "Last Alliance Helmet": "Classic_Set_HelmetArmor",
-    "Crested Helmet": "Taunting_TBDSet_Helm",  # Internal name is Taunting
-    "Spiked Helmet": "SouthernmostFireProof_Set_HelmetArmor",
-    "Dimrill Helmet": "Awesome_Set_HelmetArmor",
-    
-    # Special armor
-    "Expeditioner's Armor": "Orcbane_Set_TorsoArmor",
-}
+KNOWN_FIELD_SUFFIXES = {"Name", "Description", "DisplayName"}
 
 
-def load_json(filename: str):
-    """Load a JSON file from gamesource directory."""
-    path = GAMESOURCE_DIR / filename
-    print(f"Loading {path}...")
-    with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+# ---------------------------------------------------------------
+# Phase 1: String Table
+# ---------------------------------------------------------------
 
+def load_string_table(items_path: Path) -> dict[str, dict]:
+    """Parse Items.json and build a string table with underscore aliases.
 
-def build_string_table(items_data: list) -> dict[str, str]:
-    """Build internal name → display name mapping from Items.json."""
-    string_table = {}
-    
-    # Items.json is a list with a StringTable entry
-    for entry in items_data:
+    Each entry is stored as ``{game_name: {"name": ..., "description": ...}}``.
+    An underscore-aliased duplicate (dots → underscores) is also created so
+    that ``"Weapons_Spear_Iron"`` resolves the same way as ``"Weapons.Spear.Iron"``.
+    """
+    with open(items_path, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+
+    keys_to_entries: dict[str, str] = {}
+    for entry in data:
         if entry.get("Type") == "StringTable":
             keys_to_entries = entry.get("StringTable", {}).get("KeysToEntries", {})
-            for key, value in keys_to_entries.items():
-                string_table[key] = value
-    
-    print(f"  Loaded {len(string_table)} string table entries")
+            break
+
+    string_table: dict[str, dict] = {}
+
+    for key, value in keys_to_entries.items():
+        # Determine field type from the last segment
+        if "." in key:
+            game_name, field = key.rsplit(".", 1)
+        else:
+            game_name, field = key, "Name"
+
+        field_lower = field.lower()
+        if field_lower in ("name", "displayname"):
+            field_key = "name"
+        elif field_lower == "description":
+            field_key = "description"
+        else:
+            # Not a recognised suffix — treat the whole key as a direct name
+            game_name = key
+            field_key = "name"
+
+        # Merge into existing entry
+        string_table.setdefault(game_name, {})[field_key] = value
+
+        # Underscore alias
+        alias = game_name.replace(".", "_")
+        if alias != game_name:
+            string_table.setdefault(alias, {})[field_key] = value
+
+    print(f"  Phase 1: {len(keys_to_entries)} raw entries "
+          f"-> {len(string_table)} string-table entries (with aliases)")
     return string_table
 
 
-def build_reverse_lookup(string_table: dict[str, str]) -> dict[str, list[str]]:
-    """Build display name → list of internal key patterns.
-    
-    This allows us to find all string table keys that have a specific display name.
-    """
-    reverse = {}
-    for key, value in string_table.items():
-        if value not in reverse:
-            reverse[value] = []
-        reverse[value].append(key)
-    return reverse
+# ---------------------------------------------------------------
+# Phase 2: Resolve DisplayName from Definition Tables
+# ---------------------------------------------------------------
 
-
-def find_recipe_name_from_string_key(string_key: str) -> str | None:
-    """Extract likely recipe name from a string table key.
-    
-    e.g., "Weapons.Spear.Khazad.Name" → "Spear_Khazad" or similar patterns
-    e.g., "Armor.Belegost.Boots.Name" → "Belegost_APSet_BootsArmor" or similar
-    """
-    # Remove common suffixes
-    key = string_key.replace(".Name", "").replace(".DisplayName", "")
-    parts = key.split(".")
-    
-    # Skip prefix like "Weapons" or "Armor"
-    if parts and parts[0] in ("Weapons", "Armor", "Items"):
-        parts = parts[1:]
-    
-    # Return joined parts
-    return "_".join(parts) if parts else None
-
-
-def extract_weapon_names(weapons_data: dict) -> list[str]:
-    """Extract weapon row names from DT_Weapons.json."""
-    names = []
-    
-    exports = weapons_data.get("Exports", [])
-    for export in exports:
-        table = export.get("Table", {})
-        data = table.get("Data", [])
-        for item in data:
-            name = item.get("Name")
-            if name:
-                names.append(name)
-    
-    print(f"  Found {len(names)} weapons")
-    return names
-
-
-def extract_armor_names(armor_data: dict) -> list[str]:
-    """Extract armor row names from DT_Armor.json."""
-    names = []
-    
-    exports = armor_data.get("Exports", [])
-    for export in exports:
-        table = export.get("Table", {})
-        data = table.get("Data", [])
-        for item in data:
-            name = item.get("Name")
-            if name:
-                names.append(name)
-    
-    print(f"  Found {len(names)} armor pieces")
-    return names
-
-
-def build_recipe_map(recipes_data: list) -> dict:
-    """Build recipe name → materials mapping from DT_ItemRecipes.json.
-    
-    Returns a dict with both DefaultRequiredMaterials and SandboxRequiredMaterials.
-    """
-    recipes = {}
-    
-    for entry in recipes_data:
-        if entry.get("Type") == "DataTable":
-            rows = entry.get("Rows", {})
-            for recipe_name, recipe_data in rows.items():
-                default_materials = []
-                sandbox_materials = []
-                
-                # Extract DefaultRequiredMaterials
-                for mat in recipe_data.get("DefaultRequiredMaterials", []):
-                    mat_handle = mat.get("MaterialHandle", {})
-                    row_name = mat_handle.get("RowName", "")
-                    count = mat.get("Count", 0)
-                    if row_name and row_name != "None":
-                        default_materials.append({
-                            "item": row_name,
-                            "quantity": count
-                        })
-                
-                # Extract SandboxRequiredMaterials
-                for mat in recipe_data.get("SandboxRequiredMaterials", []):
-                    mat_handle = mat.get("MaterialHandle", {})
-                    row_name = mat_handle.get("RowName", "")
-                    count = mat.get("Count", 0)
-                    if row_name and row_name != "None":
-                        sandbox_materials.append({
-                            "item": row_name,
-                            "quantity": count
-                        })
-                
-                # Keep recipe if either list has data
-                if default_materials or sandbox_materials:
-                    recipes[recipe_name] = {
-                        "default": default_materials,
-                        "sandbox": sandbox_materials
-                    }
-    
-    print(f"  Loaded {len(recipes)} recipes with materials")
-    return recipes
-
-
-def find_display_name(internal_name: str, string_table: dict, item_type: str = "weapon") -> str | None:
-    """
-    Try to find display name for an item using various key patterns.
-    
-    Patterns tried:
-    - DT_Weapons.{name}.DisplayName
-    - DT_Armor.{name}.DisplayName  
-    - Weapons.{pattern}.Name (parsed from name)
-    - Armor.{pattern}.Name (parsed from name)
-    """
-    # Try DT_Weapons/DT_Armor pattern
-    dt_prefix = "DT_Weapons" if item_type == "weapon" else "DT_Armor"
-    key = f"{dt_prefix}.{internal_name}.DisplayName"
-    if key in string_table:
-        return string_table[key]
-    
-    # Try without DT_ prefix
-    prefix = "Weapons" if item_type == "weapon" else "Armor"
-    key = f"{prefix}.{internal_name}.Name"
-    if key in string_table:
-        return string_table[key]
-    
-    # Parse the internal name to build possible key patterns
-    # e.g., "Belegost_APSet_BootsArmor" -> look for "Armor.Belegost.Boots.Name"
-    # e.g., "Sword_1h_t1" -> look for "Weapons.*.Sword*.Name"
-    
-    # For armor: Parse the name pattern
-    if item_type == "armor":
-        parts = internal_name.split("_")
-        # Filter out common non-meaningful parts
-        meaningful_parts = [p for p in parts if p.lower() not in ("set", "apset", "armor")]
-        
-        # Extract the set name and armor type
-        set_name = parts[0] if parts else None
-        armor_type = None
-        for part in parts:
-            part_lower = part.lower()
-            if "boots" in part_lower:
-                armor_type = "Boots"
-            elif "gloves" in part_lower or "gauntlet" in part_lower:
-                armor_type = "Gloves"
-            elif "helmet" in part_lower or "helm" in part_lower:
-                armor_type = "Helmet"
-            elif "torso" in part_lower:
-                armor_type = "Torso"
-            elif "shield" in part_lower:
-                armor_type = "Shield"
-        
-        # Find best match with most parts matching
-        best_match = None
-        best_match_count = 0
-        
-        for key, value in string_table.items():
-            key_lower = key.lower()
-            if not key_lower.startswith("armor.") or not key_lower.endswith(".name"):
-                continue
-            if "broken" in key_lower or "broken" in value.lower():
-                continue
-            
-            key_parts = key_lower.replace(".name", "").split(".")
-            # Count how many meaningful parts match
-            matches = sum(1 for p in meaningful_parts if p.lower() in key_parts)
-            
-            # Bonus for matching armor type
-            if armor_type and armor_type.lower() in key_parts:
-                matches += 1
-            
-            if matches > best_match_count:
-                best_match = value
-                best_match_count = matches
-        
-        # Require at least 2 matching parts for a valid match
-        # This prevents generic items from matching incorrectly
-        if best_match_count < 2:
-            return None
-        
-        if best_match:
-            return best_match
-    
-    # For weapons: Parse the name pattern
-    if item_type == "weapon":
-        parts = internal_name.split("_")
-        
-        # Extract tier info to help with matching
-        tier = None
-        for p in parts:
-            p_lower = p.lower()
-            if p_lower.startswith("t") and len(p_lower) >= 2 and p_lower[1:].isdigit():
-                tier = int(p_lower[1:])
-                break
-        
-        # Map tiers to material types for string table matching
-        tier_materials = {
-            1: ["iron"],
-            2: ["steel"],
-            3: ["khazad", "khazâd", "bronze"],
-            4: ["firstage", "darkalloy"],
-            5: ["mithril"],
-            6: ["mithril"]  # Highest tier also uses mithril
-        }
-        
-        # Filter out tier indicators like "1h", "2h", "t1", "t2", etc.
-        meaningful_parts = [p for p in parts if not p.lower().startswith("t") 
-                          and p.lower() not in ("1h", "2h")]
-        
-        # For tier-based weapons, add the expected material to meaningful parts
-        if tier and tier in tier_materials:
-            meaningful_parts.extend(tier_materials[tier])
-        
-        # Find the best match (most parts matching)
-        best_match = None
-        best_match_count = 0
-        
-        # Try each meaningful part as the weapon type
-        for weapon_type in meaningful_parts:
-            # Search for any key that has this weapon type and ends with .Name
-            for key, value in string_table.items():
-                key_lower = key.lower()
-                # Skip recipe fragments and broken items
-                if "recipefragment" in key_lower:
-                    continue
-                if "craft plans" in value.lower():
-                    continue
-                if "broken" in key_lower or "broken" in value.lower():
-                    continue
-                if (weapon_type.lower() in key_lower and 
-                    key_lower.endswith(".name") and 
-                    key_lower.startswith("weapons.")):
-                    # For patterns like Weapons.Mattock.Mithril.Name, check if other parts match
-                    key_parts = key_lower.replace(".name", "").split(".")
-                    # Check if multiple meaningful parts appear in the key
-                    matches = sum(1 for p in meaningful_parts if p.lower() in key_parts)
-                    if matches > best_match_count:
-                        best_match = value
-                        best_match_count = matches
-        
-        # Require at least 2 matching parts for tier-based weapons
-        # This prevents generic tier weapons from matching to wrong named weapons
-        if tier and best_match_count < 2:
-            return None
-        
-        if best_match:
-            return best_match
-    
+def _extract_display_name_key(row_value: list) -> str | None:
+    """Find the DisplayName property inside a UAssetAPI row Value array."""
+    for prop in row_value:
+        if prop.get("Name") == "DisplayName" and "Value" in prop:
+            val = prop["Value"]
+            if isinstance(val, str):
+                return val
     return None
 
 
-def find_material_display_name(material_internal: str, string_table: dict) -> str | None:
-    """Try to find display name for a material."""
-    # Materials often have patterns like "Item.IronIngot" → lookup Items.Items.IronIngot.Name
-    if material_internal.startswith("Item."):
-        item_part = material_internal[5:]  # Remove "Item." prefix
-        # Try Items.Items.{name}.Name pattern
-        key = f"Items.Items.{item_part}.Name"
-        if key in string_table:
-            return string_table[key]
-        # Try Items.{name}.Name pattern
-        key = f"Items.{item_part}.Name"
-        if key in string_table:
-            return string_table[key]
-    
-    if material_internal.startswith("Ore."):
-        ore_part = material_internal[4:]
-        # Try Items.Item.PreciousGem.{name}.Name pattern (for gems like Ruby, Diamond)
-        key = f"Items.Item.PreciousGem.{ore_part}.Name"
-        if key in string_table:
-            return string_table[key]
-        # Try Items.Item.SemiPreciousGem.{name}.Name pattern
-        key = f"Items.Item.SemiPreciousGem.{ore_part}.Name"
-        if key in string_table:
-            return string_table[key]
-        # Try Items.Ores.{name}.Name pattern
-        key = f"Items.Ores.{ore_part}.Name"
-        if key in string_table:
-            return string_table[key]
-        key = f"Ores.{ore_part}.Name"
-        if key in string_table:
-            return string_table[key]
-    
-    if material_internal.startswith("Consumable."):
-        consumable_part = material_internal[11:]
-        # Try Items.Consumables.{name}.Name pattern
-        key = f"Items.Consumables.{consumable_part}.Name"
-        if key in string_table:
-            return string_table[key]
-        key = f"Consumables.{consumable_part}.Name"
-        if key in string_table:
-            return string_table[key]
-    
-    # Try direct lookup
-    key = f"{material_internal}.Name"
-    if key in string_table:
-        return string_table[key]
-    
-    key = f"{material_internal}.DisplayName"
-    if key in string_table:
-        return string_table[key]
-    
-    return material_internal  # Return internal name as fallback
+def _extract_weapon_tier(row_value: list) -> int | None:
+    """Extract the Tier byte property from a weapon row."""
+    for prop in row_value:
+        if prop.get("Name") == "Tier" and "Value" in prop:
+            val = prop["Value"]
+            if isinstance(val, (int, float)):
+                return int(val)
+    return None
 
+
+def _extract_armor_tier(row_value: list) -> int | None:
+    """Extract tier from an armor row's Tags → UI.Armor.*.Tier{N} tag."""
+    import re
+    for prop in row_value:
+        if prop.get("Name") != "Tags":
+            continue
+        # Tags is a GameplayTagContainer struct; the tag strings are
+        # nested: prop.Value[0].Value = ["UI.Armor.Boots.Tier2", ...]
+        for inner in prop.get("Value", []):
+            for tag in inner.get("Value", []):
+                if isinstance(tag, str):
+                    m = re.search(r"UI\.Armor\.\w+\.Tier(\d+)", tag)
+                    if m:
+                        return int(m.group(1))
+    return None
+
+
+def _cascade_lookup(st_key: str, string_table: dict) -> dict | None:
+    """4-step cascade lookup from a string-table reference key.
+
+    1.  Direct: string_table[st_key]
+    1b. Underscore variant of st_key
+    2.  Strip .Name/.Description suffix: string_table[game_name]
+    2b. Underscore variant of game_name
+    """
+    # 1 — direct
+    if st_key in string_table:
+        return string_table[st_key]
+
+    # 1b — underscore variant
+    us = st_key.replace(".", "_")
+    if us in string_table:
+        return string_table[us]
+
+    # 2 — strip last segment
+    if "." in st_key:
+        game_name = st_key.rsplit(".", 1)[0]
+        if game_name in string_table:
+            return string_table[game_name]
+
+        # 2b — underscore variant of stripped
+        us2 = game_name.replace(".", "_")
+        if us2 in string_table:
+            return string_table[us2]
+
+    return None
+
+
+def _load_uasset_rows(path: Path) -> list[tuple[str, list]]:
+    """Load row (name, value_array) pairs from a UAssetAPI DataTable JSON."""
+    with open(path, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+
+    rows: list[tuple[str, list]] = []
+    for export in data.get("Exports", []):
+        table_data = export.get("Table", {}).get("Data", [])
+        for row in table_data:
+            name = row.get("Name")
+            value = row.get("Value", [])
+            if name:
+                rows.append((name, value))
+    return rows
+
+
+def resolve_definitions(
+    string_table: dict[str, dict],
+    gamesource: Path,
+) -> tuple[set[str], set[str], set[str]]:
+    """Phase 2 — resolve DisplayName from definition tables.
+
+    Iterates DT_Weapons, DT_Armor, DT_Items and maps each row name into the
+    string table using the DisplayName property as a bridge.
+
+    Returns (weapon_names, armor_names, item_names) — the sets of row names
+    found in each definition table.
+    """
+    tables = {
+        "DT_Weapons.json": "weapon",
+        "DT_Armor.json":   "armor",
+        "DT_Items.json":   "item",
+    }
+
+    weapon_names: set[str] = set()
+    armor_names:  set[str] = set()
+    item_names:   set[str] = set()
+
+    name_sets = {
+        "weapon": weapon_names,
+        "armor":  armor_names,
+        "item":   item_names,
+    }
+
+    resolved = 0
+    skipped = 0
+
+    for filename, category in tables.items():
+        path = gamesource / filename
+        if not path.exists():
+            print(f"  Warning: {filename} not found, skipping")
+            continue
+
+        rows = _load_uasset_rows(path)
+        name_sets[category].update(name for name, _ in rows)
+
+        for row_name, row_value in rows:
+            # Extract tier (weapons use a Tier byte, armor uses Tags)
+            if category == "weapon":
+                tier = _extract_weapon_tier(row_value)
+            elif category == "armor":
+                tier = _extract_armor_tier(row_value)
+            else:
+                tier = None
+
+            # Skip if already resolved
+            if row_name in string_table:
+                # Still store tier even if name was already known
+                if tier is not None:
+                    string_table[row_name]["tier"] = tier
+                skipped += 1
+                continue
+
+            st_key = _extract_display_name_key(row_value)
+            if not st_key:
+                continue
+
+            entry = _cascade_lookup(st_key, string_table)
+            if entry:
+                new_entry = dict(entry)
+                if tier is not None:
+                    new_entry["tier"] = tier
+                string_table[row_name] = new_entry
+                resolved += 1
+
+        print(f"  Phase 2: {filename} — {len(rows)} rows, "
+              f"category={category}")
+
+    print(f"  Phase 2 totals: resolved {resolved} new mappings, "
+          f"{skipped} already known")
+    return weapon_names, armor_names, item_names
+
+
+# ---------------------------------------------------------------
+# Phase 3: Build Recipe Data
+# ---------------------------------------------------------------
+
+def _strip_handle_prefix(row_name: str) -> str:
+    """Strip category prefixes like 'Weapon.', 'Armor.', 'Tool.', 'Item.'."""
+    for prefix in ("Weapon.", "Armor.", "Tool.", "Item.", "Ore.", "Consumable."):
+        if row_name.startswith(prefix):
+            return row_name[len(prefix):]
+    return row_name
+
+
+def _lookup_display(internal: str, string_table: dict) -> str:
+    """Look up a display name, returning the internal name as fallback."""
+    entry = string_table.get(internal)
+    if entry and "name" in entry:
+        return entry["name"]
+    # Try stripping prefix
+    stripped = _strip_handle_prefix(internal)
+    entry = string_table.get(stripped)
+    if entry and "name" in entry:
+        return entry["name"]
+    return internal
+
+
+def build_recipes(
+    string_table: dict[str, dict],
+    weapon_names: set[str],
+    armor_names: set[str],
+    gamesource: Path,
+) -> tuple[list[dict], list[dict]]:
+    """Phase 3 — build weapons and armor recipe lists.
+
+    Only recipes whose result item appears in both the recipe table AND
+    a weapon/armor definition table are included.
+    """
+    recipes_path = gamesource / "DT_ItemRecipes.json"
+    with open(recipes_path, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+
+    rows: dict = {}
+    for entry in data:
+        if entry.get("Type") == "DataTable":
+            rows = entry.get("Rows", {})
+            break
+
+    weapons: list[dict] = []
+    armor:   list[dict] = []
+    w_miss = 0
+    a_miss = 0
+
+    for recipe_name, recipe_data in rows.items():
+        result_row = recipe_data.get("ResultItemHandle", {}).get("RowName", "")
+        stripped = _strip_handle_prefix(result_row)
+
+        # Determine if this is a weapon or armor recipe
+        is_weapon = stripped in weapon_names or recipe_name in weapon_names
+        is_armor  = stripped in armor_names  or recipe_name in armor_names
+
+        if not is_weapon and not is_armor:
+            continue
+
+        # Resolve display name for the item itself
+        display = _lookup_display(recipe_name, string_table)
+        if display == recipe_name:
+            display = _lookup_display(stripped, string_table)
+
+        # Build material lists
+        def _convert_materials(mat_list):
+            out = []
+            for mat in mat_list:
+                mat_row = mat.get("MaterialHandle", {}).get("RowName", "")
+                count = mat.get("Count", 0)
+                if not mat_row or mat_row == "None":
+                    continue
+                mat_display = _lookup_display(mat_row, string_table)
+                out.append({
+                    "internal": mat_row,
+                    "display": mat_display,
+                    "quantity": count,
+                })
+            return out
+
+        default_mats = _convert_materials(
+            recipe_data.get("DefaultRequiredMaterials", []))
+        sandbox_mats = _convert_materials(
+            recipe_data.get("SandboxRequiredMaterials", []))
+
+        # Look up tier from string_table (stored during Phase 2)
+        tier = None
+        st_entry = string_table.get(recipe_name)
+        if st_entry and "tier" in st_entry:
+            tier = st_entry["tier"]
+        if tier is None:
+            st_entry = string_table.get(stripped)
+            if st_entry and "tier" in st_entry:
+                tier = st_entry["tier"]
+        # Default to 0 for armor with no tier tag (NPC outfits, etc.)
+        if tier is None and is_armor:
+            tier = 0
+
+        entry = {
+            "internal_name": recipe_name,
+            "display_name": display,
+            "tier": tier,
+            "default_materials": default_mats,
+            "sandbox_materials": sandbox_mats,
+        }
+
+        if is_weapon:
+            weapons.append(entry)
+        else:
+            armor.append(entry)
+
+    # Sort by display name
+    weapons.sort(key=lambda e: e["display_name"].lower())
+    armor.sort(key=lambda e: e["display_name"].lower())
+
+    print(f"  Phase 3: {len(weapons)} weapons, {len(armor)} armor pieces "
+          f"with recipes")
+    return weapons, armor
+
+
+# ---------------------------------------------------------------
+# Output helpers
+# ---------------------------------------------------------------
+
+def write_json_output(weapons, armor, out_path: Path):
+    """Write recipes_output.json for manual inspection."""
+    output = {
+        "weapons": weapons,
+        "armor": armor,
+        "stats": {
+            "weapons_found": len(weapons),
+            "armor_found": len(armor),
+        },
+    }
+    with open(out_path, "w", encoding="utf-8") as fh:
+        json.dump(output, fh, indent=2, ensure_ascii=False)
+    print(f"  Wrote {out_path}")
+
+
+def _format_list(items: list[dict], indent: int = 4) -> str:
+    """Format a list of recipe dicts as Python source."""
+    pad = " " * indent
+    lines: list[str] = ["["]
+    for item in items:
+        lines.append(f"{pad}{{")
+        lines.append(f'{pad}    "internal_name": {item["internal_name"]!r},')
+        lines.append(f'{pad}    "display_name": {item["display_name"]!r},')
+        lines.append(f'{pad}    "tier": {item["tier"]!r},')
+
+        # default_materials
+        if item["default_materials"]:
+            lines.append(f'{pad}    "default_materials": [')
+            for m in item["default_materials"]:
+                lines.append(
+                    f'{pad}        {{"internal": {m["internal"]!r}, '
+                    f'"display": {m["display"]!r}, '
+                    f'"quantity": {m["quantity"]!r}}},'
+                )
+            lines.append(f"{pad}    ],")
+        else:
+            lines.append(f'{pad}    "default_materials": [],')
+
+        # sandbox_materials
+        if item["sandbox_materials"]:
+            lines.append(f'{pad}    "sandbox_materials": [')
+            for m in item["sandbox_materials"]:
+                lines.append(
+                    f'{pad}        {{"internal": {m["internal"]!r}, '
+                    f'"display": {m["display"]!r}, '
+                    f'"quantity": {m["quantity"]!r}}},'
+                )
+            lines.append(f"{pad}    ],")
+        else:
+            lines.append(f'{pad}    "sandbox_materials": [],')
+
+        lines.append(f"{pad}}},")
+    lines.append("]")
+    return "\n".join(lines)
+
+
+def write_embedded_py(weapons, armor, out_path: Path):
+    """Generate recipes_data_embedded.py consumed at runtime."""
+    content = textwrap.dedent('''\
+        """Embedded recipes data for the Materials Calculator.
+
+        Auto-generated by helper/recipe_extractor.py — do not edit by hand.
+        """
+
+        # Weapons with crafting recipes
+        WEAPONS = {weapons}
+
+        # Armor with crafting recipes
+        ARMOR = {armor}
+
+
+        def get_recipes_data() -> dict:
+            """Get the complete recipes data structure.
+
+            Returns:
+                Dictionary with 'weapons' and 'armor' keys containing lists of recipes.
+            """
+            return {{
+                "weapons": WEAPONS,
+                "armor": ARMOR,
+            }}
+    ''').format(
+        weapons=_format_list(weapons),
+        armor=_format_list(armor),
+    )
+    with open(out_path, "w", encoding="utf-8") as fh:
+        fh.write(content)
+    print(f"  Wrote {out_path}")
+
+
+# ---------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------
 
 def main():
     print("=" * 60)
-    print("Recipe Extractor - Direct Mapping Approach")
+    print("Recipe Extractor — 3-Phase Algorithm")
     print("=" * 60)
-    
-    # Load all data files
-    items_data = load_json("Items.json")
-    recipes_data = load_json("DT_ItemRecipes.json")
-    
-    print()
-    
-    # Build lookups
-    string_table = build_string_table(items_data)
-    recipes = build_recipe_map(recipes_data)
-    
-    print(f"  Total recipes available: {len(recipes)}")
-    
-    print()
-    print("=" * 60)
-    print("Finding weapons using direct mapping...")
-    print("=" * 60)
-    
-    weapons_result = []
-    weapons_not_found = []
-    
-    for display_name, recipe_name in sorted(WEAPON_RECIPES.items()):
-        if recipe_name in recipes:
-            recipe = recipes[recipe_name]
-            
-            # Convert materials
-            default_mats = []
-            for mat in recipe.get("default", []):
-                mat_display = find_material_display_name(mat["item"], string_table)
-                default_mats.append({
-                    "internal": mat["item"],
-                    "display": mat_display,
-                    "quantity": mat["quantity"]
-                })
-            
-            sandbox_mats = []
-            for mat in recipe.get("sandbox", []):
-                mat_display = find_material_display_name(mat["item"], string_table)
-                sandbox_mats.append({
-                    "internal": mat["item"],
-                    "display": mat_display,
-                    "quantity": mat["quantity"]
-                })
-            
-            weapons_result.append({
-                "internal_name": recipe_name,
-                "display_name": display_name,
-                "default_materials": default_mats,
-                "sandbox_materials": sandbox_mats
-            })
-            print(f"  Found: {display_name} -> {recipe_name}")
-        else:
-            weapons_not_found.append((display_name, recipe_name))
-            print(f"  NOT FOUND: {display_name} -> {recipe_name}")
-    
-    print()
-    print("=" * 60)
-    print("Finding armor using direct mapping...")
-    print("=" * 60)
-    
-    armor_result = []
-    armor_not_found = []
-    
-    for display_name, recipe_name in sorted(ARMOR_RECIPES.items()):
-        if recipe_name in recipes:
-            recipe = recipes[recipe_name]
-            
-            # Convert materials
-            default_mats = []
-            for mat in recipe.get("default", []):
-                mat_display = find_material_display_name(mat["item"], string_table)
-                default_mats.append({
-                    "internal": mat["item"],
-                    "display": mat_display,
-                    "quantity": mat["quantity"]
-                })
-            
-            sandbox_mats = []
-            for mat in recipe.get("sandbox", []):
-                mat_display = find_material_display_name(mat["item"], string_table)
-                sandbox_mats.append({
-                    "internal": mat["item"],
-                    "display": mat_display,
-                    "quantity": mat["quantity"]
-                })
-            
-            armor_result.append({
-                "internal_name": recipe_name,
-                "display_name": display_name,
-                "default_materials": default_mats,
-                "sandbox_materials": sandbox_mats
-            })
-            print(f"  Found: {display_name} -> {recipe_name}")
-        else:
-            armor_not_found.append((display_name, recipe_name))
-            print(f"  NOT FOUND: {display_name} -> {recipe_name}")
-    
-    # Output results
-    print()
-    print("=" * 60)
+
+    # Phase 1
+    print("\n--- Phase 1: String Table ---")
+    string_table = load_string_table(GAMESOURCE_DIR / "Items.json")
+
+    # Phase 2
+    print("\n--- Phase 2: Definition Tables ---")
+    weapon_names, armor_names, item_names = resolve_definitions(
+        string_table, GAMESOURCE_DIR)
+
+    # Phase 3
+    print("\n--- Phase 3: Recipes ---")
+    weapons, armor = build_recipes(
+        string_table, weapon_names, armor_names, GAMESOURCE_DIR)
+
+    # Summary
+    print("\n" + "=" * 60)
     print("SUMMARY")
     print("=" * 60)
-    
-    print(f"\nWeapons found: {len(weapons_result)}/{len(WEAPON_RECIPES)}")
-    if weapons_not_found:
-        print(f"  Missing recipe names: {[x[1] for x in weapons_not_found]}")
-    
-    print(f"\nArmor found: {len(armor_result)}/{len(ARMOR_RECIPES)}")
-    if armor_not_found:
-        print(f"  Missing recipe names: {[x[1] for x in armor_not_found]}")
-    
-    # Save to output file
-    output = {
-        "weapons": weapons_result,
-        "armor": armor_result,
-        "stats": {
-            "weapons_found": len(weapons_result),
-            "weapons_missing": len(weapons_not_found),
-            "armor_found": len(armor_result),
-            "armor_missing": len(armor_not_found)
-        },
-        "missing": {
-            "weapons": [{"display": d, "recipe": r} for d, r in weapons_not_found],
-            "armor": [{"display": d, "recipe": r} for d, r in armor_not_found]
-        }
-    }
-    
-    output_path = Path(__file__).parent / "recipes_output.json"
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(output, f, indent=2)
-    
-    print(f"\n\nFull results saved to: {output_path}")
+    print(f"  Weapons with recipes: {len(weapons)}")
+    for w in weapons:
+        tag = w["display_name"]
+        if tag == w["internal_name"]:
+            tag += "  ** (no display name resolved)"
+        tier_str = f"T{w['tier']}" if w["tier"] is not None else "T?"
+        print(f"    [{tier_str}] {tag}  [{w['internal_name']}]")
+
+    print(f"\n  Armor with recipes:   {len(armor)}")
+    for a in armor:
+        tag = a["display_name"]
+        if tag == a["internal_name"]:
+            tag += "  ** (no display name resolved)"
+        tier_str = f"T{a['tier']}" if a["tier"] is not None else "T?"
+        print(f"    [{tier_str}] {tag}  [{a['internal_name']}]")
+
+    # Output
+    print("\n--- Writing output files ---")
+    json_out = Path(__file__).parent / "recipes_output.json"
+    write_json_output(weapons, armor, json_out)
+    write_embedded_py(weapons, armor, EMBEDDED_PY)
+
+    print("\nDone.")
 
 
 if __name__ == "__main__":
