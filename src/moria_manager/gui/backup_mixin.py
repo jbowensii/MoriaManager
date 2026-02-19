@@ -534,9 +534,71 @@ class BackupMixin:
                     restore_btn.pack(side="right", padx=PADDING["small"])
                     self._create_tooltip(restore_btn, "Make this file the current save")
 
+                # "Copy to Desktop" button — always shown, left of the
+                # context-specific button (mark-bad / restore).
+                desktop_image = self._load_icon("icons/desktop.png", size=(16, 16))
+                if desktop_image:
+                    desktop_btn = ctk.CTkButton(
+                        row, image=desktop_image, text="", width=24, height=24,
+                        fg_color="transparent", hover_color=("gray80", "gray30"),
+                        command=lambda v=version: self._copy_version_to_desktop(v)
+                    )
+                else:
+                    desktop_btn = ctk.CTkButton(
+                        row, text="\U0001f5a5", width=24, height=24,
+                        font=FONTS["small"],
+                        fg_color="transparent", hover_color=("gray80", "gray30"),
+                        command=lambda v=version: self._copy_version_to_desktop(v)
+                    )
+                desktop_btn.pack(side="right", padx=PADDING["small"])
+                self._create_tooltip(desktop_btn, "Copy to Desktop")
+
         self._set_status(f"Selected version: {version.display_name}")
 
-    # --- File Operations (Restore / Mark Bad) ---
+    # --- File Operations (Copy to Desktop / Restore / Mark Bad) ---
+
+    def _copy_version_to_desktop(self, version: SaveFileVersion):
+        """Copy the selected version file to the user's Desktop."""
+        logger.debug("Copy to desktop called: file_path=%s",
+                      version.file_path if version else None)
+
+        if not version or not version.file_path:
+            self._set_status("File not found")
+            return
+
+        if not version.file_path.exists():
+            self._set_status(f"File not found: {version.file_path}")
+            logger.warning("Copy to desktop: file does not exist: %s",
+                           version.file_path)
+            return
+
+        # Use the Windows Shell API to resolve the real Desktop path
+        # (handles OneDrive folder redirection).
+        try:
+            import winreg  # pylint: disable=import-outside-toplevel
+            with winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+            ) as key:
+                raw, _ = winreg.QueryValueEx(key, "Desktop")
+                import os as _os  # pylint: disable=import-outside-toplevel
+                desktop = Path(_os.path.expandvars(raw))
+        except (OSError, ImportError):
+            desktop = Path.home() / "Desktop"
+
+        if not desktop.is_dir():
+            self._set_status("Desktop folder not found")
+            logger.warning("Copy to desktop: Desktop dir not found: %s", desktop)
+            return
+
+        try:
+            dest = desktop / version.file_path.name
+            shutil.copy2(str(version.file_path), str(dest))
+            self._set_status(f"Copied '{version.file_path.name}' to Desktop")
+            logger.info("Copied %s to %s", version.file_path, dest)
+        except (OSError, IOError, shutil.Error) as e:
+            self._set_status(f"Error copying to Desktop: {e}")
+            logger.error("Copy to desktop failed: %s", e)
 
     def _restore_version(self, version: SaveFileVersion):
         """Restore the selected version as the current save (copies over existing main file).

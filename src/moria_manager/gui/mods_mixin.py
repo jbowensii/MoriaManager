@@ -125,8 +125,11 @@ class ModsMixin:
 
         Handles four source types:
         - Directories: copied wholesale into ``backup/mods``.
-        - ``.zip`` archives: extracted; single top-level folders are
-          preserved.
+        - ``.zip`` archives: a directory is created in ``backup/mods``
+          named after the zip (date/time stamps stripped, ``_P``
+          appended) and all files are extracted flat into it.  Any
+          ``LogicMods`` directory left in ``backup/mods`` or the
+          game's Paks folder is removed afterwards.
         - ``.pak`` files: all three companion files (``.pak``, ``.ucas``,
           ``.utoc``) are copied together from the source directory.
         - Other files: copied individually.
@@ -183,116 +186,102 @@ class ModsMixin:
                     imported_count += 1
 
                 elif source_path.is_file() and source_path.suffix.lower() == ".zip":
-                    # Handle zip files - extract contents to Available Mods
+                    # Handle zip files - extract flat into a named directory
                     try:
+                        import re as _re
+
+                        # Build a clean mod name from the zip filename:
+                        # strip the .zip extension, remove Nexus Mods
+                        # suffixes, date/time stamps, trailing separators,
+                        # and append "_P".
+                        mod_dir_name = source_path.stem
+                        # Nexus Mods suffix: -modID-version-epoch
+                        # e.g. "-75-1-6-0-1770750452"
+                        mod_dir_name = _re.sub(
+                            r'-\d+(-\d+)*-\d{9,10}$', '', mod_dir_name)
+                        # ISO-style dates (2024-01-15, 2024.01.15)
+                        mod_dir_name = _re.sub(
+                            r'[\s_\-.]?\d{4}[\-_.]\d{2}[\-_.]\d{2}', '', mod_dir_name)
+                        # Compact dates (20240115)
+                        mod_dir_name = _re.sub(
+                            r'[\s_\-.]?\d{8}', '', mod_dir_name)
+                        # Time stamps (123456, 12-30-00, etc.)
+                        mod_dir_name = _re.sub(
+                            r'[\s_\-.]?\d{2}[\-_.:]?\d{2}[\-_.:]?\d{2}(?!\d)',
+                            '', mod_dir_name)
+                        # Strip trailing separators and whitespace
+                        mod_dir_name = mod_dir_name.strip(' _-.')
+                        if not mod_dir_name:
+                            mod_dir_name = source_path.stem
+                        # Ensure it ends with _P
+                        if not mod_dir_name.endswith("_P"):
+                            mod_dir_name += "_P"
+
+                        mod_dir_name = sanitize_filename(mod_dir_name)
+                        mod_dest = mods_backup_path / mod_dir_name
+
+                        if (not is_safe_path(mod_dest, allowed_roots=[backup_root])
+                                or not is_path_under_root(mod_dest, backup_root)):
+                            self._set_status(
+                                f"Skipped: Invalid destination for '{source_path.name}'")
+                            skipped_count += 1
+                            continue
+
+                        # Overwrite check
+                        if mod_dest.exists():
+                            choice = self._show_overwrite_skip_dialog(
+                                "Folder Exists",
+                                f"The folder '{mod_dir_name}' already "
+                                "exists in Available Mods.\n\nOverwrite?"
+                            )
+                            if choice == "skip":
+                                skipped_count += 1
+                                continue
+                            shutil.rmtree(str(mod_dest))
+
+                        mod_dest.mkdir(parents=True, exist_ok=True)
+
                         with zipfile.ZipFile(str(source_path), 'r') as zip_ref:
-                            # Get list of files in zip
-                            zip_contents = zip_ref.namelist()
-
-                            # Determine unique top-level entries in the archive so we can
-                            # check for conflicts in the destination directory.
-                            top_level_items = set()
-                            for item in zip_contents:
-                                top_item = item.split('/')[0]
-                                if top_item:
-                                    top_level_items.add(top_item)
-
-                            # Detect single wrapper directory (e.g. "LogicMods/").
-                            # The contents will be flattened after extraction, so
-                            # the overwrite check must use the second-level names.
-                            _single_wrapper = None
-                            if len(top_level_items) == 1:
-                                _wrapper_candidate = next(iter(top_level_items))
-                                # Every entry must live under the wrapper dir
-                                if all(
-                                    item == _wrapper_candidate
-                                    or item.startswith(_wrapper_candidate + "/")
-                                    for item in zip_contents if item
-                                ):
-                                    _single_wrapper = _wrapper_candidate
-                                    # Re-derive effective items (second level)
-                                    top_level_items = set()
-                                    for item in zip_contents:
-                                        parts = item.split("/")
-                                        if len(parts) > 1 and parts[1]:
-                                            top_level_items.add(parts[1])
-
-                            # Check for existing files/folders
-                            existing_items = []
-                            for item in top_level_items:
-                                check_path = mods_backup_path / item
-                                if check_path.exists():
-                                    existing_items.append(item)
-
-                            if existing_items:
-                                items_str = ", ".join(existing_items[:3])
-                                if len(existing_items) > 3:
-                                    items_str += f" (+{len(existing_items) - 3} more)"
-                                choice = self._show_overwrite_skip_dialog(
-                                    "Items Exist",
-                                    f"Some items from '{source_path.name}'"
-                                    f" already exist:\n{items_str}"
-                                    "\n\nOverwrite?"
-                                )
-                                if choice == "skip":
-                                    skipped_count += 1
+                            # Extract only files, flattened (no subdirectories)
+                            for member in zip_ref.infolist():
+                                # Skip directory entries
+                                if member.is_dir():
                                     continue
+                                # Use only the basename (flatten)
+                                filename = Path(member.filename).name
+                                if not filename:
+                                    continue
+                                dest_file = mod_dest / sanitize_filename(filename)
+                                with zip_ref.open(member) as src, \
+                                        open(str(dest_file), 'wb') as dst:
+                                    shutil.copyfileobj(src, dst)
 
-                                # Remove existing items
-                                for item in existing_items:
-                                    item_path = mods_backup_path / item
-                                    if item_path.is_dir():
-                                        shutil.rmtree(str(item_path))
-                                    elif item_path.is_file():
-                                        item_path.unlink()
+                        # Clean up any LogicMods directory that the zip
+                        # may have left in backup/mods or the Paks folder.
+                        paks_path = (
+                            self.current_installation.game_path
+                            / "Moria" / "Content" / "Paks"
+                        )
+                        refreshed_left = False
+                        for check_root in (mods_backup_path, paks_path):
+                            lm_path = check_root / "LogicMods"
+                            if lm_path.is_dir():
+                                shutil.rmtree(str(lm_path))
+                                logger.debug("Removed LogicMods dir from %s",
+                                             check_root)
+                                if check_root == paks_path:
+                                    refreshed_left = True
 
-                            # Extract zip contents
-                            zip_ref.extractall(str(mods_backup_path))
+                        if refreshed_left:
+                            self._refresh_mods_list()
 
-                            # Flatten single wrapper directories.
-                            # Some mod zips wrap everything inside a
-                            # directory like "LogicMods/" which has no
-                            # meaning in backup/mods.  Move the contents
-                            # up one level and remove the empty wrapper.
-                            if _single_wrapper:
-                                wrapper_path = mods_backup_path / _single_wrapper
-                                if wrapper_path.is_dir() and any(wrapper_path.iterdir()):
-                                    for child in list(wrapper_path.iterdir()):
-                                        dest_child = mods_backup_path / child.name
-                                        if dest_child.exists():
-                                            if dest_child.is_dir():
-                                                shutil.rmtree(str(dest_child))
-                                            else:
-                                                dest_child.unlink()
-                                        shutil.move(str(child), str(dest_child))
-                                    # Remove the now-empty wrapper
-                                    try:
-                                        wrapper_path.rmdir()
-                                    except OSError:
-                                        pass
-
-                            # Remove any empty directories left by extraction
-                            # (includes the wrapper dir if it was empty)
-                            dirs_to_check = set(top_level_items)
-                            if _single_wrapper:
-                                dirs_to_check.add(_single_wrapper)
-                            for tl_item in dirs_to_check:
-                                tl_path = mods_backup_path / tl_item
-                                if (tl_path.is_dir()
-                                        and not any(tl_path.iterdir())):
-                                    try:
-                                        tl_path.rmdir()
-                                        logger.debug(
-                                            "Removed empty directory from "
-                                            "zip extraction: %s", tl_item)
-                                    except OSError:
-                                        pass
-
-                            imported_count += 1
-                            self._set_status(f"Extracted '{source_path.name}' to Available Mods")
+                        imported_count += 1
+                        self._set_status(
+                            f"Extracted '{source_path.name}' to {mod_dir_name}")
 
                     except zipfile.BadZipFile:
-                        self._set_status(f"Error: '{source_path.name}' is not a valid zip file")
+                        self._set_status(
+                            f"Error: '{source_path.name}' is not a valid zip file")
                         continue
 
                 elif source_path.is_file() and source_path.suffix.lower() == ".pak":
