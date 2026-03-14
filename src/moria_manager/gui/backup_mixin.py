@@ -13,7 +13,9 @@ import customtkinter as ctk
 
 from ..config.paths import GamePaths
 from ..core.backup_index import BackupIndexManager
-from ..core.save_parser import WorldWithVersions, CharacterWithVersions, SaveFileVersion
+from ..core.save_parser import (
+    WorldWithVersions, CharacterWithVersions, SaveFileVersion, MoriaSaveParser
+)
 from ..logging_config import get_logger
 from .styles import COLORS, FONTS, PADDING, THEME_COLORS
 
@@ -412,7 +414,11 @@ class BackupMixin:
         self._reset_scroll_if_few_items(self.versions_list_frame)
 
     def _create_version_row(self, version: SaveFileVersion):
-        """Create a clickable row for a file version with restore button."""
+        """Create a clickable row for a file version with restore button.
+
+        Each row shows the version type, the file's modification time,
+        and the actual world/character name parsed from the save file.
+        """
         row = ctk.CTkFrame(self.versions_list_frame, cursor="hand2")
         row.pack(fill="x", pady=1)
 
@@ -422,16 +428,60 @@ class BackupMixin:
         # Make row clickable
         row.bind("<Button-1>", lambda e, v=version: self._on_version_selected(v))
 
-        # Version type/name
+        # Build detail text: modification time + parsed world/character name
+        detail_parts = []
+        if version.modified_time:
+            detail_parts.append(version.modified_time.strftime("%Y-%m-%d %H:%M:%S"))
+
+        # Parse the actual world/character name from the save file
+        parsed_name = self._parse_version_name(version)
+        if parsed_name:
+            detail_parts.append(parsed_name)
+
+        detail_text = "  \u2022  ".join(detail_parts) if detail_parts else ""
+
+        # Version type/name (e.g., "Current Save (.sav)")
         name_label = ctk.CTkLabel(
             row, text=version.display_name,
             font=FONTS["body_bold"], anchor="w",
             text_color=THEME_COLORS["text"]
         )
         name_label.pack(
-            side="left", fill="x", expand=True,
-            padx=PADDING["small"], pady=PADDING["small"])
+            fill="x", padx=PADDING["small"], pady=(PADDING["small"], 0))
         name_label.bind("<Button-1>", lambda e, v=version: self._on_version_selected(v))
+
+        # Detail line: date/time and parsed name
+        if detail_text:
+            detail_label = ctk.CTkLabel(
+                row, text=detail_text,
+                font=FONTS["small"], anchor="w",
+                text_color=THEME_COLORS["text_secondary"]
+            )
+            detail_label.pack(
+                fill="x", padx=PADDING["small"], pady=(0, PADDING["small"]))
+            detail_label.bind("<Button-1>", lambda e, v=version: self._on_version_selected(v))
+
+    def _parse_version_name(self, version: SaveFileVersion) -> str:
+        """Parse the actual world or character name from a save file version.
+
+        Returns the parsed name, or empty string if parsing fails or if
+        the name matches the already-displayed header name.
+        """
+        try:
+            parser = MoriaSaveParser()
+            file_path = version.file_path
+
+            if file_path.name.startswith(MoriaSaveParser.WORLD_PREFIX):
+                info = parser.parse_world_save(file_path)
+                if info and info.world_name and info.world_name != "Unknown World":
+                    return info.world_name
+            elif file_path.name.startswith(MoriaSaveParser.CHARACTER_PREFIX):
+                info = parser.parse_character_save(file_path)
+                if info and info.character_name:
+                    return info.character_name
+        except Exception:
+            pass
+        return ""
 
     def _on_version_selected(self, version: SaveFileVersion):
         """Handle version selection — highlight row and show action buttons.

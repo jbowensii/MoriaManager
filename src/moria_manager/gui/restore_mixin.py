@@ -14,6 +14,7 @@ import customtkinter as ctk
 
 from ..config.paths import GamePaths
 from ..core.backup_index import BackupIndexManager, BackupIndexEntry
+from ..core.save_parser import MoriaSaveParser
 from ..logging_config import get_logger
 from .styles import FONTS, PADDING, THEME_COLORS
 
@@ -284,8 +285,9 @@ class RestoreMixin:
         """Create a clickable row for a backup timestamp directory.
 
         Converts the directory name from YYYY-MM-DD_HHMMSS format into a
-        human-readable date/time string for display. Falls back to the raw
-        directory name if parsing fails.
+        human-readable date/time string for display. Also parses the backed-up
+        .sav file to show the actual world/character name at that point in time.
+        Falls back to the raw directory name if parsing fails.
         """
         row = ctk.CTkFrame(self.versions_list_frame, cursor="hand2")
         row.pack(fill="x", pady=1)
@@ -303,6 +305,9 @@ class RestoreMixin:
         except ValueError:
             display_text = timestamp_dir.name
 
+        # Parse world/character name from the backed-up .sav file
+        parsed_name = self._parse_backup_name(timestamp_dir)
+
         # Timestamp label
         name_label = ctk.CTkLabel(
             row, text=display_text,
@@ -310,12 +315,54 @@ class RestoreMixin:
             text_color=THEME_COLORS["text"]
         )
         name_label.pack(
-            side="left", fill="x", expand=True,
-            padx=PADDING["small"], pady=PADDING["small"])
+            fill="x", padx=PADDING["small"], pady=(PADDING["small"], 0))
         name_label.bind(
             "<Button-1>",
             lambda e, ts=timestamp_dir:
             self._on_restore_timestamp_selected(ts))
+
+        # Parsed name detail line
+        if parsed_name:
+            detail_label = ctk.CTkLabel(
+                row, text=parsed_name,
+                font=FONTS["small"], anchor="w",
+                text_color=THEME_COLORS["text_secondary"]
+            )
+            detail_label.pack(
+                fill="x", padx=PADDING["small"], pady=(0, PADDING["small"]))
+            detail_label.bind(
+                "<Button-1>",
+                lambda e, ts=timestamp_dir:
+                self._on_restore_timestamp_selected(ts))
+
+    def _parse_backup_name(self, timestamp_dir: Path) -> str:
+        """Parse the actual world or character name from a backup timestamp directory.
+
+        Finds the .sav file inside the timestamp directory and parses it
+        to extract the world or character name stored in the save data.
+
+        Returns the parsed name, or empty string if parsing fails.
+        """
+        try:
+            sav_files = [f for f in timestamp_dir.iterdir()
+                         if f.is_file() and f.suffix == ".sav"]
+            if not sav_files:
+                return ""
+
+            parser = MoriaSaveParser()
+            sav_file = sav_files[0]
+
+            if sav_file.name.startswith(MoriaSaveParser.WORLD_PREFIX):
+                info = parser.parse_world_save(sav_file)
+                if info and info.world_name and info.world_name != "Unknown World":
+                    return info.world_name
+            elif sav_file.name.startswith(MoriaSaveParser.CHARACTER_PREFIX):
+                info = parser.parse_character_save(sav_file)
+                if info and info.character_name:
+                    return info.character_name
+        except Exception:
+            pass
+        return ""
 
     def _on_restore_timestamp_selected(self, timestamp_dir: Path):
         """Handle timestamp selection in restore mode.

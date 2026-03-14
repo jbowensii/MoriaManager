@@ -33,5 +33,5 @@ Configuration:
     - Backup indexes: %APPDATA%/MoriaManager/index_*.xml
 """
 
-__version__ = "1.9.0"
+__version__ = "2.0.0"
 __app_name__ = "Moria Manager"

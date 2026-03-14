@@ -8,7 +8,7 @@ from ..assets.loader import get_asset_path
 from .styles import DialogIconMixin, THEME_COLORS
 
 # Application info
-APP_DATE = "February 2026"
+APP_DATE = "March 2026"
 APP_AUTHOR = "John B Owens II"
 GITHUB_URL = "https://github.com/jbowensii/MoriaManager"
 LICENSE_URL = "https://github.com/jbowensii/MoriaManager?tab=MIT-1-ov-file#"
